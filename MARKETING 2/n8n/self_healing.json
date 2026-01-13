@@ -1,0 +1,62 @@
+{
+    "name": "Self-Healing Error Loop",
+    "nodes": [
+        {
+            "parameters": {},
+            "name": "Error Trigger",
+            "type": "n8n-nodes-base.errorTrigger",
+            "typeVersion": 1,
+            "position": [
+                250,
+                300
+            ]
+        },
+        {
+            "parameters": {
+                "method": "POST",
+                "url": "https://YOUR-REPLIT-URL.replit.app/debug-fix",
+                "sendHeaders": true,
+                "headerParameters": {
+                    "parameters": [
+                        {
+                            "name": "x-n8n-auth",
+                            "value": "YOUR_AUTH_SECRET_TOKEN"
+                        }
+                    ]
+                },
+                "bodyParameters": {
+                    "parameters": [
+                        {
+                            "name": "node",
+                            "value": "={{$node[\"Error Trigger\"].json[\"execution\"][\"lastNodeExecuted\"]}}"
+                        },
+                        {
+                            "name": "message",
+                            "value": "={{$node[\"Error Trigger\"].json[\"message\"]}}"
+                        }
+                    ]
+                }
+            },
+            "name": "Alert Antigravity",
+            "type": "n8n-nodes-base.httpRequest",
+            "typeVersion": 1,
+            "position": [
+                450,
+                300
+            ]
+        }
+    ],
+    "connections": {
+        "Error Trigger": {
+            "main": [
+                [
+                    {
+                        "node": "Alert Antigravity",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        }
+    }
+}
