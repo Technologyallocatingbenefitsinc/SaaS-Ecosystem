@@ -1,0 +1,46 @@
+{
+    "name": "Local Upload - File Processed",
+    "nodes": [
+        {
+            "parameters": {
+                "path": "file-processed",
+                "responseMode": "lastNode",
+                "options": {}
+            },
+            "name": "Webhook",
+            "type": "n8n-nodes-base.webhook",
+            "typeVersion": 1,
+            "position": [
+                250,
+                300
+            ]
+        },
+        {
+            "parameters": {
+                "subject": "Your upload is ready!",
+                "message": "We finished processing your file: {{ $json[\"body\"][\"filename\"] }}.\n\nLog in to view your summary.",
+                "toEmail": "student@example.edu"
+            },
+            "name": "Gmail Sender",
+            "type": "n8n-nodes-base.gmail",
+            "typeVersion": 1,
+            "position": [
+                450,
+                300
+            ]
+        }
+    ],
+    "connections": {
+        "Webhook": {
+            "main": [
+                [
+                    {
+                        "node": "Gmail Sender",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        }
+    }
+}

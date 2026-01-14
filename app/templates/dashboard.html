@@ -6,6 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dashboard | SaaS Ecosystem</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <!-- OpenDyslexic Font (CDN) -->
     <link href="https://cdn.jsdelivr.net/npm/opendyslexic@2.1.0-beta1/css/opendyslexic.min.css" rel="stylesheet">
@@ -183,14 +184,44 @@
                         <h3 class="text-2xl font-bold mb-2">
                             {% if tier == 'student' %}Summarize Lecture{% else %}Create Content{% endif %}
                         </h3>
-                        <form action="/upload-video" method="post" class="w-full max-w-md relative">
-                            <input type="text" name="video_url" placeholder="Paste YouTube URL..."
-                                class="w-full pl-6 pr-32 py-4 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:outline-none">
-                            <button type="submit"
-                                class="absolute right-2 top-2 bottom-2 bg-black text-white px-6 rounded-lg font-bold hover:scale-105 transition">
+
+                        <!-- Upload Form with Progress -->
+                        <div class="w-full max-w-md relative z-10">
+                            <!-- URL Input -->
+                            <input type="text" id="urlInput" placeholder="Paste YouTube URL..."
+                                class="w-full pl-6 pr-32 py-4 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:outline-none mb-4">
+
+                            <!-- OR Separator -->
+                            <div class="flex items-center gap-2 mb-4">
+                                <div class="h-px bg-gray-200 flex-1"></div>
+                                <span class="text-xs text-slate-400 uppercase font-bold">OR Upload File</span>
+                                <div class="h-px bg-gray-200 flex-1"></div>
+                            </div>
+
+                            <!-- File Input -->
+                            <input type="file" id="fileInput"
+                                class="block w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 mb-4"
+                                onchange="handleFileUpload(this)">
+
+                            <!-- Progress Bar (Hidden by default) -->
+                            <div id="uploadProgress" class="hidden text-left">
+                                <div class="flex justify-between mb-1">
+                                    <span class="text-sm font-medium text-blue-700">Uploading...</span>
+                                    <span class="text-sm font-medium text-blue-700" id="progressPercent">0%</span>
+                                </div>
+                                <div class="w-full bg-gray-200 rounded-full h-2.5">
+                                    <div id="progressBar"
+                                        class="bg-blue-600 h-2.5 rounded-full shadow-[0_0_10px_rgba(37,99,235,0.5)] transition-all duration-300 ease-out"
+                                        style="width: 0%"></div>
+                                </div>
+                            </div>
+
+                            <button onclick="submitUrl()"
+                                class="absolute right-2 top-2 bg-black text-white px-6 py-2 rounded-lg font-bold hover:scale-105 transition h-[42px]"
+                                id="goBtn">
                                 Go
                             </button>
-                        </form>
+                        </div>
                         {% endif %}
                     </div>
                 </div>
@@ -244,10 +275,9 @@
         </div>
     </div>
 
-    <script>
-            <!-- Cookie Banner (2026 Compliant) -->
-            < div id = "cookieBanner"
-        class="fixed bottom-4 left-4 right-4 md:left-auto md:right-4 md:w-96 bg-white rounded-2xl shadow-2xl border border-gray-200 p-6 z-50 transform transition-all duration-500 translate-y-full opacity-0" >
+    <!-- Cookie Banner (2026 Compliant) -->
+    <div id="cookieBanner"
+        class="fixed bottom-4 left-4 right-4 md:left-auto md:right-4 md:w-96 bg-white rounded-2xl shadow-2xl border border-gray-200 p-6 z-50 transform transition-all duration-500 translate-y-full opacity-0">
         <div class="flex items-start gap-4 mb-4">
             <div class="text-2xl text-blue-600"><i class="fas fa-cookie-bite"></i></div>
             <div>
@@ -264,76 +294,151 @@
                 class="flex-1 py-3 bg-white text-slate-700 border border-gray-200 rounded-xl font-bold hover:bg-gray-50 transition">Reject
                 All</button>
         </div>
-    </div >
+    </div>
 
-            <script>
-        // Check GPC
-                const gpc = navigator.globalPrivacyControl;
-        
+    <script>
+        // --- Cookie Logic ---
+        const gpc = navigator.globalPrivacyControl;
+
         window.addEventListener('load', () => {
+            // Check Cookie Consent
             if (!localStorage.getItem('cookieConsent')) {
                 const banner = document.getElementById('cookieBanner');
                 banner.classList.remove('translate-y-full', 'opacity-0');
             }
-                if (gpc) {
-                    console.log("GPC Signal Detected: Auto-Rejecting non-essential.");
+            if (gpc) {
+                console.log("GPC Signal Detected: Auto-Rejecting non-essential.");
             }
         });
 
-                function acceptCookies() {
-                    localStorage.setItem('cookieConsent', 'accepted');
-                closeBanner();
+        function acceptCookies() {
+            localStorage.setItem('cookieConsent', 'accepted');
+            closeBanner();
         }
 
-                function rejectCookies() {
-                    localStorage.setItem('cookieConsent', 'rejected');
-                closeBanner();
+        function rejectCookies() {
+            localStorage.setItem('cookieConsent', 'rejected');
+            closeBanner();
         }
 
-                function closeBanner() {
-                    document.getElementById('cookieBanner').classList.add('translate-y-full', 'opacity-0');
+        function closeBanner() {
+            document.getElementById('cookieBanner').classList.add('translate-y-full', 'opacity-0');
         }
 
-        // Existing CMD+K and Invite scripts...
-        // Cmd + K Listener
+        // --- File Upload Logic (Axios + Progress) ---
+        async function handleFileUpload(input) {
+            const file = input.files[0];
+            if (!file) return;
+
+            const formData = new FormData();
+            formData.append('file', file);
+
+            // Show Progress UI
+            const progressDiv = document.getElementById('uploadProgress');
+            const progressBar = document.getElementById('progressBar');
+            const progressPercent = document.getElementById('progressPercent');
+            const goBtn = document.getElementById('goBtn');
+            const urlInput = document.getElementById('urlInput');
+
+            progressDiv.classList.remove('hidden');
+            goBtn.disabled = true;
+            goBtn.innerText = "Wait";
+
+            // Optional: Hide URL input to reduce clutter
+            urlInput.classList.add('opacity-50');
+
+            try {
+                await axios.post('/upload/upload-content', formData, {
+                    headers: { 'Content-Type': 'multipart/form-data' },
+                    onUploadProgress: (progressEvent) => {
+                        const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total);
+                        progressBar.style.width = percentCompleted + '%';
+                        progressPercent.innerText = percentCompleted + '%';
+                    }
+                });
+
+                // Success Effect
+                progressBar.classList.add('bg-green-500');
+                progressBar.classList.remove('bg-blue-600');
+                progressPercent.innerText = "Done! ✅";
+
+                setTimeout(() => {
+                    alert("Upload Complete! Processing started.");
+                    // Reset
+                    progressBar.style.width = '0%';
+                    progressBar.classList.remove('bg-green-500');
+                    progressBar.classList.add('bg-blue-600');
+                    progressDiv.classList.add('hidden');
+                    goBtn.disabled = false;
+                    goBtn.innerText = "Go";
+                    input.value = '';
+                    urlInput.classList.remove('opacity-50');
+                }, 500);
+
+            } catch (error) {
+                console.error("Upload failed", error);
+                alert("Upload Failed.");
+                goBtn.disabled = false;
+                goBtn.innerText = "Go";
+                progressDiv.classList.add('hidden');
+                urlInput.classList.remove('opacity-50');
+            }
+        }
+
+        async function submitUrl() {
+            const url = document.getElementById('urlInput').value;
+            if (url) {
+                const form = document.createElement('form');
+                form.method = 'POST';
+                form.action = '/upload-video';
+                const input = document.createElement('input');
+                input.name = 'video_url';
+                input.value = url;
+                form.appendChild(input);
+                document.body.appendChild(form);
+                form.submit();
+            }
+        }
+
+        // --- Cmd + K Listener ---
         document.addEventListener('keydown', (e) => {
             if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
-                    e.preventDefault();
+                e.preventDefault();
                 document.getElementById('cmdKModal').classList.remove('hidden');
                 document.querySelector('#cmdKModal input').focus();
             }
-                if (e.key === 'Escape') {
-                    document.getElementById('cmdKModal').classList.add('hidden');
+            if (e.key === 'Escape') {
+                document.getElementById('cmdKModal').classList.add('hidden');
             }
         });
 
         // Close on Click Outside
         document.getElementById('cmdKModal').addEventListener('click', (e) => {
             if (e.target === document.getElementById('cmdKModal')) {
-                    document.getElementById('cmdKModal').classList.add('hidden');
+                document.getElementById('cmdKModal').classList.add('hidden');
             }
         });
 
-                // Professor Invite Logic
-                async function inviteStudents() {
+        // --- Professor Invite Logic ---
+        async function inviteStudents() {
             const btn = document.querySelector('button[onclick="inviteStudents()"]');
-                const originalText = btn.innerText;
-                btn.innerText = "Sending...";
-                btn.disabled = true;
+            const originalText = btn.innerText;
+            btn.innerText = "Sending...";
+            btn.disabled = true;
 
-                try {
-                const res = await fetch('/invite-students', {method: 'POST' });
+            try {
+                const res = await fetch('/invite-students', { method: 'POST' });
                 if (res.ok) {
                     btn.innerText = "Invites Sent! ✅";
-                btn.classList.add('bg-green-600', 'text-white');
+                    btn.classList.add('bg-green-600', 'text-white');
                     setTimeout(() => {
-                    btn.innerText = originalText;
-                btn.classList.remove('bg-green-600');
-                btn.disabled = false;
+                        btn.innerText = originalText;
+                        btn.classList.remove('bg-green-600');
+                        btn.disabled = false;
                     }, 3000);
                 }
             } catch (e) {
-                    alert("Error sending invites.");
+                alert("Error sending invites.");
                 btn.innerText = originalText;
                 btn.disabled = false;
             }
