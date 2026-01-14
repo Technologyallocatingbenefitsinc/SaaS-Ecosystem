@@ -1,7 +1,7 @@
 from fastapi import FastAPI, Depends, HTTPException, Header, Request, Form
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
-from fastapi.responses import HTMLResponse
+from fastapi.responses import HTMLResponse, RedirectResponse
 from contextlib import asynccontextmanager
 from sqlalchemy import select
 from app.database import engine, get_db, Base
@@ -75,8 +75,20 @@ async def dashboard(request: Request, user = Depends(auth.get_replit_user)):
     
     return templates.TemplateResponse("dashboard.html", {
         "request": request, 
-        **mock_stats
+        "user": user,
+        "tier": user_tier,
+        "credits": mock_stats["credits"]
     })
+
+@app.get("/profile", response_class=HTMLResponse)
+async def profile_page(request: Request, user = Depends(auth.get_replit_user)):
+    if not user:
+        return RedirectResponse(url="/dashboard") # Or Login
+    return templates.TemplateResponse("profile.html", {"request": request, "user": user})
+
+@app.get("/billing", response_class=HTMLResponse)
+async def billing_page(request: Request, user = Depends(auth.get_replit_user)):
+    return templates.TemplateResponse("billing.html", {"request": request, "user": user})
 
 @app.post("/invite-students")
 async def invite_students():

@@ -1,7 +1,9 @@
-from fastapi import APIRouter, Depends, HTTPException, status, Request
+from fastapi import APIRouter, Depends, HTTPException, status, Request, Header
 from sqlalchemy.future import select
 from app.database import get_db
 from app.models import User
+from app.config import settings
+import httpx
 from pydantic import BaseModel
 
 router = APIRouter()
