@@ -60,7 +60,7 @@
         },
         {
             "parameters": {
-                "prompt": "### IDENTITY\nYou are a creative Marketing Assistant. \n\n### INPUT DATA\nHost Name: {{ JSON.parse($node[\"Gemini Researcher\"].json[\"content\"])[\"host_name\"] }}\nTopic: {{ JSON.parse($node[\"Gemini Researcher\"].json[\"content\"])[\"topic\"] }}\nGuest: {{ JSON.parse($node[\"Gemini Researcher\"].json[\"content\"])[\"guest_name\"] }}\n\n### TASK\nWrite a 2-sentence email \"Icebreaker\" and a Subject Line. \n\n### RULES\n1. DO NOT use corporate jargon.\n2. Mention the specific guest and topic naturally.\n3. Goal: Offer free slide deck.\n\n### OUTPUT FORMAT (JSON)\n{\n  \"subject\": \"\",\n  \"icebreaker\": \"\"\n}"
+                "prompt": "### IDENTITY\nYou are a creative Marketing Assistant. \n\n### INPUT DATA\nHost Name: {{ JSON.parse($node[\"Gemini Researcher\"].json[\"content\"])[\"host_name\"] }}\nTopic: {{ JSON.parse($node[\"Gemini Researcher\"].json[\"content\"])[\"topic\"] }}\nGuest: {{ JSON.parse($node[\"Gemini Researcher\"].json[\"content\"])[\"guest_name\"] }}\nTone: {{ JSON.parse($node[\"Gemini Researcher\"].json[\"content\"])[\"tone\"] }}\n\n### TASK\nWrite a one-sentence compliment about the video's {{tone}} tone and a specific insight about {{topic}}. This will be used as an icebreaker.\nAlso write a catchy subject line.\n\n### OUTPUT FORMAT (JSON)\n{\n  \"subject\": \"\",\n  \"icebreaker_based_on_tone\": \"\"\n}"
             },
             "name": "Gemini Pitch Writer",
             "type": "n8n-nodes-base.googleGemini",
@@ -93,7 +93,7 @@
             "parameters": {
                 "sendTo": "{{ $node[\"YouTube Search\"].json[\"snippet\"][\"channelTitle\"] }} <placeholder@email.com>",
                 "subject": "={{ JSON.parse($node[\"Gemini Pitch Writer\"].json[\"content\"])[\"subject\"] }}",
-                "message": "={{ JSON.parse($node[\"Gemini Pitch Writer\"].json[\"content\"])[\"icebreaker\"] }}\n\nI used my AI tool to turn your episode into a high-quality Slide Deck for your LinkedIn/Instagram audience. I've attached it here for free.\n\nIf you want to automate this for every episode, check out my app at: https://yourapp.replit.app"
+                "message": "Hi {{ JSON.parse($node[\"Gemini Researcher\"].json[\"content\"])[\"host_name\"] }},\n\nI just caught your recent episode on YouTube about {{ JSON.parse($node[\"Gemini Researcher\"].json[\"content\"])[\"topic\"] }}.\n\n{{ JSON.parse($node[\"Gemini Pitch Writer\"].json[\"content\"])[\"icebreaker_based_on_tone\"] }}\n\nI’m reaching out because I actually put together a custom slide deck that summarizes the key takeaways and insights from that specific episode. I thought it might be something your audience would find valuable for social media or as a quick-reference guide.\n\nI’d love to send it over to you for free—no strings attached.\n\nWould you be interested in taking a look?\n\nBest,\n[Your Name]\n[Your Company/Website]"
             },
             "name": "Gmail Sender",
             "type": "n8n-nodes-base.gmail",
