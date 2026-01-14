@@ -92,14 +92,21 @@
             </button>
 
             <div class="flex items-center gap-3">
+                {% if user %}
                 <div
                     class="w-10 h-10 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-700 font-bold">
-                    {{ tier[0]|upper }}
+                    {{ (user.username or user.email)[0]|upper }}
                 </div>
                 <div>
-                    <p class="text-sm font-semibold">{{ tier|title }}</p>
-                    <p class="text-xs text-slate-500">Pro Plan</p>
+                    <p class="text-sm font-semibold">{{ user.username or (user.email.split('@')[0]) }}</p>
+                    <p class="text-xs text-slate-500">{{ user.tier|title }} Plan</p>
                 </div>
+                {% else %}
+                <button onclick="window.location.href='/__replauthuser'"
+                    class="w-full flex items-center justify-center gap-2 py-2 px-4 bg-white border border-gray-200 rounded-xl hover:bg-gray-50 transition text-sm font-bold">
+                    <i class="fab fa-google text-red-500"></i> Sign in
+                </button>
+                {% endif %}
             </div>
         </div>
     </aside>

@@ -64,12 +64,12 @@ async def process_video_endpoint(
         raise HTTPException(status_code=500, detail=str(e))
 
 @app.get("/dashboard", response_class=HTMLResponse)
-async def dashboard(request: Request):
-    # Mock User Data (In real app, fetch from DB)
-    user_tier = "professor" # Change this to 'student' or 'podcaster' to see other views
+async def dashboard(request: Request, user = Depends(auth.get_replit_user)):
+    # Fallback/Default tier
+    user_tier = user.tier if user else "professor" 
     
     mock_stats = {
-        "credits": 25,
+        "credits": user.credits if user else 25,
         "tier": user_tier
     }
     

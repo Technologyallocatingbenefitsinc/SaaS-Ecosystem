@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, Request
 from sqlalchemy.future import select
 from app.database import get_db
 from app.models import User
@@ -51,3 +51,44 @@ async def check_referral(code: str, db = Depends(get_db)):
     if not user:
         raise HTTPException(status_code=404, detail="Referral code not found")
     return {"valid": True, "referrer": user.email}
+
+async def get_replit_user(request: Request, db = Depends(get_db)):
+    """Dependency to extract Replit Auth headers and sync with DB"""
+    user_id = request.headers.get("X-Replit-User-Id")
+    user_name = request.headers.get("X-Replit-User-Name")
+    user_roles = request.headers.get("X-Replit-User-Roles")
+
+    if not user_id:
+        return None
+
+    # Sync with DB
+    result = await db.execute(select(User).where(User.replit_id == user_id))
+    user = result.scalars().first()
+
+    if not user:
+        # Create user if logging in via Replit for the first time
+        user = User(
+            email=f"{user_name}@replit.user", # Replit doesn't always provide email in headers
+            replit_id=user_id,
+            username=user_name,
+            tier="student", # Default
+            credits=5 # Welcome bonus
+        )
+        db.add(user)
+        await db.commit()
+        await db.refresh(user)
+    
+    return user
+
+@router.get("/me")
+async def get_me(user = Depends(get_replit_user)):
+    if not user:
+        return {"logged_in": False}
+    return {
+        "logged_in": True,
+        "id": user.id,
+        "email": user.email,
+        "username": getattr(user, 'username', 'User'),
+        "role": user.tier,
+        "credits": user.credits
+    }

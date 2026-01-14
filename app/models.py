@@ -11,6 +11,8 @@ class User(Base):
     tier = Column(String, default="student") # student, professor, podcaster
     referral_code = Column(String, unique=True, index=True)
     credits = Column(Integer, default=0)
+    replit_id = Column(String, unique=True, index=True)
+    username = Column(String)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 
 class Lead(Base):
