@@ -1,0 +1,194 @@
+{
+    "name": "Podcaster Hunter (15/Day)",
+    "nodes": [
+        {
+            "parameters": {
+                "rule": {
+                    "interval": [
+                        {
+                            "field": "hours",
+                            "triggerAtHour": 9
+                        }
+                    ]
+                }
+            },
+            "name": "Daily Schedule",
+            "type": "n8n-nodes-base.scheduleTrigger",
+            "typeVersion": 1,
+            "position": [
+                250,
+                300
+            ]
+        },
+        {
+            "parameters": {
+                "limit": 50,
+                "term": "site:youtube.com \"podcast\" \"full episode\" \"2026\""
+            },
+            "name": "YouTube Search",
+            "type": "n8n-nodes-base.youTube",
+            "typeVersion": 1,
+            "position": [
+                450,
+                300
+            ]
+        },
+        {
+            "parameters": {
+                "maxItems": 15
+            },
+            "name": "Limit",
+            "type": "n8n-nodes-base.limit",
+            "typeVersion": 1,
+            "position": [
+                650,
+                300
+            ]
+        },
+        {
+            "parameters": {
+                "prompt": "### IDENTITY\nYou are a Lead Generation Researcher specialized in the Podcast industry.\n\n### INPUT\nAnalyze the following YouTube Video Description: \n{{ $node[\"YouTube Search\"].json[\"snippet\"][\"description\"] }}\n\n### GOAL\nExtract specific details to personalize an outreach email. If a piece of information is missing, use \"Podcaster\" as the fallback.\n\n### EXTRACTION RULES\n1. HOST_NAME: Look for \"Hosted by\", \"With [Name]\", or the first name mentioned in the \"About\" section.\n2. TOPIC: Summarize the main value proposition of this specific episode in 5 words or less.\n3. TONE: Identify if the podcast is \"Professional/Academic\" or \"Casual/Entertaining\".\n4. GUEST: If there is a guest, extract their name.\n\n### OUTPUT FORMAT\nReturn ONLY a JSON object. Do not include markdown blocks or extra text.\n\n{\n  \"host_name\": \"\",\n  \"guest_name\": \"\",\n  \"topic\": \"\",\n  \"tone\": \"\",\n  \"is_video_podcast\": true/false\n}",
+                "model": "gemini-1.5-flash"
+            },
+            "name": "Gemini Researcher",
+            "type": "n8n-nodes-base.googleGemini",
+            "typeVersion": 1,
+            "position": [
+                850,
+                300
+            ]
+        },
+        {
+            "parameters": {
+                "prompt": "### IDENTITY\nYou are a creative Marketing Assistant. \n\n### INPUT DATA\nHost Name: {{ JSON.parse($node[\"Gemini Researcher\"].json[\"content\"])[\"host_name\"] }}\nTopic: {{ JSON.parse($node[\"Gemini Researcher\"].json[\"content\"])[\"topic\"] }}\nGuest: {{ JSON.parse($node[\"Gemini Researcher\"].json[\"content\"])[\"guest_name\"] }}\n\n### TASK\nWrite a 2-sentence email \"Icebreaker\" and a Subject Line. \n\n### RULES\n1. DO NOT use corporate jargon.\n2. Mention the specific guest and topic naturally.\n3. Goal: Offer free slide deck.\n\n### OUTPUT FORMAT (JSON)\n{\n  \"subject\": \"\",\n  \"icebreaker\": \"\"\n}"
+            },
+            "name": "Gemini Pitch Writer",
+            "type": "n8n-nodes-base.googleGemini",
+            "typeVersion": 1,
+            "position": [
+                1050,
+                300
+            ]
+        },
+        {
+            "parameters": {
+                "values": {
+                    "number": [
+                        {
+                            "name": "Request Cost",
+                            "value": "={{ ($node[\"Gemini Researcher\"].json[\"usage\"][\"prompt_token_count\"] * 0.00000015) + ($node[\"Gemini Researcher\"].json[\"usage\"][\"candidates_token_count\"] * 0.0000006) }}"
+                        }
+                    ]
+                }
+            },
+            "name": "Cost Calculator",
+            "type": "n8n-nodes-base.set",
+            "typeVersion": 1,
+            "position": [
+                1250,
+                300
+            ]
+        },
+        {
+            "parameters": {
+                "sendTo": "{{ $node[\"YouTube Search\"].json[\"snippet\"][\"channelTitle\"] }} <placeholder@email.com>",
+                "subject": "={{ JSON.parse($node[\"Gemini Pitch Writer\"].json[\"content\"])[\"subject\"] }}",
+                "message": "={{ JSON.parse($node[\"Gemini Pitch Writer\"].json[\"content\"])[\"icebreaker\"] }}\n\nI used my AI tool to turn your episode into a high-quality Slide Deck for your LinkedIn/Instagram audience. I've attached it here for free.\n\nIf you want to automate this for every episode, check out my app at: https://yourapp.replit.app"
+            },
+            "name": "Gmail Sender",
+            "type": "n8n-nodes-base.gmail",
+            "typeVersion": 1,
+            "position": [
+                1450,
+                300
+            ]
+        },
+        {
+            "parameters": {
+                "sheetId": "YOUR_SHEET_ID",
+                "range": "A:E",
+                "options": {}
+            },
+            "name": "Google Sheets Log",
+            "type": "n8n-nodes-base.googleSheets",
+            "typeVersion": 1,
+            "position": [
+                1650,
+                300
+            ]
+        }
+    ],
+    "connections": {
+        "Daily Schedule": {
+            "main": [
+                [
+                    {
+                        "node": "YouTube Search",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "YouTube Search": {
+            "main": [
+                [
+                    {
+                        "node": "Limit",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Limit": {
+            "main": [
+                [
+                    {
+                        "node": "Gemini Researcher",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Gemini Researcher": {
+            "main": [
+                [
+                    {
+                        "node": "Gemini Pitch Writer",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Gemini Pitch Writer": {
+            "main": [
+                [
+                    {
+                        "node": "Cost Calculator",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Cost Calculator": {
+            "main": [
+                [
+                    {
+                        "node": "Gmail Sender",
+                        "type": "main",
+                        "index": 0
+                    },
+                    {
+                        "node": "Google Sheets Log",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        }
+    }
+}

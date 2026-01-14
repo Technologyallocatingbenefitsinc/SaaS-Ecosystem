@@ -1,0 +1,14 @@
+fastapi
+uvicorn
+sqlalchemy[asyncio]
+asyncpg
+pydantic-settings
+google-generativeai
+youtube-transcript-api
+fpdf2
+python-multipart
+httpx
+pytest
+pytest-asyncio
+email-validator
+redis
