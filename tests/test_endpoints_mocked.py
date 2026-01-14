@@ -41,13 +41,18 @@ async def test_signup_mocked():
 
 @pytest.mark.asyncio
 async def test_upload_mocked():
+    headers = {
+        "X-Replit-User-Id": "123",
+        "X-Replit-User-Name": "testuser",
+        "X-Replit-User-Roles": "student"
+    }
     with pytest.MonkeyPatch.context() as m:
         m.setattr("app.routers.upload.remove_file_after_delay", AsyncMock(return_value=None))
         m.setattr("app.routers.upload.signal_n8n_to_start", AsyncMock(return_value=200))
         
         files = {'file': ('test_mock.txt', b'mock content', 'text/plain')}
         async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as ac:
-            response = await ac.post("/upload/upload-content", files=files)
+            response = await ac.post("/upload/upload-content", files=files, headers=headers)
         
         assert response.status_code == 200
         assert "filename" in response.json()

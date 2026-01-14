@@ -7,6 +7,9 @@ import asyncio
 import hashlib
 import httpx
 from app.config import settings
+from app.routers import auth
+from fastapi import Depends
+from app.database import get_db
 
 router = APIRouter()
 
@@ -61,13 +64,16 @@ async def delete_user_folder(user_id: int):
 @router.post("/upload-content")
 async def upload_local_file(
     background_tasks: BackgroundTasks,
-    file: UploadFile = File(...)
+    file: UploadFile = File(...),
+    user = Depends(auth.get_replit_user)
 ):
+    if not user:
+         raise HTTPException(status_code=401, detail="Please sign in via Replit Auth to upload files.")
+    
     try:
-        # Mock User Data (In production, get from Auth middleware)
-        user_id = 123 
-        user_email = "student@example.edu"
-        user_role = "student"
+        user_id = user.id 
+        user_email = user.email
+        user_role = user.tier
 
         # Create user-specific directory
         user_dir = UPLOAD_BASE_DIR / str(user_id)

@@ -29,9 +29,13 @@ app.include_router(editor.router, prefix="/editor", tags=["editor"])
 app.include_router(legal.router, prefix="/legal", tags=["legal"])
 app.include_router(upload.router, prefix="/upload", tags=["upload"])
 
-@app.get("/")
-def read_root():
-    return {"message": "SaaS Ecosystem API is running"}
+@app.get("/", response_class=RedirectResponse)
+async def root():
+    return RedirectResponse(url="/dashboard")
+
+@app.get("/login", response_class=HTMLResponse)
+async def login(request: Request):
+    return templates.TemplateResponse(request, "dashboard.html", {"user": None})
 
 @app.post("/debug-fix")
 async def handle_error(request: Request, x_n8n_auth: str = Header(None)):
@@ -73,8 +77,7 @@ async def dashboard(request: Request, user = Depends(auth.get_replit_user)):
         "tier": user_tier
     }
     
-    return templates.TemplateResponse("dashboard.html", {
-        "request": request, 
+    return templates.TemplateResponse(request, "dashboard.html", {
         "user": user,
         "tier": user_tier,
         "credits": mock_stats["credits"]
@@ -84,11 +87,11 @@ async def dashboard(request: Request, user = Depends(auth.get_replit_user)):
 async def profile_page(request: Request, user = Depends(auth.get_replit_user)):
     if not user:
         return RedirectResponse(url="/dashboard") # Or Login
-    return templates.TemplateResponse("profile.html", {"request": request, "user": user})
+    return templates.TemplateResponse(request, "profile.html", {"user": user})
 
 @app.get("/billing", response_class=HTMLResponse)
 async def billing_page(request: Request, user = Depends(auth.get_replit_user)):
-    return templates.TemplateResponse("billing.html", {"request": request, "user": user})
+    return templates.TemplateResponse(request, "billing.html", {"user": user})
 
 @app.post("/invite-students")
 async def invite_students():
@@ -106,7 +109,7 @@ async def invite_students():
 
 @app.get("/workspace", response_class=HTMLResponse)
 async def workspace(request: Request):
-    return templates.TemplateResponse("workspace.html", {"request": request})
+    return templates.TemplateResponse(request, "workspace.html")
 
 @app.post("/upload-video")
 async def upload_video_form(video_url: str = Form(...)):
