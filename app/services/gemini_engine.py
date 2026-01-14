@@ -13,14 +13,16 @@ def get_transcript(video_url: str):
     except Exception as e:
         raise Exception(f"Failed to fetch transcript: {str(e)}")
 
-async def process_video_content(video_url: str, user_tier: str):
+from app.services.usage_logger import log_token_usage
+
+async def process_video_content(video_url: str, user_tier: str, user_id: int):
     transcript = get_transcript(video_url)
     
     if user_tier == "student":
         model_name = "gemini-1.5-flash"
         prompt = f"Summarize the following video transcript into concise bullet points suitable for study notes:\n\n{transcript}"
     elif user_tier == "professor":
-        model_name = "gemini-1.5-pro" # Using 1.5 Pro as proxy for 3.0 Pro
+        model_name = "gemini-1.5-pro" 
         prompt = f"Create a detailed academic study guide with citations based on the following transcript:\n\n{transcript}"
     elif user_tier == "podcaster":
         model_name = "gemini-1.5-pro"
@@ -32,6 +34,18 @@ async def process_video_content(video_url: str, user_tier: str):
     model = genai.GenerativeModel(model_name)
     response = model.generate_content(prompt)
     
+    # 🕵️ Log usage for budget tracking
+    try:
+        usage = response.usage_metadata
+        await log_token_usage(
+            user_id=user_id,
+            plan_type=user_tier,
+            prompt_tokens=usage.prompt_token_count,
+            response_tokens=usage.candidates_token_count
+        )
+    except Exception as e:
+        print(f"Usage logging failed: {e}")
+        
     return {
         "tier": user_tier,
         "model": model_name,

@@ -8,6 +8,7 @@ class Settings(BaseSettings):
     N8N_API_KEY: str = "mock_key"
     N8N_UPLOAD_WEBHOOK: str = "https://your-n8n-instance.com/webhook/process-upload"
     N8N_PURGE_WEBHOOK: str = "https://your-n8n-instance.com/webhook/purge-user"
+    N8N_TOKEN_LOGGER_URL: str = "https://your-n8n-instance.com/webhook/token-logger"
     STRIPE_SECRET_KEY: str = "mock_key"
     
     class Config:

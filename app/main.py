@@ -53,6 +53,7 @@ async def handle_error(request: Request, x_n8n_auth: str = Header(None)):
 @app.post("/process-video")
 async def process_video_endpoint(
     video_url: str, 
+    user_id: int = 1, # Default to 1 for system tests
     user_tier: str = "student",
     x_n8n_auth: str = Header(None),
     db = Depends(get_db)
@@ -61,7 +62,8 @@ async def process_video_endpoint(
          raise HTTPException(status_code=401, detail="Unauthorized")
 
     try:
-        result = await process_video_content(video_url, user_tier)
+        result = await process_video_content(video_url, user_tier, user_id)
+        return result
         return result
     except Exception as e:
         print(f"Error processing video: {e}")

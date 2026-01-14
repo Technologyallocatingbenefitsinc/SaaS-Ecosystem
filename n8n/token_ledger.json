@@ -1,0 +1,157 @@
+{
+    "name": "Backend - TOKEN LEDGER & BUDGET ALERTS",
+    "nodes": [
+        {
+            "parameters": {
+                "path": "token-logger",
+                "responseMode": "lastNode",
+                "options": {}
+            },
+            "name": "Webhook",
+            "type": "n8n-nodes-base.webhook",
+            "typeVersion": 1,
+            "position": [
+                250,
+                300
+            ]
+        },
+        {
+            "parameters": {
+                "operation": "append",
+                "sheetId": "your-google-sheet-id",
+                "range": "MasterLedger!A:Z",
+                "fieldsUI": {
+                    "values": [
+                        {
+                            "name": "Date",
+                            "value": "={{ $now }}"
+                        },
+                        {
+                            "name": "User ID",
+                            "value": "={{ $json[\"body\"][\"user_id\"] }}"
+                        },
+                        {
+                            "name": "Plan",
+                            "value": "={{ $json[\"body\"][\"plan\"] }}"
+                        },
+                        {
+                            "name": "Tokens In",
+                            "value": "={{ $json[\"body\"][\"tokens_in\"] }}"
+                        },
+                        {
+                            "name": "Tokens Out",
+                            "value": "={{ $json[\"body\"][\"tokens_out\"] }}"
+                        },
+                        {
+                            "name": "Cost USD",
+                            "value": "={{ $json[\"body\"][\"cost_usd\"] }}"
+                        }
+                    ]
+                }
+            },
+            "name": "Log to Google Sheet",
+            "type": "n8n-nodes-base.googleSheets",
+            "typeVersion": 1,
+            "position": [
+                450,
+                300
+            ]
+        },
+        {
+            "parameters": {
+                "operation": "lookup",
+                "sheetId": "your-google-sheet-id",
+                "range": "Summary!A:B",
+                "lookupColumn": "Key",
+                "lookupValue": "TotalMonthCost"
+            },
+            "name": "Check Monthly Total",
+            "type": "n8n-nodes-base.googleSheets",
+            "typeVersion": 1,
+            "position": [
+                650,
+                300
+            ]
+        },
+        {
+            "parameters": {
+                "conditions": {
+                    "number": [
+                        {
+                            "value1": "={{ $json[\"Value\"] }}",
+                            "operation": "larger",
+                            "value2": 800
+                        }
+                    ]
+                }
+            },
+            "name": "Is Budget > 80%",
+            "type": "n8n-nodes-base.if",
+            "typeVersion": 1,
+            "position": [
+                850,
+                300
+            ]
+        },
+        {
+            "parameters": {
+                "chatId": "YOUR_TELEGRAM_CHAT_ID",
+                "text": "🚨 URGENT: Gemini Budget Warning! You have reached ${{ $json[\"Value\"] }} (80% of $1,000 limit). Review usage log immediately.",
+                "options": {}
+            },
+            "name": "Telegram Alert",
+            "type": "n8n-nodes-base.telegram",
+            "typeVersion": 1,
+            "position": [
+                1050,
+                200
+            ]
+        }
+    ],
+    "connections": {
+        "Webhook": {
+            "main": [
+                [
+                    {
+                        "node": "Log to Google Sheet",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Log to Google Sheet": {
+            "main": [
+                [
+                    {
+                        "node": "Check Monthly Total",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Check Monthly Total": {
+            "main": [
+                [
+                    {
+                        "node": "Is Budget > 80%",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Is Budget > 80%": {
+            "main": [
+                [
+                    {
+                        "node": "Telegram Alert",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        }
+    }
+}
