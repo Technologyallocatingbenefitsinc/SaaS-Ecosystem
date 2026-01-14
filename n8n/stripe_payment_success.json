@@ -1,0 +1,94 @@
+{
+    "name": "Backend - Stripe Payment Success",
+    "nodes": [
+        {
+            "parameters": {
+                "path": "stripe-webhook",
+                "responseMode": "lastNode",
+                "options": {}
+            },
+            "name": "Stripe Webhook",
+            "type": "n8n-nodes-base.webhook",
+            "typeVersion": 1,
+            "position": [
+                100,
+                300
+            ]
+        },
+        {
+            "parameters": {
+                "method": "POST",
+                "url": "https://your-replit-app.replit.app/auth/api/credits/add",
+                "sendHeaders": true,
+                "headerParameters": {
+                    "parameters": [
+                        {
+                            "name": "auth-token",
+                            "value": "YOUR_AUTH_SECRET_TOKEN"
+                        }
+                    ]
+                },
+                "queryParameters": {
+                    "parameters": [
+                        {
+                            "name": "user_id",
+                            "value": "={{ $json[\"body\"][\"client_reference_id\"] }}"
+                        },
+                        {
+                            "name": "amount",
+                            "value": "100"
+                        }
+                    ]
+                },
+                "options": {}
+            },
+            "name": "Add Credits in FastAPI",
+            "type": "n8n-nodes-base.httpRequest",
+            "typeVersion": 4.1,
+            "position": [
+                300,
+                300
+            ]
+        },
+        {
+            "parameters": {
+                "fromEmail": "growth@saas-ecosystem.com",
+                "toEmail": "={{ $json[\"body\"][\"customer_details\"][\"email\"] }}",
+                "subject": "Credits Added! 🚀",
+                "text": "Your tank is full! 100 credits have been added to your account. Go build something amazing!",
+                "options": {}
+            },
+            "name": "Send Confirmation Email",
+            "type": "n8n-nodes-base.gmail",
+            "typeVersion": 2.1,
+            "position": [
+                500,
+                300
+            ]
+        }
+    ],
+    "connections": {
+        "Stripe Webhook": {
+            "main": [
+                [
+                    {
+                        "node": "Add Credits in FastAPI",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Add Credits in FastAPI": {
+            "main": [
+                [
+                    {
+                        "node": "Send Confirmation Email",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        }
+    }
+}

@@ -151,3 +151,26 @@ async def delete_account(
     await db.commit()
     
     return {"status": "Triple-Wipe Complete. Your data has been permanently erased."}
+
+@router.post("/api/credits/add")
+async def add_credits(
+    user_id: int, 
+    amount: int, 
+    auth_token: str = Header(None),
+    db = Depends(get_db)
+):
+    """Internal Webhook to add credits after payment success"""
+    if auth_token != settings.AUTH_SECRET_TOKEN:
+        raise HTTPException(status_code=401, detail="Unauthorized")
+    
+    result = await db.execute(select(User).where(User.id == user_id))
+    user = result.scalars().first()
+    
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    user.credits += amount
+    db.add(user)
+    await db.commit()
+    
+    return {"status": "success", "new_balance": user.credits}
