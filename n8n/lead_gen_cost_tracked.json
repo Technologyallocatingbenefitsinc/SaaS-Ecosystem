@@ -1,5 +1,5 @@
 {
-    "name": "Podcaster Hunter (15/Day)",
+    "name": "Podcaster Hunter (Smart Discovery)",
     "nodes": [
         {
             "parameters": {
@@ -60,13 +60,26 @@
         },
         {
             "parameters": {
+                "prompt": "Scan the following text for any email addresses. If you find one, return only the email address. If no email is found, return 'NOT_FOUND'. \n\nText: {{ $node[\"YouTube Search\"].json[\"snippet\"][\"description\"] }}",
+                "model": "gemini-1.5-flash"
+            },
+            "name": "Gemini Email Finder",
+            "type": "n8n-nodes-base.googleGemini",
+            "typeVersion": 1,
+            "position": [
+                1050,
+                300
+            ]
+        },
+        {
+            "parameters": {
                 "prompt": "Role: You are a savvy podcast researcher and outreach specialist.\n\nInput Data:\nHost: {{ JSON.parse($node[\"Gemini Researcher\"].json[\"content\"])[\"host_name\"] }}\nGuest: {{ JSON.parse($node[\"Gemini Researcher\"].json[\"content\"])[\"guest_name\"] }}\nTopic: {{ JSON.parse($node[\"Gemini Researcher\"].json[\"content\"])[\"topic\"] }}\nTone of Video: {{ JSON.parse($node[\"Gemini Researcher\"].json[\"content\"])[\"tone\"] }}\nTask: Write a one-sentence \"icebreaker\" for an email to the host.\n\nGuidelines:\nBe Specific: Mention how the host handled the topic of {{topic}} or their chemistry with {{guest_name}}.\nMatch the Tone: If the video tone is \"{{tone}}\", make the sentence match that (e.g., if casual, use \"loved the vibe\"; if professional, use \"impressive depth\").\nThe \"No-Bot\" Rule: Do NOT use phrases like \"I am writing to you because,\" \"I found your video interesting,\" or \"As an AI.\"\nThe Goal: Make it sound like you just finished watching the video and are sending a quick, genuine compliment.\nOutput: [A single natural-sounding sentence]"
             },
             "name": "Gemini Pitch Writer",
             "type": "n8n-nodes-base.googleGemini",
             "typeVersion": 1,
             "position": [
-                1050,
+                1250,
                 300
             ]
         },
@@ -85,13 +98,33 @@
             "type": "n8n-nodes-base.set",
             "typeVersion": 1,
             "position": [
-                1250,
+                1450,
                 300
             ]
         },
         {
             "parameters": {
-                "sendTo": "{{ $node[\"YouTube Search\"].json[\"snippet\"][\"channelTitle\"] }} <placeholder@email.com>",
+                "conditions": {
+                    "string": [
+                        {
+                            "value1": "={{ $node[\"Gemini Email Finder\"].json[\"content\"].trim() }}",
+                            "operation": "notEqual",
+                            "value2": "NOT_FOUND"
+                        }
+                    ]
+                }
+            },
+            "name": "If Email Found",
+            "type": "n8n-nodes-base.if",
+            "typeVersion": 1,
+            "position": [
+                1650,
+                300
+            ]
+        },
+        {
+            "parameters": {
+                "sendTo": "={{ $node[\"Gemini Email Finder\"].json[\"content\"].trim() }}",
                 "subject": "Loved your conversation with {{ JSON.parse($node[\"Gemini Researcher\"].json[\"content\"])[\"guest_name\"] }}!",
                 "message": "Hi {{ JSON.parse($node[\"Gemini Researcher\"].json[\"content\"])[\"host_name\"] }},\n\nI just caught your recent episode on YouTube about {{ JSON.parse($node[\"Gemini Researcher\"].json[\"content\"])[\"topic\"] }}.\n\n{{ $node[\"Gemini Pitch Writer\"].json[\"content\"] }}\n\nI’m reaching out because I actually put together a custom slide deck that summarizes the key takeaways and insights from that specific episode. I thought it might be something your audience would find valuable for social media or as a quick-reference guide.\n\nI’d love to send it over to you for free—no strings attached.\n\nWould you be interested in taking a look?\n\nBest,\n[Your Name]\n[Your Company/Website]"
             },
@@ -99,8 +132,22 @@
             "type": "n8n-nodes-base.gmail",
             "typeVersion": 1,
             "position": [
-                1450,
-                300
+                1900,
+                200
+            ]
+        },
+        {
+            "parameters": {
+                "requestMethod": "POST",
+                "url": "https://api.hunter.io/v2/email-finder?domain=youtube.com&api_key=PLACEHOLDER",
+                "options": {}
+            },
+            "name": "Hunter.io Enricher (Placeholder)",
+            "type": "n8n-nodes-base.httpRequest",
+            "typeVersion": 1,
+            "position": [
+                1900,
+                400
             ]
         },
         {
@@ -113,7 +160,7 @@
             "type": "n8n-nodes-base.googleSheets",
             "typeVersion": 1,
             "position": [
-                1650,
+                2150,
                 300
             ]
         }
@@ -156,6 +203,17 @@
             "main": [
                 [
                     {
+                        "node": "Gemini Email Finder",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Gemini Email Finder": {
+            "main": [
+                [
+                    {
                         "node": "Gemini Pitch Writer",
                         "type": "main",
                         "index": 0
@@ -178,10 +236,45 @@
             "main": [
                 [
                     {
+                        "node": "If Email Found",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "If Email Found": {
+            "main": [
+                [
+                    {
                         "node": "Gmail Sender",
                         "type": "main",
                         "index": 0
-                    },
+                    }
+                ],
+                [
+                    {
+                        "node": "Hunter.io Enricher (Placeholder)",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Gmail Sender": {
+            "main": [
+                [
+                    {
+                        "node": "Google Sheets Log",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Hunter.io Enricher (Placeholder)": {
+            "main": [
+                [
                     {
                         "node": "Google Sheets Log",
                         "type": "main",
