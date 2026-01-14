@@ -12,6 +12,7 @@
     <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
     <!-- Babel -->
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <!-- OpenDyslexic Font -->
     <link href="https://cdn.jsdelivr.net/npm/opendyslexic@2.1.0-beta1/css/opendyslexic.min.css" rel="stylesheet">
     <!-- Tiptap Dependencies (ESM for Browser) -->
     <script type="module">
@@ -51,6 +52,10 @@
         .animate-pulse-slow {
             animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
         }
+
+        .font-dyslexic {
+            font-family: 'OpenDyslexic', sans-serif !important;
+        }
     </style>
 </head>
 
@@ -66,11 +71,8 @@
             const editorRef = useRef(null);
 
             useEffect(() => {
-                // Initialize Tiptap when dependencies are ready and component mounts
                 const initEditor = async () => {
-                    // Small delay to ensure modules load
                     await new Promise(r => setTimeout(r, 500));
-
                     if (window.Tiptap) {
                         const { Editor, StarterKit } = window.Tiptap;
                         const tipTapEditor = new Editor({
@@ -83,10 +85,7 @@
                     }
                 };
                 initEditor();
-
-                return () => {
-                    if (editor) editor.destroy();
-                }
+                return () => { if (editor) editor.destroy(); }
             }, []);
 
             const handleAIRewrite = async () => {
@@ -112,14 +111,12 @@
 
             const handleExportPDF = async () => {
                 if (!editor) return;
-                const text = editor.getText(); // For MVP FPDF, we send raw text. HTML->PDF is harder without advanced libs.
-
+                const text = editor.getText();
                 const response = await fetch('/editor/export-pdf', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ text: text })
                 });
-
                 if (response.ok) {
                     const blob = await response.blob();
                     const url = window.URL.createObjectURL(blob);
@@ -134,15 +131,13 @@
 
             return (
                 <div className="flex h-screen">
-                    {/* Sidebar Placeholder */}
+                    {/* Sidebar */}
                     <div className="w-16 bg-slate-900 flex flex-col items-center py-4 gap-4 hidden md:flex">
                         <div className="w-8 h-8 bg-blue-500 rounded-lg"></div>
                         <div className="w-6 h-6 bg-slate-700 rounded-full mt-auto"></div>
                     </div>
 
-                    {/* Main Content */}
                     <main className="flex-1 flex flex-col">
-                        {/* Header */}
                         <header className="h-16 border-b bg-white flex items-center justify-between px-6">
                             <h1 className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-indigo-600">
                                 Workspace
@@ -156,6 +151,13 @@
                                     {isThinking ? 'Thinking...' : '✨ AI Polish'}
                                 </button>
                                 <button
+                                    onClick={() => document.body.classList.toggle('font-dyslexic')}
+                                    className="px-3 py-2 bg-white border border-gray-200 text-slate-600 rounded-lg hover:bg-gray-50 font-bold"
+                                    title="Toggle Dyslexic Font"
+                                >
+                                    Aa
+                                </button>
+                                <button
                                     onClick={handleExportPDF}
                                     className="px-4 py-2 bg-slate-900 text-white rounded-lg font-medium hover:bg-slate-800 transition shadow-lg"
                                 >
@@ -164,10 +166,8 @@
                             </div>
                         </header>
 
-                        {/* Editor Canvas */}
                         <div className="flex-1 bg-gray-50 overflow-auto p-8 flex justify-center">
                             <div className="w-full max-w-4xl bg-white shadow-xl rounded-xl min-h-[800px] border border-gray-100">
-                                {/* Editor Toolbar Placeholder */}
                                 <div className="border-b p-2 flex gap-2 text-gray-500 text-sm">
                                     <button className="hover:text-black">Bold</button>
                                     <button className="hover:text-black">Italic</button>
