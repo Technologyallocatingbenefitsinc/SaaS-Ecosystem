@@ -1,0 +1,134 @@
+{
+    "name": "Backend - PROCESS UPLOAD",
+    "nodes": [
+        {
+            "parameters": {
+                "path": "process-upload",
+                "responseMode": "lastNode",
+                "options": {}
+            },
+            "name": "Webhook",
+            "type": "n8n-nodes-base.webhook",
+            "typeVersion": 1,
+            "position": [
+                250,
+                300
+            ]
+        },
+        {
+            "parameters": {
+                "operation": "executeQuery",
+                "query": "SELECT id FROM content_summary WHERE file_hash = $1;",
+                "additionalFields": {
+                    "queryParams": "={{ $json[\"body\"][\"file_hash\"] }}"
+                }
+            },
+            "name": "Check Duplicates",
+            "type": "n8n-nodes-base.postgres",
+            "typeVersion": 1,
+            "position": [
+                450,
+                300
+            ]
+        },
+        {
+            "parameters": {
+                "conditions": {
+                    "boolean": [
+                        {
+                            "value1": "={{ $json[\"id\"] }}",
+                            "operation": "isEmpty"
+                        }
+                    ]
+                }
+            },
+            "name": "Is New File?",
+            "type": "n8n-nodes-base.if",
+            "typeVersion": 1,
+            "position": [
+                650,
+                300
+            ]
+        },
+        {
+            "parameters": {
+                "prompt": "Summarize this lecture content: {{ $json[\"body\"][\"file_path\"] }}",
+                "model": "gemini-1.5-flash"
+            },
+            "name": "Gemini AI",
+            "type": "n8n-nodes-base.googleGemini",
+            "typeVersion": 1,
+            "position": [
+                850,
+                200
+            ]
+        },
+        {
+            "parameters": {
+                "subject": "Your Summary is Ready!",
+                "message": "View it here: [Link]",
+                "toEmail": "={{ $json[\"body\"][\"user_email\"] }}"
+            },
+            "name": "Email Notification",
+            "type": "n8n-nodes-base.gmail",
+            "typeVersion": 1,
+            "position": [
+                1050,
+                300
+            ]
+        }
+    ],
+    "connections": {
+        "Webhook": {
+            "main": [
+                [
+                    {
+                        "node": "Check Duplicates",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Check Duplicates": {
+            "main": [
+                [
+                    {
+                        "node": "Is New File?",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Is New File?": {
+            "main": [
+                [
+                    {
+                        "node": "Gemini AI",
+                        "type": "main",
+                        "index": 0
+                    }
+                ],
+                [
+                    {
+                        "node": "Email Notification",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Gemini AI": {
+            "main": [
+                [
+                    {
+                        "node": "Email Notification",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        }
+    }
+}
