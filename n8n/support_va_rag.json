@@ -1,0 +1,184 @@
+{
+    "name": "Support VA - With WhatsApp",
+    "nodes": [
+        {
+            "parameters": {
+                "filters": {
+                    "labelIds": [
+                        "Support"
+                    ]
+                }
+            },
+            "name": "Gmail Trigger",
+            "type": "n8n-nodes-base.gmailTrigger",
+            "typeVersion": 1,
+            "position": [
+                250,
+                300
+            ]
+        },
+        {
+            "parameters": {
+                "prompt": "Classify this email into ONE category: 'Simple', 'Complex', or 'Spam'.\n\nEmail: {{ $node[\"Gmail Trigger\"].json[\"snippet\"] }}\n\nSimple = Pricing, Login help.\nComplex = Bugs, Refunds.\nSpam = Marketing junk.\n\nReturn JUST the category name.",
+                "model": "gemini-1.5-flash"
+            },
+            "name": "Gemini Classifier",
+            "type": "n8n-nodes-base.googleGemini",
+            "typeVersion": 1,
+            "position": [
+                450,
+                300
+            ]
+        },
+        {
+            "parameters": {
+                "conditions": {
+                    "string": [
+                        {
+                            "value1": "={{ $node[\"Gemini Classifier\"].json[\"content\"].trim() }}",
+                            "operation": "equal",
+                            "value2": "Complex"
+                        }
+                    ]
+                }
+            },
+            "name": "Is Urgent?",
+            "type": "n8n-nodes-base.if",
+            "typeVersion": 1,
+            "position": [
+                650,
+                300
+            ]
+        },
+        {
+            "parameters": {
+                "operation": "sendTemplate",
+                "phoneNumberId": "YOUR_PHONE_NUMBER_ID",
+                "recipientPhoneNumber": "YOUR_PERSONAL_NUMBER",
+                "templateName": "urgent_alert",
+                "components": [
+                    {
+                        "type": "body",
+                        "parameters": [
+                            {
+                                "type": "text",
+                                "text": "={{ $node['Gmail Trigger'].json['from'] }}"
+                            },
+                            {
+                                "type": "text",
+                                "text": "={{ $node['Gmail Trigger'].json['subject'] }}"
+                            }
+                        ]
+                    }
+                ]
+            },
+            "name": "WhatsApp Alert",
+            "type": "n8n-nodes-base.whatsApp",
+            "typeVersion": 1,
+            "position": [
+                850,
+                200
+            ]
+        },
+        {
+            "parameters": {
+                "mode": "retrieve",
+                "query": "={{ $node[\"Gmail Trigger\"].json[\"snippet\"] }}"
+            },
+            "name": "Vector Store",
+            "type": "n8n-nodes-base.vectorStore",
+            "typeVersion": 1,
+            "position": [
+                850,
+                400
+            ]
+        },
+        {
+            "parameters": {
+                "prompt": "You are the Support Assistant. Answer using this context: {{$node[\"Vector Store\"].json[\"text\"]}}.",
+                "model": "gemini-1.5-flash"
+            },
+            "name": "Gemini Answer",
+            "type": "n8n-nodes-base.googleGemini",
+            "typeVersion": 1,
+            "position": [
+                1050,
+                400
+            ]
+        },
+        {
+            "parameters": {},
+            "name": "Gmail Reply",
+            "type": "n8n-nodes-base.gmail",
+            "typeVersion": 1,
+            "position": [
+                1250,
+                400
+            ]
+        }
+    ],
+    "connections": {
+        "Gmail Trigger": {
+            "main": [
+                [
+                    {
+                        "node": "Gemini Classifier",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Gemini Classifier": {
+            "main": [
+                [
+                    {
+                        "node": "Is Urgent?",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Is Urgent?": {
+            "main": [
+                [
+                    {
+                        "node": "WhatsApp Alert",
+                        "type": "main",
+                        "index": 0
+                    }
+                ],
+                [
+                    {
+                        "node": "Vector Store",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Vector Store": {
+            "main": [
+                [
+                    {
+                        "node": "Gemini Answer",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Gemini Answer": {
+            "main": [
+                [
+                    {
+                        "node": "Gmail Reply",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        }
+    }
+}
