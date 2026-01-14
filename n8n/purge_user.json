@@ -1,0 +1,81 @@
+{
+    "name": "Backend - PURGE USER",
+    "nodes": [
+        {
+            "parameters": {
+                "path": "purge-user",
+                "responseMode": "lastNode",
+                "options": {}
+            },
+            "name": "Webhook",
+            "type": "n8n-nodes-base.webhook",
+            "typeVersion": 1,
+            "position": [
+                250,
+                300
+            ]
+        },
+        {
+            "parameters": {
+                "operation": "lookup",
+                "sheetId": "your-sheet-id",
+                "range": "Leads!A:Z",
+                "lookupColumn": "Email",
+                "lookupValue": "={{ $json[\"body\"][\"email\"] }}"
+            },
+            "name": "Find in Sheets",
+            "type": "n8n-nodes-base.googleSheets",
+            "typeVersion": 1,
+            "position": [
+                450,
+                300
+            ]
+        },
+        {
+            "parameters": {
+                "operation": "update",
+                "sheetId": "your-sheet-id",
+                "columnToMatch": "Email",
+                "valueToMatch": "={{ $json[\"body\"][\"email\"] }}",
+                "valuesSend": "fields",
+                "fields": [
+                    {
+                        "name": "Status",
+                        "value": "DELETED"
+                    }
+                ]
+            },
+            "name": "Set Status DELETED",
+            "type": "n8n-nodes-base.googleSheets",
+            "typeVersion": 1,
+            "position": [
+                650,
+                300
+            ]
+        }
+    ],
+    "connections": {
+        "Webhook": {
+            "main": [
+                [
+                    {
+                        "node": "Find in Sheets",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Find in Sheets": {
+            "main": [
+                [
+                    {
+                        "node": "Set Status DELETED",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        }
+    }
+}

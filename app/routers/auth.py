@@ -115,15 +115,39 @@ async def manual_recovery(email: str, db = Depends(get_db)):
     return {"status": "Recovery request sent to support"}
 
 @router.delete("/api/delete-account")
-async def delete_account(user = Depends(get_replit_user), db = Depends(get_db)):
+async def delete_account(
+    user = Depends(get_replit_user), 
+    db = Depends(get_db),
+    auth_token: str = Header(None)
+):
+    """Triple-Wipe: DB, Storage, and Automation Purge"""
     if not user:
         raise HTTPException(status_code=401, detail="Unauthorized")
     
-    # Trigger cleanup of user files (Placeholder for logic in upload.py)
-    # from app.routers.upload import delete_user_files
-    # await delete_user_files(user.id)
+    # 1. Security Check (Optional but recommended for destructive actions)
+    if auth_token and auth_token != settings.AUTH_SECRET_TOKEN:
+        raise HTTPException(status_code=403, detail="Invalid Auth Token for deletion")
+
+    user_email = user.email
+    user_id = user.id
+
+    # 2. Storage Wipe (Videos, PDFs)
+    from app.routers.upload import delete_user_folder
+    await delete_user_folder(user_id)
     
+    # 3. Automation Purge (Signal n8n)
+    async with httpx.AsyncClient() as client:
+        try:
+            await client.post(settings.N8N_PURGE_WEBHOOK, json={
+                "email": user_email,
+                "event": "account_terminated",
+                "auth_token": settings.AUTH_SECRET_TOKEN
+            })
+        except Exception as e:
+            print(f"n8n Purge failed: {e}")
+
+    # 4. Database Wipe
     await db.delete(user)
     await db.commit()
     
-    return {"status": "Account and associated data deleted"}
+    return {"status": "Triple-Wipe Complete. Your data has been permanently erased."}
