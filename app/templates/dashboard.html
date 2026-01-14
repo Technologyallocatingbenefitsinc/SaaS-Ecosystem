@@ -85,6 +85,28 @@
         </nav>
 
         <div class="mt-auto pt-6 border-t border-gray-100">
+            <!-- Credit Countdown -->
+            <div class="p-4 bg-slate-50 rounded-2xl border border-slate-100 mb-6">
+                <div class="flex justify-between items-end mb-3">
+                    <div>
+                        <p class="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Credits</p>
+                        <h3 class="text-lg font-black text-slate-800">
+                            {{ credits }} <span
+                                class="text-[10px] font-normal text-slate-400 tracking-normal text-nowrap">left</span>
+                        </h3>
+                    </div>
+                    <a href="/billing" class="text-[10px] font-bold text-blue-600 hover:underline uppercase">Add</a>
+                </div>
+
+                {% set total = 60 if tier == 'professor' else (100 if tier == 'podcaster' else 20) %}
+                {% set used = total - (credits|default(20)|int) %}
+                {% set percentage = (used / total * 100)|round|int %}
+                <div class="w-full bg-slate-200 rounded-full h-1.5 overflow-hidden">
+                    <div class="h-full transition-all duration-1000 {{ 'bg-red-500' if percentage > 90 else 'bg-blue-500' }}"
+                        style="width: {{ percentage }}%"></div>
+                </div>
+            </div>
+
             <!-- A11y Toggles -->
             <button onclick="document.body.classList.toggle('font-dyslexic')"
                 class="flex items-center gap-2 text-xs text-slate-400 hover:text-slate-700 mb-4 font-semibold uppercase tracking-wider">
