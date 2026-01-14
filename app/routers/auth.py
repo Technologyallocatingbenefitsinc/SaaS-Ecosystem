@@ -92,3 +92,38 @@ async def get_me(user = Depends(get_replit_user)):
         "role": user.tier,
         "credits": user.credits
     }
+
+@router.get("/api/profile")
+async def get_profile(user = Depends(get_replit_user)):
+    if not user:
+        raise HTTPException(status_code=401, detail="Unauthorized")
+    
+    return {
+        "email": user.email,
+        "username": user.username,
+        "role": user.tier,
+        "credits": user.credits,
+        "referral_code": user.referral_code,
+        "member_since": user.created_at.strftime("%B %Y")
+    }
+
+@router.post("/api/recovery")
+async def manual_recovery(email: str, db = Depends(get_db)):
+    """Triggers n8n alert for manual account recovery"""
+    # In a real app, send to n8n webhook
+    print(f"n8n Alert: Manual Recovery requested for {email}")
+    return {"status": "Recovery request sent to support"}
+
+@router.delete("/api/delete-account")
+async def delete_account(user = Depends(get_replit_user), db = Depends(get_db)):
+    if not user:
+        raise HTTPException(status_code=401, detail="Unauthorized")
+    
+    # Trigger cleanup of user files (Placeholder for logic in upload.py)
+    # from app.routers.upload import delete_user_files
+    # await delete_user_files(user.id)
+    
+    await db.delete(user)
+    await db.commit()
+    
+    return {"status": "Account and associated data deleted"}

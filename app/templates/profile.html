@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Profile | SaaS Ecosystem</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+
+<body class="bg-gray-50 text-slate-900 font-sans min-h-screen">
+
+    <main class="max-w-4xl mx-auto p-8 space-y-8">
+        <!-- Header -->
+        <div class="flex items-center justify-between">
+            <a href="/dashboard" class="text-blue-600 hover:underline flex items-center gap-2">
+                <i class="fas fa-arrow-left"></i> Back to Dashboard
+            </a>
+            <h1 class="text-2xl font-bold">My Profile</h1>
+        </div>
+
+        <!-- Personal Info Card -->
+        <div class="bg-white p-8 rounded-3xl shadow-sm border border-gray-100 flex items-center gap-6">
+            <div
+                class="w-20 h-20 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 text-3xl font-bold">
+                {{ (user.username or user.email)[0]|upper }}
+            </div>
+            <div>
+                <h2 class="text-xl font-bold">{{ user.username or "EcoUser" }}</h2>
+                <p class="text-slate-500">{{ user.email }}</p>
+                <div
+                    class="mt-2 inline-flex items-center gap-2 px-3 py-1 bg-indigo-50 text-indigo-700 rounded-full text-xs font-bold uppercase tracking-wider">
+                    {{ user.tier|title }} Plan
+                </div>
+            </div>
+        </div>
+
+        <!-- Modular Stats Grid -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+            <!-- AI Credit Tracker -->
+            <div class="bg-white p-8 rounded-3xl shadow-sm border border-gray-100">
+                <h3 class="font-bold mb-4 flex items-center gap-2">
+                    <i class="fas fa-battery-half text-blue-500"></i> AI Credits
+                </h3>
+                <div class="relative pt-1">
+                    <div class="flex mb-2 items-center justify-between">
+                        <div>
+                            <span
+                                class="text-xs font-semibold inline-block py-1 px-2 uppercase rounded-full text-blue-600 bg-blue-200">
+                                Usage
+                            </span>
+                        </div>
+                        <div class="text-right">
+                            <span class="text-xs font-semibold inline-block text-blue-600">
+                                {{ user.credits }} / 20 Remaining
+                            </span>
+                        </div>
+                    </div>
+                    <div class="overflow-hidden h-2 mb-4 text-xs flex rounded bg-blue-100">
+                        <div style="width:{{ (user.credits / 20) * 100 }}%"
+                            class="shadow-none flex flex-col text-center whitespace-nowrap text-white justify-center bg-blue-500">
+                        </div>
+                    </div>
+                </div>
+                <p class="text-xs text-slate-400">Credits reset on the 1st of every month.</p>
+            </div>
+
+            <!-- Referral Link -->
+            <div class="bg-white p-8 rounded-3xl shadow-sm border border-gray-100">
+                <h3 class="font-bold mb-4 flex items-center gap-2">
+                    <i class="fas fa-gift text-purple-500"></i> Invite Friends
+                </h3>
+                <p class="text-sm text-slate-500 mb-4">Give 2 credits, get 5. Win-win.</p>
+                <div class="flex gap-2">
+                    <input type="text" readonly value="https://saas-eco.replit.app/signup?ref={{ user.referral_code }}"
+                        class="flex-1 bg-gray-50 border border-gray-200 rounded-xl px-4 py-2 text-sm focus:outline-none"
+                        id="refLink">
+                    <button onclick="copyRef()"
+                        class="bg-black text-white px-4 py-2 rounded-xl text-sm font-bold hover:opacity-80 transition">
+                        Copy
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Danger Zone -->
+        <div class="bg-red-50 p-8 rounded-3xl border border-red-100 space-y-4">
+            <h3 class="font-bold text-red-700 flex items-center gap-2">
+                <i class="fas fa-exclamation-triangle"></i> Danger Zone
+            </h3>
+            <p class="text-sm text-red-600">Deleting your account will permanently wipe all your files, summaries, and
+                credits from our 2026-compliant secure storage.</p>
+            <button onclick="deleteAccount()"
+                class="bg-red-600 text-white px-6 py-3 rounded-xl font-bold hover:bg-red-700 transition">
+                Delete My Account
+            </button>
+        </div>
+    </main>
+
+    <script>
+        function copyRef() {
+            const copyText = document.getElementById("refLink");
+            copyText.select();
+            document.execCommand("copy");
+            alert("Referral link copied!");
+        }
+
+        async function deleteAccount() {
+            if (confirm("Are you absolutely sure? This cannot be undone.")) {
+                const res = await fetch('/api/delete-account', { method: 'DELETE' });
+                if (res.ok) {
+                    alert("Account and data deleted. Redirecting...");
+                    window.location.href = '/';
+                } else {
+                    alert("Error deleting account.");
+                }
+            }
+        }
+    </script>
+</body>
+
+</html>
