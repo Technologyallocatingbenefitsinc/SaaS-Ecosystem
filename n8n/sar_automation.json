@@ -1,0 +1,73 @@
+{
+    "name": "Legal - SAR Automation",
+    "nodes": [
+        {
+            "parameters": {
+                "path": "sar-request",
+                "responseMode": "lastNode",
+                "options": {}
+            },
+            "name": "Webhook",
+            "type": "n8n-nodes-base.webhook",
+            "typeVersion": 1,
+            "position": [
+                250,
+                300
+            ]
+        },
+        {
+            "parameters": {
+                "operation": "executeQuery",
+                "query": "SELECT * FROM slide_decks WHERE user_id = $1;",
+                "additionalFields": {
+                    "queryParams": "={{ $json[\"body\"][\"user_id\"] }}"
+                }
+            },
+            "name": "Fetch User Data",
+            "type": "n8n-nodes-base.postgres",
+            "typeVersion": 1,
+            "position": [
+                450,
+                300
+            ]
+        },
+        {
+            "parameters": {
+                "subject": "Your Data Export (SAR Request)",
+                "message": "Here is the data you requested under the Data Portability Act.\n\n[Link to Zip File]\n\nSafety Note: This link expires in 24 hours.",
+                "toEmail": "={{ $json[\"body\"][\"email\"] }}"
+            },
+            "name": "Gmail Sender",
+            "type": "n8n-nodes-base.gmail",
+            "typeVersion": 1,
+            "position": [
+                650,
+                300
+            ]
+        }
+    ],
+    "connections": {
+        "Webhook": {
+            "main": [
+                [
+                    {
+                        "node": "Fetch User Data",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Fetch User Data": {
+            "main": [
+                [
+                    {
+                        "node": "Gmail Sender",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        }
+    }
+}

@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Privacy & Data | SaaS Ecosystem</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+
+<body class="bg-slate-50 text-slate-900 font-sans min-h-screen">
+
+    <div class="max-w-3xl mx-auto py-12 px-6">
+        <header class="mb-10 text-center">
+            <div
+                class="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center text-blue-600 text-3xl mx-auto mb-4">
+                <i class="fas fa-shield-alt"></i>
+            </div>
+            <h1 class="text-3xl font-bold mb-2">Your Data, Your Control</h1>
+            <p class="text-slate-500">Manage your privacy per the EU AI Act (2026) and GDPR.</p>
+        </header>
+
+        <!-- 1. Data Portability -->
+        <section class="bg-white rounded-2xl shadow-sm border border-gray-200 p-8 mb-8">
+            <h2 class="text-xl font-bold mb-4 flex items-center gap-2">
+                <i class="fas fa-file-export text-blue-500"></i> Data Portability
+            </h2>
+            <p class="text-slate-600 mb-6">Download a machine-readable JSON file of all your lecture summaries, slides,
+                and quizzes.</p>
+            <button onclick="requestExport()" id="exportBtn"
+                class="bg-slate-900 text-white px-6 py-3 rounded-lg font-medium hover:bg-slate-800 transition">
+                Download My Data (JSON)
+            </button>
+            <p id="exportStatus" class="mt-4 text-green-600 hidden"><i class="fas fa-check"></i> Request Queued. Check
+                your email.</p>
+        </section>
+
+        <!-- 2. AI Preferences -->
+        <section class="bg-white rounded-2xl shadow-sm border border-gray-200 p-8 mb-8">
+            <h2 class="text-xl font-bold mb-4 flex items-center gap-2">
+                <i class="fas fa-robot text-indigo-500"></i> AI Processing Rights
+            </h2>
+
+            <div class="space-y-6">
+                <div class="flex items-start justify-between">
+                    <div>
+                        <h3 class="font-semibold">No-Training Guarantee</h3>
+                        <p class="text-sm text-slate-500 mt-1">Your data is NEVER used to train our base models.</p>
+                    </div>
+                    <div class="text-green-600 font-bold text-sm bg-green-50 px-3 py-1 rounded-full">Active</div>
+                </div>
+
+                <div class="border-t pt-6">
+                    <div class="flex items-center justify-between mb-2">
+                        <div>
+                            <h3 class="font-semibold">Personalized Study Tips</h3>
+                            <p class="text-sm text-slate-500">Allow AI to analyze your history to suggest study plans.
+                            </p>
+                        </div>
+                        <label class="relative inline-flex items-center cursor-pointer">
+                            <input type="checkbox" id="aiToggle" class="sr-only peer" checked onchange="savePrefs()">
+                            <div
+                                class="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600">
+                            </div>
+                        </label>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 3. Danger Zone -->
+        <section class="bg-red-50 rounded-2xl border border-red-100 p-8">
+            <h2 class="text-xl font-bold mb-4 text-red-700 flex items-center gap-2">
+                <i class="fas fa-exclamation-triangle"></i> Danger Zone
+            </h2>
+            <p class="text-red-600 mb-6">Permanently delete your account and all associated data. This action cannot be
+                undone.</p>
+            <button onclick="deleteAccount()"
+                class="border border-red-300 text-red-600 px-6 py-3 rounded-lg font-medium hover:bg-red-100 transition">
+                Delete Account
+            </button>
+        </section>
+
+        <footer class="mt-12 text-center text-sm text-slate-400 space-x-6">
+            <a href="#" class="hover:text-slate-600">Privacy Policy</a>
+            <a href="#" class="hover:text-slate-600">Terms of Service</a>
+            <a href="#" onclick="showCookieBanner()" class="hover:text-slate-600">Cookie Preferences</a>
+        </footer>
+    </div>
+
+    <script>
+        async function requestExport() {
+            const btn = document.getElementById('exportBtn');
+            btn.disabled = true;
+            btn.innerText = "Processing...";
+
+            try {
+                await fetch('/legal/export-data', { method: 'POST' });
+                document.getElementById('exportStatus').classList.remove('hidden');
+                btn.innerText = "Request Sent";
+            } catch (e) {
+                alert("Error");
+                btn.disabled = false;
+            }
+        }
+
+        async function savePrefs() {
+            const ai = document.getElementById('aiToggle').checked;
+            await fetch('/legal/update-preferences', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ allow_ai_personalization: ai, analytics_consent: true })
+            });
+        }
+
+        async function deleteAccount() {
+            if (confirm("Are you ABSOLUTELY sure? This is irreversible.")) {
+                await fetch('/legal/delete-account', { method: 'POST' });
+                alert("Account scheduled for deletion.");
+                window.location.href = "/";
+            }
+        }
+
+        function showCookieBanner() {
+            // Trigger the global cookie banner from dashboard logic (simulated)
+            alert("Cookie Preference Center would open here.");
+        }
+    </script>
+</body>
+
+</html>

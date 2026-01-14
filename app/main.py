@@ -7,7 +7,7 @@ from sqlalchemy.select import select
 from app.database import engine, get_db, Base
 from app.config import settings
 from app.services.gemini_engine import process_video_content
-from app.routers import auth
+from app.routers import auth, editor, legal
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -25,6 +25,8 @@ app.mount("/static", StaticFiles(directory="app/static"), name="static")
 templates = Jinja2Templates(directory="app/templates")
 
 app.include_router(auth.router, prefix="/auth", tags=["auth"])
+app.include_router(editor.router, prefix="/editor", tags=["editor"])
+app.include_router(legal.router, prefix="/legal", tags=["legal"])
 
 @app.get("/")
 def read_root():
@@ -62,14 +64,36 @@ async def process_video_endpoint(
 
 @app.get("/dashboard", response_class=HTMLResponse)
 async def dashboard(request: Request):
-    # In a real app, we'd get user from session/cookie. 
-    # For demo, we pass dummy data or empty contexts.
+    # Mock User Data (In real app, fetch from DB)
+    user_tier = "professor" # Change this to 'student' or 'podcaster' to see other views
+    
+    mock_stats = {
+        "credits": 25,
+        "tier": user_tier
+    }
+    
     return templates.TemplateResponse("dashboard.html", {
         "request": request, 
-        "credits": 10,  # Dummy value for demo
-        "tier": "Professor",
-        "decks": [] # Fetch from DB in real implementation
+        **mock_stats
     })
+
+@app.post("/invite-students")
+async def invite_students():
+    # Trigger n8n Webhook for emails
+    # In production: Fetch user's class list from DB
+    async with httpx.AsyncClient() as client:
+        try:
+            # Replace with ACTUAL n8n Production URL
+            # await client.post("https://your-n8n-instance.com/webhook/professor-invite", json={"professor_id": 123})
+            print("Simulating n8n Invite Webhook Trigger...")
+            pass 
+        except Exception as e:
+            print(f"Failed to trigger n8n: {e}")
+    return {"status": "Invites Queued"}
+
+@app.get("/workspace", response_class=HTMLResponse)
+async def workspace(request: Request):
+    return templates.TemplateResponse("workspace.html", {"request": request})
 
 @app.post("/upload-video")
 async def upload_video_form(video_url: str = Form(...)):

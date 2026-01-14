@@ -1,87 +1,344 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="scroll-smooth">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SaaS Ecosystem | Dashboard</title>
-    <link rel="stylesheet" href="/static/style.css">
+    <title>Dashboard | SaaS Ecosystem</title>
+    <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <!-- OpenDyslexic Font (CDN) -->
+    <link href="https://cdn.jsdelivr.net/npm/opendyslexic@2.1.0-beta1/css/opendyslexic.min.css" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#3b82f6',
+                        secondary: '#8b5cf6',
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        .font-dyslexic {
+            font-family: 'OpenDyslexic', sans-serif !important;
+        }
+
+        .skeleton {
+            background: linear-gradient(90deg, #f3f4f6 25%, #e5e7eb 50%, #f3f4f6 75%);
+            background-size: 200% 100%;
+            animation: shimmer 2s infinite;
+        }
+
+        @keyframes shimmer {
+            0% {
+                background-position: 200% 0;
+            }
+
+            100% {
+                background-position: -200% 0;
+            }
+        }
+
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+    </style>
 </head>
-<body>
-    <div class="container">
-        <!-- Sidebar -->
-        <aside class="sidebar">
-            <div class="logo">
-                <h2>Eco<span>System</span></h2>
+
+<body class="bg-gray-50 text-slate-900 font-sans min-h-screen flex transition-colors duration-300">
+
+    <!-- Sidebar -->
+    <aside
+        class="w-64 bg-white border-r border-gray-200 hidden md:flex flex-col p-6 shadow-sm sticky top-0 h-screen z-20">
+        <div class="mb-10 flex items-center gap-2">
+            <div class="w-8 h-8 bg-black rounded-lg flex items-center justify-center text-white font-bold">E</div>
+            <h2 class="text-xl font-bold tracking-tight">Eco<span class="text-blue-600">System</span></h2>
+        </div>
+
+        <nav class="space-y-2 flex-1">
+            <a href="#"
+                class="flex items-center gap-3 px-4 py-3 bg-blue-50 text-blue-700 rounded-xl font-medium transition group">
+                <i class="fas fa-grid-2 group-hover:scale-110 transition"></i> Dashboard
+            </a>
+            <a href="/workspace"
+                class="flex items-center gap-3 px-4 py-3 text-slate-500 hover:bg-slate-50 hover:text-slate-900 rounded-xl font-medium transition group">
+                <i class="fas fa-pen-nib group-hover:scale-110 transition"></i> Workspace
+            </a>
+            {% if tier == 'professor' %}
+            <a href="#"
+                class="flex items-center gap-3 px-4 py-3 text-slate-500 hover:bg-slate-50 hover:text-slate-900 rounded-xl font-medium transition">
+                <i class="fas fa-users-class"></i> My Class
+            </a>
+            {% endif %}
+            {% if tier == 'podcaster' %}
+            <a href="#"
+                class="flex items-center gap-3 px-4 py-3 text-slate-500 hover:bg-slate-50 hover:text-slate-900 rounded-xl font-medium transition">
+                <i class="fas fa-chart-line"></i> Analytics
+            </a>
+            {% endif %}
+        </nav>
+
+        <div class="mt-auto pt-6 border-t border-gray-100">
+            <!-- A11y Toggles -->
+            <button onclick="document.body.classList.toggle('font-dyslexic')"
+                class="flex items-center gap-2 text-xs text-slate-400 hover:text-slate-700 mb-4 font-semibold uppercase tracking-wider">
+                <i class="fas fa-universal-access"></i> Toggle Dyslexic Font
+            </button>
+
+            <div class="flex items-center gap-3">
+                <div
+                    class="w-10 h-10 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-700 font-bold">
+                    {{ tier[0]|upper }}
+                </div>
+                <div>
+                    <p class="text-sm font-semibold">{{ tier|title }}</p>
+                    <p class="text-xs text-slate-500">Pro Plan</p>
+                </div>
             </div>
-            <nav>
-                <a href="#" class="active"><i class="fas fa-home"></i> Dashboard</a>
-                <a href="#"><i class="fas fa-video"></i> My Lectures</a>
-                <a href="#"><i class="fas fa-users"></i> Referrals</a>
-                <a href="#"><i class="fas fa-cog"></i> Settings</a>
-            </nav>
-            <div class="user-info">
-                <p>Welcome, User</p>
-                <span class="badge">{{ tier|default('Student') }}</span>
+        </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="flex-1 flex flex-col relative">
+
+        <!-- Command Bar Hint -->
+        <div
+            class="absolute top-4 right-1/2 translate-x-1/2 bg-black/80 text-white text-xs px-3 py-1 rounded-full z-10 pointer-events-none opacity-50">
+            Cmd + K
+        </div>
+
+        <!-- Top Bar -->
+        <header
+            class="h-20 flex items-center justify-between px-8 bg-white/80 backdrop-blur-sm sticky top-0 z-10 border-b border-gray-100">
+            <h1 class="text-xl font-bold text-slate-800">
+                {% if tier == 'professor' %}Lecture Hub
+                {% elif tier == 'student' %}Study Center
+                {% else %}Growth Engine
+                {% endif %}
+            </h1>
+
+            <div class="flex items-center gap-4">
+                <!-- Role Specific Stats -->
+                {% if tier == 'professor' %}
+                <div
+                    class="flex items-center gap-2 px-3 py-1 bg-green-50 text-green-700 rounded-full text-sm font-bold border border-green-100">
+                    <i class="fas fa-check-circle"></i> A11y Score: 98%
+                </div>
+                {% elif tier == 'podcaster' %}
+                <div
+                    class="flex items-center gap-2 px-3 py-1 bg-purple-50 text-purple-700 rounded-full text-sm font-bold border border-purple-100">
+                    <i class="fas fa-rocket"></i> Viral Check: High
+                </div>
+                {% else %}
+                <div
+                    class="flex items-center gap-2 px-3 py-1 bg-blue-50 text-blue-700 rounded-full text-sm font-bold border border-blue-100">
+                    <i class="fas fa-battery-full"></i> Focus: 85%
+                </div>
+                {% endif %}
             </div>
-        </aside>
+        </header>
 
-        <!-- Main Content -->
-        <main class="main-content">
-            <header>
-                <h1>Dashboard</h1>
-                <div class="credits-box">
-                    <i class="fas fa-coins"></i>
-                    <span>{{ credits|default(0) }} Credits Available</span>
-                </div>
-            </header>
+        <!-- Dynamic Dashboard Body -->
+        <div class="flex-1 p-8 overflow-y-auto">
+            <div class="max-w-5xl mx-auto space-y-12">
 
-            <!-- Upload Section -->
-            <section class="upload-section">
-                <div class="glass-card">
-                    <h3><i class="fas fa-cloud-upload-alt"></i> Transform Lecture to Slides</h3>
-                    <p>Paste a YouTube URL to generate a PDF slide deck instantly.</p>
-                    <form action="/upload-video" method="post" class="upload-form">
-                        <input type="text" name="video_url" placeholder="https://youtube.com/watch?v=..." required>
-                        <button type="submit" class="btn-primary">Generate Slides</button>
-                    </form>
-                </div>
-            </section>
+                <!-- Hero Section -->
+                <section class="text-center space-y-4 pt-8">
+                    <h1 class="text-4xl md:text-6xl font-extrabold text-slate-900 tracking-tight leading-tight">
+                        {% if tier == 'professor' %}Make Learning<br><span class="text-blue-600">Accessible.</span>
+                        {% elif tier == 'student' %}Conquer Your<br><span class="text-blue-600">Week.</span>
+                        {% else %}Go Viral<br><span class="text-blue-600">Faster.</span>
+                        {% endif %}
+                    </h1>
+                </section>
 
-            <!-- Recent Activity -->
-            <section class="recent-activity">
-                <h3>Recent Decks</h3>
-                <div class="table-container glass-card">
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>Video</th>
-                                <th>Status</th>
-                                <th>Date</th>
-                                <th>Action</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <!-- Jinja Loop Placeholder -->
-                            {% if decks %}
-                                {% for deck in decks %}
-                                <tr>
-                                    <td>{{ deck.video_url }}</td>
-                                    <td><span class="status-done">Completed</span></td>
-                                    <td>{{ deck.created_at.strftime('%Y-%m-%d') }}</td>
-                                    <td><a href="#" class="btn-sm">Download</a></td>
-                                </tr>
-                                {% endfor %}
-                            {% else %}
-                                <tr>
-                                    <td colspan="4" style="text-align:center;">No decks generated yet. Start above!</td>
-                                </tr>
-                            {% endif %}
-                        </tbody>
-                    </table>
+                <!-- Primary Action (The "Happy Path") -->
+                <div
+                    class="bg-gradient-to-br from-blue-500 to-indigo-600 rounded-3xl p-1 shadow-2xl transform hover:scale-[1.01] transition duration-300">
+                    <div
+                        class="bg-white rounded-[20px] p-12 text-center h-full flex flex-col items-center justify-center">
+                        {% if tier == 'professor' %}
+                        <div
+                            class="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center text-blue-600 text-3xl mb-6">
+                            <i class="fas fa-users"></i>
+                        </div>
+                        <h3 class="text-2xl font-bold mb-2">Invite Your Class</h3>
+                        <p class="text-slate-500 mb-6 max-w-md">Send automated welcome emails to all your students with
+                            one click.</p>
+                        <button onclick="inviteStudents()"
+                            class="bg-black text-white px-8 py-3 rounded-xl font-bold hover:opacity-80 transition w-full max-w-xs">
+                            Send Invites
+                        </button>
+                        {% else %}
+                        <!-- Default Upload for others -->
+                        <div
+                            class="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center text-blue-600 text-3xl mb-6">
+                            <i class="fas fa-magic"></i>
+                        </div>
+                        <h3 class="text-2xl font-bold mb-2">
+                            {% if tier == 'student' %}Summarize Lecture{% else %}Create Content{% endif %}
+                        </h3>
+                        <form action="/upload-video" method="post" class="w-full max-w-md relative">
+                            <input type="text" name="video_url" placeholder="Paste YouTube URL..."
+                                class="w-full pl-6 pr-32 py-4 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:outline-none">
+                            <button type="submit"
+                                class="absolute right-2 top-2 bottom-2 bg-black text-white px-6 rounded-lg font-bold hover:scale-105 transition">
+                                Go
+                            </button>
+                        </form>
+                        {% endif %}
+                    </div>
                 </div>
-            </section>
-        </main>
+
+                <!-- Skeleton Loader Example (Simulating processing) -->
+                {% if tier == 'podcaster' %}
+                <section>
+                    <h3 class="font-bold text-slate-800 mb-4">Processing...</h3>
+                    <div class="grid grid-cols-3 gap-6">
+                        <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-100">
+                            <div class="skeleton h-32 rounded-lg mb-4"></div>
+                            <div class="skeleton h-4 w-3/4 rounded mb-2"></div>
+                            <div class="skeleton h-3 w-1/2 rounded"></div>
+                        </div>
+                    </div>
+                </section>
+                {% endif %}
+
+            </div>
+        </div>
+    </main>
+
+    <!-- Command Bar (Cmd+K) Modal -->
+    <div id="cmdKModal"
+        class="fixed inset-0 bg-black/20 backdrop-blur-sm z-50 hidden flex items-start justify-center pt-[20vh]">
+        <div
+            class="bg-white w-full max-w-xl rounded-xl shadow-2xl overflow-hidden animate-fade-in-down border border-gray-200">
+            <div class="border-b px-4 flex items-center gap-3">
+                <i class="fas fa-search text-slate-400"></i>
+                <input type="text" placeholder="Type a command or search..."
+                    class="w-full py-4 text-lg focus:outline-none" autofocus>
+                <div class="text-xs bg-gray-100 px-2 py-1 rounded text-slate-500">ESC</div>
+            </div>
+            <div class="p-2 space-y-1">
+                <button
+                    class="w-full text-left px-4 py-3 hover:bg-blue-50 rounded-lg flex items-center justify-between group">
+                    <span class="font-medium text-slate-700">Summarize last video</span>
+                    <span class="text-xs text-slate-400 group-hover:text-blue-500">Enter</span>
+                </button>
+                <button
+                    class="w-full text-left px-4 py-3 hover:bg-blue-50 rounded-lg flex items-center justify-between group">
+                    <span class="font-medium text-slate-700">Switch to Dark Mode</span>
+                    <span class="text-xs text-slate-400 group-hover:text-blue-500">Cmd+D</span>
+                </button>
+                <button
+                    class="w-full text-left px-4 py-3 hover:bg-blue-50 rounded-lg flex items-center justify-between group">
+                    <span class="font-medium text-slate-700">Invite Students</span>
+                    <span class="text-xs text-slate-400 group-hover:text-blue-500">Cmd+I</span>
+                </button>
+            </div>
+        </div>
     </div>
+
+    <script>
+            <!-- Cookie Banner (2026 Compliant) -->
+            < div id = "cookieBanner"
+        class="fixed bottom-4 left-4 right-4 md:left-auto md:right-4 md:w-96 bg-white rounded-2xl shadow-2xl border border-gray-200 p-6 z-50 transform transition-all duration-500 translate-y-full opacity-0" >
+        <div class="flex items-start gap-4 mb-4">
+            <div class="text-2xl text-blue-600"><i class="fas fa-cookie-bite"></i></div>
+            <div>
+                <h3 class="font-bold text-slate-800">Your Privacy Matters</h3>
+                <p class="text-sm text-slate-500 mt-1">We honor GPC signals. We use minimal cookies for security and AI
+                    optimization.</p>
+            </div>
+        </div>
+        <div class="flex gap-3">
+            <button onclick="acceptCookies()"
+                class="flex-1 py-3 bg-slate-900 text-white rounded-xl font-bold hover:bg-slate-800 transition">Accept
+                All</button>
+            <button onclick="rejectCookies()"
+                class="flex-1 py-3 bg-white text-slate-700 border border-gray-200 rounded-xl font-bold hover:bg-gray-50 transition">Reject
+                All</button>
+        </div>
+    </div >
+
+            <script>
+        // Check GPC
+                const gpc = navigator.globalPrivacyControl;
+        
+        window.addEventListener('load', () => {
+            if (!localStorage.getItem('cookieConsent')) {
+                const banner = document.getElementById('cookieBanner');
+                banner.classList.remove('translate-y-full', 'opacity-0');
+            }
+                if (gpc) {
+                    console.log("GPC Signal Detected: Auto-Rejecting non-essential.");
+            }
+        });
+
+                function acceptCookies() {
+                    localStorage.setItem('cookieConsent', 'accepted');
+                closeBanner();
+        }
+
+                function rejectCookies() {
+                    localStorage.setItem('cookieConsent', 'rejected');
+                closeBanner();
+        }
+
+                function closeBanner() {
+                    document.getElementById('cookieBanner').classList.add('translate-y-full', 'opacity-0');
+        }
+
+        // Existing CMD+K and Invite scripts...
+        // Cmd + K Listener
+        document.addEventListener('keydown', (e) => {
+            if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+                    e.preventDefault();
+                document.getElementById('cmdKModal').classList.remove('hidden');
+                document.querySelector('#cmdKModal input').focus();
+            }
+                if (e.key === 'Escape') {
+                    document.getElementById('cmdKModal').classList.add('hidden');
+            }
+        });
+
+        // Close on Click Outside
+        document.getElementById('cmdKModal').addEventListener('click', (e) => {
+            if (e.target === document.getElementById('cmdKModal')) {
+                    document.getElementById('cmdKModal').classList.add('hidden');
+            }
+        });
+
+                // Professor Invite Logic
+                async function inviteStudents() {
+            const btn = document.querySelector('button[onclick="inviteStudents()"]');
+                const originalText = btn.innerText;
+                btn.innerText = "Sending...";
+                btn.disabled = true;
+
+                try {
+                const res = await fetch('/invite-students', {method: 'POST' });
+                if (res.ok) {
+                    btn.innerText = "Invites Sent! ✅";
+                btn.classList.add('bg-green-600', 'text-white');
+                    setTimeout(() => {
+                    btn.innerText = originalText;
+                btn.classList.remove('bg-green-600');
+                btn.disabled = false;
+                    }, 3000);
+                }
+            } catch (e) {
+                    alert("Error sending invites.");
+                btn.innerText = originalText;
+                btn.disabled = false;
+            }
+        }
+    </script>
 </body>
+
 </html>

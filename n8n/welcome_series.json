@@ -1,0 +1,70 @@
+{
+    "name": "Growth - Welcome Series",
+    "nodes": [
+        {
+            "parameters": {
+                "path": "signup-event",
+                "responseMode": "lastNode",
+                "options": {}
+            },
+            "name": "Webhook",
+            "type": "n8n-nodes-base.webhook",
+            "typeVersion": 1,
+            "position": [
+                250,
+                300
+            ]
+        },
+        {
+            "parameters": {
+                "amount": 24,
+                "unit": "hours"
+            },
+            "name": "Wait 24h",
+            "type": "n8n-nodes-base.wait",
+            "typeVersion": 1,
+            "position": [
+                450,
+                300
+            ]
+        },
+        {
+            "parameters": {
+                "subject": "Tip: How to create your first Summary",
+                "message": "Hi there,\n\nDid you know you can turn a 2-hour lecture into a study guide in 60 seconds?\n\n[Link to Dashboard]",
+                "toEmail": "={{ $json[\"body\"][\"email\"] }}"
+            },
+            "name": "Gmail Sender",
+            "type": "n8n-nodes-base.gmail",
+            "typeVersion": 1,
+            "position": [
+                650,
+                300
+            ]
+        }
+    ],
+    "connections": {
+        "Webhook": {
+            "main": [
+                [
+                    {
+                        "node": "Wait 24h",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Wait 24h": {
+            "main": [
+                [
+                    {
+                        "node": "Gmail Sender",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        }
+    }
+}
