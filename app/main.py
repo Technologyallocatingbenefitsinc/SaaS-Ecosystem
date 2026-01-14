@@ -3,7 +3,7 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from fastapi.responses import HTMLResponse
 from contextlib import asynccontextmanager
-from sqlalchemy.select import select
+from sqlalchemy import select
 from app.database import engine, get_db, Base
 from app.config import settings
 from app.services.gemini_engine import process_video_content
