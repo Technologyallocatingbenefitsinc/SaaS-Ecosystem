@@ -79,7 +79,7 @@ async def test_billing_page_exists():
 
 @pytest.mark.asyncio
 async def test_add_credits_endpoint():
-    headers = {"auth-token": "mock_secret"}
+    headers = {"x-n8n-auth": "mock_secret"}
     params = {"user_id": 1, "amount": 100}
     # Note: This will likely fail with 404 because our mock DB returns None for the user lookup
     # But it verifies the endpoint structure and authentication check.
@@ -92,7 +92,7 @@ async def test_add_credits_endpoint():
 async def test_delete_account_logic():
     headers = {
         "X-Replit-User-Id": "123",
-        "auth-token": "mock_secret"
+        "x-n8n-auth": "mock_secret"
     }
     with pytest.MonkeyPatch.context() as m:
         m.setattr("app.routers.upload.delete_user_folder", AsyncMock(return_value=None))

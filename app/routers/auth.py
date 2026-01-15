@@ -120,14 +120,14 @@ async def manual_recovery(email: str, db = Depends(get_db)):
 async def delete_account(
     user = Depends(get_replit_user), 
     db = Depends(get_db),
-    auth_token: str = Header(None)
+    x_n8n_auth: str = Header(None)
 ):
     """Triple-Wipe: DB, Storage, and Automation Purge"""
     if not user:
         raise HTTPException(status_code=401, detail="Unauthorized")
     
     # 1. Security Check (Optional but recommended for destructive actions)
-    if auth_token and auth_token != settings.AUTH_SECRET_TOKEN:
+    if x_n8n_auth and x_n8n_auth != settings.AUTH_SECRET_TOKEN:
         raise HTTPException(status_code=403, detail="Invalid Auth Token for deletion")
 
     user_email = user.email
@@ -158,11 +158,11 @@ async def delete_account(
 async def add_credits(
     user_id: int, 
     amount: int, 
-    auth_token: str = Header(None),
+    x_n8n_auth: str = Header(None),
     db = Depends(get_db)
 ):
     """Internal Webhook to add credits after payment success"""
-    if auth_token != settings.AUTH_SECRET_TOKEN:
+    if x_n8n_auth != settings.AUTH_SECRET_TOKEN:
         raise HTTPException(status_code=401, detail="Unauthorized")
     
     result = await db.execute(select(User).where(User.id == user_id))
