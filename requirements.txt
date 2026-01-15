@@ -13,9 +13,6 @@ pytest-asyncio
 email-validator
 redis
 jinja2
-jinja2
-fpdf2
 python-docx
 moviepy
-python-multipart
 aiofiles

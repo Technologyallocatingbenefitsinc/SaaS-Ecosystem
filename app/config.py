@@ -1,4 +1,5 @@
 from pydantic_settings import BaseSettings
+from pydantic import ConfigDict
 
 class Settings(BaseSettings):
     GEMINI_API_KEY: str
@@ -11,7 +12,6 @@ class Settings(BaseSettings):
     N8N_TOKEN_LOGGER_URL: str = "https://your-n8n-instance.com/webhook/token-logger"
     STRIPE_SECRET_KEY: str = "mock_key"
     
-    class Config:
-        env_file = ".env"
+    model_config = ConfigDict(env_file=".env")
 
 settings = Settings()
