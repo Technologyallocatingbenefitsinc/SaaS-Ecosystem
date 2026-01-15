@@ -15,18 +15,18 @@ def get_transcript(video_url: str):
 
 from app.services.usage_logger import log_token_usage
 
-async def process_video_content(video_url: str, user_tier: str, user_id: int):
+async def process_video_content(video_url: str, user_tier: str, user_id: int, slide_count: str = "6-10"):
     transcript = get_transcript(video_url)
     
     if user_tier == "student":
         model_name = "gemini-1.5-flash"
-        prompt = f"Summarize the following video transcript into concise bullet points suitable for study notes:\n\n{transcript}"
+        prompt = f"Summarize the following video transcript into concise bullet points suitable for study notes. Target length: {slide_count} slides/sections.\n\n{transcript}"
     elif user_tier == "professor":
         model_name = "gemini-1.5-pro" 
-        prompt = f"Create a detailed academic study guide with citations based on the following transcript:\n\n{transcript}"
+        prompt = f"Create a detailed academic study guide with citations based on the following transcript. Structure the guide into {slide_count} distinct chapters or modules.\n\n{transcript}"
     elif user_tier == "podcaster":
         model_name = "gemini-1.5-pro"
-        prompt = f"Generate slide descriptions and visual imagery ideas for a presentation based on this transcript. For each slide, provide the text content and a prompt for an image generator:\n\n{transcript}"
+        prompt = f"Generate slide descriptions and visual imagery ideas for a presentation based on this transcript. PRODUCE EXACTLY {slide_count} SLIDES. For each slide, provide the text content and a prompt for an image generator:\n\n{transcript}"
     else:
         model_name = "gemini-1.5-flash"
         prompt = f"Summarize this:\n\n{transcript}"

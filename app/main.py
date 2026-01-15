@@ -55,6 +55,7 @@ async def process_video_endpoint(
     video_url: str, 
     user_id: int = 1, # Default to 1 for system tests
     user_tier: str = "student",
+    slide_count: str = "6-10",
     x_n8n_auth: str = Header(None),
     db = Depends(get_db)
 ):
@@ -62,7 +63,7 @@ async def process_video_endpoint(
          raise HTTPException(status_code=401, detail="Unauthorized")
 
     try:
-        result = await process_video_content(video_url, user_tier, user_id)
+        result = await process_video_content(video_url, user_tier, user_id, slide_count)
         return result
     except Exception as e:
         print(f"Error processing video: {e}")
@@ -125,7 +126,7 @@ async def workspace(request: Request):
     return templates.TemplateResponse(request, "workspace.html")
 
 @app.post("/upload-video")
-async def upload_video_form(video_url: str = Form(...)):
+async def upload_video_form(video_url: str = Form(...), slide_count: str = Form("6-10")):
     # Wrapper to handle form submission from dashboard
-    # Triggers the Gemini process
-    return {"status": "Processing Started", "url": video_url}
+    # In production, this would trigger process-video asynchronously
+    return {"status": "Processing Started", "url": video_url, "length": slide_count}

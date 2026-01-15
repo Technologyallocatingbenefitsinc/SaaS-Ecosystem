@@ -236,8 +236,16 @@
                         <!-- Upload Form with Progress -->
                         <div class="w-full max-w-md relative z-10">
                             <!-- URL Input -->
-                            <input type="text" id="urlInput" placeholder="Paste YouTube URL..."
-                                class="w-full pl-6 pr-32 py-4 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:outline-none mb-4">
+                            <div class="flex gap-2 mb-4">
+                                <input type="text" id="urlInput" placeholder="Paste YouTube URL..."
+                                    class="flex-1 pl-6 pr-4 py-4 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:outline-none">
+                                <select id="slideCount"
+                                    class="bg-white border border-gray-200 rounded-xl px-4 py-4 text-sm font-bold text-slate-600 focus:ring-2 focus:ring-blue-500 focus:outline-none">
+                                    <option value="1-5">1-5 slides</option>
+                                    <option value="6-10" selected>6-10 slides</option>
+                                    <option value="11-18">11-18 slides</option>
+                                </select>
+                            </div>
 
                             <!-- OR Separator -->
                             <div class="flex items-center gap-2 mb-4">
@@ -389,6 +397,7 @@
 
             const formData = new FormData();
             formData.append('file', file);
+            formData.append('slide_count', document.getElementById('slideCount').value);
 
             // Show Progress UI
             const progressDiv = document.getElementById('uploadProgress');
@@ -444,14 +453,22 @@
 
         async function submitUrl() {
             const url = document.getElementById('urlInput').value;
+            const slideCount = document.getElementById('slideCount').value;
             if (url) {
                 const form = document.createElement('form');
                 form.method = 'POST';
                 form.action = '/upload-video';
-                const input = document.createElement('input');
-                input.name = 'video_url';
-                input.value = url;
-                form.appendChild(input);
+
+                const urlInput = document.createElement('input');
+                urlInput.name = 'video_url';
+                urlInput.value = url;
+                form.appendChild(urlInput);
+
+                const slideInput = document.createElement('input');
+                slideInput.name = 'slide_count';
+                slideInput.value = slideCount;
+                form.appendChild(slideInput);
+
                 document.body.appendChild(form);
                 form.submit();
             }

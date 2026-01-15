@@ -1,0 +1,107 @@
+{
+    "name": "Stripe Credit Sync",
+    "nodes": [
+        {
+            "parameters": {
+                "httpMethod": "POST",
+                "path": "stripe-checkout-completed",
+                "options": {}
+            },
+            "name": "Webhook",
+            "type": "n8n-nodes-base.webhook",
+            "typeVersion": 1,
+            "position": [
+                250,
+                300
+            ],
+            "webhookId": "stripe-webhook-credits"
+        },
+        {
+            "parameters": {
+                "keepOnlySet": true,
+                "values": {
+                    "number": [
+                        {
+                            "name": "user_id",
+                            "value": "={{$json[\"body\"][\"data\"][\"object\"][\"client_reference_id\"]}}"
+                        },
+                        {
+                            "name": "amount",
+                            "value": "={{$json[\"body\"][\"data\"][\"object\"][\"amount_total\"] / 100}}"
+                        }
+                    ]
+                },
+                "options": {}
+            },
+            "name": "Extract Metadata",
+            "type": "n8n-nodes-base.set",
+            "typeVersion": 1,
+            "position": [
+                450,
+                300
+            ]
+        },
+        {
+            "parameters": {
+                "method": "POST",
+                "url": "={{$env[\"APP_URL\"]}}/auth/api/credits/add",
+                "authentication": "genericCredentialType",
+                "genericAuthType": "httpHeaderAuth",
+                "sendHeaders": true,
+                "headerParameters": {
+                    "parameters": [
+                        {
+                            "name": "auth-token",
+                            "value": "={{$env[\"AUTH_SECRET_TOKEN\"]}}"
+                        }
+                    ]
+                },
+                "sendQueryParameters": true,
+                "queryParameters": {
+                    "parameters": [
+                        {
+                            "name": "user_id",
+                            "value": "={{$json[\"user_id\"]}}"
+                        },
+                        {
+                            "name": "amount",
+                            "value": "={{$json[\"amount\"]}}"
+                        }
+                    ]
+                },
+                "options": {}
+            },
+            "name": "Update Postgres",
+            "type": "n8n-nodes-base.httpRequest",
+            "typeVersion": 4.1,
+            "position": [
+                650,
+                300
+            ]
+        }
+    ],
+    "connections": {
+        "Webhook": {
+            "main": [
+                [
+                    {
+                        "node": "Extract Metadata",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Extract Metadata": {
+            "main": [
+                [
+                    {
+                        "node": "Update Postgres",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        }
+    }
+}
