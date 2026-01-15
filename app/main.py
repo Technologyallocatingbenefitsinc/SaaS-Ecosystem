@@ -102,6 +102,10 @@ async def privacy_page(request: Request, user = Depends(auth.get_replit_user)):
 async def tos_page(request: Request):
     return templates.TemplateResponse(request, "tos.html", {})
 
+@app.get("/trust-center", response_class=HTMLResponse)
+async def trust_center_page(request: Request):
+    return templates.TemplateResponse(request, "trust-center.html", {})
+
 @app.post("/invite-students")
 async def invite_students():
     # Trigger n8n Webhook for emails

@@ -23,7 +23,13 @@
         </div>
 
         <!-- Stripe Pricing Table -->
-        <div class="bg-white p-4 md:p-12 rounded-[32px] shadow-2xl shadow-blue-100/50 border border-blue-50">
+        <div class="bg-white p-4 md:p-12 rounded-[32px] shadow-2xl shadow-blue-100/50 border border-blue-50 relative">
+            <!-- Security Badge -->
+            <div class="absolute -top-4 left-1/2 -translate-x-1/2 bg-blue-600 text-white px-4 py-2 rounded-full text-[10px] font-black uppercase tracking-widest shadow-lg flex items-center gap-2 cursor-pointer hover:scale-105 transition active:scale-95"
+                onclick="window.open('/trust-center', '_blank')">
+                <i class="fas fa-shield-check"></i> University Grade Security: FERPA & GDPR Compliant
+            </div>
+
             <script async src="https://js.stripe.com/v3/pricing-table.js"></script>
             <stripe-pricing-table pricing-table-id="prctbl_1Qhk0PIY1W1W1W1W" publishable-key="pk_test_51P..."
                 client-reference-id="{{ user.id if user else 'guest' }}">
@@ -60,6 +66,7 @@
             <footer class="mt-12 text-center text-sm text-slate-400 space-x-6">
                 <a href="/privacy" class="hover:text-slate-600">Privacy Policy</a>
                 <a href="/tos" class="hover:text-slate-600">Terms of Service</a>
+                <a href="/trust-center" class="hover:text-slate-600">Trust Center</a>
                 <span class="text-slate-200">|</span>
                 <span>&copy; 2026 Modifier</span>
             </footer>
