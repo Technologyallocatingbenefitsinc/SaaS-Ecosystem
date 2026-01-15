@@ -1,68 +1,92 @@
 {
-    "name": "Legal - SAR Automation",
+    "name": "Phase 12 - SECURITY (SAR & GDPR Automation)",
     "nodes": [
         {
             "parameters": {
                 "path": "sar-request",
-                "responseMode": "lastNode",
                 "options": {}
             },
-            "name": "Webhook",
+            "name": "SAR Webhook",
             "type": "n8n-nodes-base.webhook",
             "typeVersion": 1,
             "position": [
-                250,
+                100,
                 300
             ]
         },
         {
             "parameters": {
-                "operation": "executeQuery",
-                "query": "SELECT * FROM slide_decks WHERE user_id = $1;",
-                "additionalFields": {
-                    "queryParams": "={{ $json[\"body\"][\"user_id\"] }}"
-                }
+                "operation": "listFiles",
+                "path": "=/user_uploads/{{ $json[\"body\"][\"user_id\"] }}"
             },
-            "name": "Fetch User Data",
-            "type": "n8n-nodes-base.postgres",
+            "name": "Gather User Files",
+            "type": "n8n-nodes-base.readBinaryFile",
             "typeVersion": 1,
             "position": [
-                450,
+                300,
                 300
             ]
         },
         {
             "parameters": {
+                "operation": "create",
+                "archiveFormat": "zip",
+                "binaryPropertyName": "data"
+            },
+            "name": "ZIP User Data",
+            "type": "n8n-nodes-base.compression",
+            "typeVersion": 1,
+            "position": [
+                500,
+                300
+            ]
+        },
+        {
+            "parameters": {
+                "resource": "message",
+                "operation": "send",
+                "to": "={{ $node[\"SAR Webhook\"].json[\"body\"][\"email\"] }}",
                 "subject": "Your Data Export (SAR Request)",
-                "message": "Here is the data you requested under the Data Portability Act.\n\n[Link to Zip File]\n\nSafety Note: This link expires in 24 hours.",
-                "toEmail": "={{ $json[\"body\"][\"email\"] }}"
+                "text": "Hello, attached is your complete data export as requested under GDPR SAR guidelines.",
+                "attachments": "data"
             },
-            "name": "Gmail Sender",
+            "name": "Email Data Export",
             "type": "n8n-nodes-base.gmail",
-            "typeVersion": 1,
+            "typeVersion": 2,
             "position": [
-                650,
+                700,
                 300
             ]
         }
     ],
     "connections": {
-        "Webhook": {
+        "SAR Webhook": {
             "main": [
                 [
                     {
-                        "node": "Fetch User Data",
+                        "node": "Gather User Files",
                         "type": "main",
                         "index": 0
                     }
                 ]
             ]
         },
-        "Fetch User Data": {
+        "Gather User Files": {
             "main": [
                 [
                     {
-                        "node": "Gmail Sender",
+                        "node": "ZIP User Data",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "ZIP User Data": {
+            "main": [
+                [
+                    {
+                        "node": "Email Data Export",
                         "type": "main",
                         "index": 0
                     }

@@ -1,282 +1,142 @@
 {
-    "name": "Podcaster Hunter (Smart Discovery)",
+    "name": "Phase 12 - LEAD GEN & EMAIL FINDER (The Growth Engine)",
     "nodes": [
         {
             "parameters": {
                 "rule": {
                     "interval": [
                         {
-                            "field": "hours",
-                            "triggerAtHour": 9
+                            "field": "cronExpression",
+                            "expression": "0 9 * * *"
                         }
                     ]
                 }
             },
-            "name": "Daily Schedule",
-            "type": "n8n-nodes-base.scheduleTrigger",
+            "name": "Daily Growth Signal",
+            "type": "n8n-nodes-base.cron",
             "typeVersion": 1,
             "position": [
-                250,
+                100,
                 300
             ]
         },
         {
             "parameters": {
-                "limit": 50,
-                "term": "site:youtube.com \"podcast\" \"full episode\" \"2026\""
+                "operation": "executeQuery",
+                "query": "SELECT * FROM potential_leads WHERE status = 'PENDING' LIMIT 15"
             },
-            "name": "YouTube Search",
-            "type": "n8n-nodes-base.youTube",
+            "name": "Get Targets from PG",
+            "type": "n8n-nodes-base.postgres",
             "typeVersion": 1,
             "position": [
-                450,
+                300,
                 300
             ]
         },
         {
             "parameters": {
-                "maxItems": 15
+                "model": "gemini-1.5-flash",
+                "prompt": "=Write a personalized cold email pitch to {{ $json[\"name\"] }} from EcoSystem. Mention their recent video/post about {{ $json[\"topic\"] }}. Keep it under 100 words. Focus on how our AI summary tools save professors and podcasters 10 hours a week."
             },
-            "name": "Limit",
-            "type": "n8n-nodes-base.limit",
-            "typeVersion": 1,
-            "position": [
-                650,
-                300
-            ]
-        },
-        {
-            "parameters": {
-                "prompt": "### IDENTITY\nYou are a Lead Generation Researcher specialized in the Podcast industry.\n\n### INPUT\nAnalyze the following YouTube Video Description: \n{{ $node[\"YouTube Search\"].json[\"snippet\"][\"description\"] }}\n\n### GOAL\nExtract specific details to personalize an outreach email. If a piece of information is missing, use \"Podcaster\" as the fallback.\n\n### EXTRACTION RULES\n1. HOST_NAME: Look for \"Hosted by\", \"With [Name]\", or the first name mentioned in the \"About\" section.\n2. TOPIC: Summarize the main value proposition of this specific episode in 5 words or less.\n3. TONE: Identify if the podcast is \"Professional/Academic\" or \"Casual/Entertaining\".\n4. GUEST: If there is a guest, extract their name.\n\n### OUTPUT FORMAT\nReturn ONLY a JSON object. Do not include markdown blocks or extra text.\n\n{\n  \"host_name\": \"\",\n  \"guest_name\": \"\",\n  \"topic\": \"\",\n  \"tone\": \"\",\n  \"is_video_podcast\": true/false\n}",
-                "model": "gemini-1.5-flash"
-            },
-            "name": "Gemini Researcher",
+            "name": "Gemini Personalized Pitch",
             "type": "n8n-nodes-base.googleGemini",
             "typeVersion": 1,
             "position": [
-                850,
+                500,
                 300
             ]
         },
         {
             "parameters": {
-                "prompt": "Scan the following text for any email addresses. If you find one, return only the email address. If no email is found, return 'NOT_FOUND'. \n\nText: {{ $node[\"YouTube Search\"].json[\"snippet\"][\"description\"] }}",
-                "model": "gemini-1.5-flash"
-            },
-            "name": "Gemini Email Finder",
-            "type": "n8n-nodes-base.googleGemini",
-            "typeVersion": 1,
-            "position": [
-                1050,
-                300
-            ]
-        },
-        {
-            "parameters": {
-                "prompt": "Role: You are a savvy podcast researcher and outreach specialist.\n\nInput Data:\nHost: {{ JSON.parse($node[\"Gemini Researcher\"].json[\"content\"])[\"host_name\"] }}\nGuest: {{ JSON.parse($node[\"Gemini Researcher\"].json[\"content\"])[\"guest_name\"] }}\nTopic: {{ JSON.parse($node[\"Gemini Researcher\"].json[\"content\"])[\"topic\"] }}\nTone of Video: {{ JSON.parse($node[\"Gemini Researcher\"].json[\"content\"])[\"tone\"] }}\nTask: Write a one-sentence \"icebreaker\" for an email to the host.\n\nGuidelines:\nBe Specific: Mention how the host handled the topic of {{topic}} or their chemistry with {{guest_name}}.\nMatch the Tone: If the video tone is \"{{tone}}\", make the sentence match that (e.g., if casual, use \"loved the vibe\"; if professional, use \"impressive depth\").\nThe \"No-Bot\" Rule: Do NOT use phrases like \"I am writing to you because,\" \"I found your video interesting,\" or \"As an AI.\"\nThe Goal: Make it sound like you just finished watching the video and are sending a quick, genuine compliment.\nOutput: [A single natural-sounding sentence]"
-            },
-            "name": "Gemini Pitch Writer",
-            "type": "n8n-nodes-base.googleGemini",
-            "typeVersion": 1,
-            "position": [
-                1250,
-                300
-            ]
-        },
-        {
-            "parameters": {
-                "values": {
-                    "number": [
-                        {
-                            "name": "Request Cost",
-                            "value": "={{ ($node[\"Gemini Researcher\"].json[\"usage\"][\"prompt_token_count\"] * 0.00000015) + ($node[\"Gemini Researcher\"].json[\"usage\"][\"candidates_token_count\"] * 0.0000006) }}"
-                        }
-                    ]
-                }
-            },
-            "name": "Cost Calculator",
-            "type": "n8n-nodes-base.set",
-            "typeVersion": 1,
-            "position": [
-                1450,
-                300
-            ]
-        },
-        {
-            "parameters": {
-                "conditions": {
-                    "string": [
-                        {
-                            "value1": "={{ $node[\"Gemini Email Finder\"].json[\"content\"].trim() }}",
-                            "operation": "notEqual",
-                            "value2": "NOT_FOUND"
-                        }
-                    ]
-                }
-            },
-            "name": "If Email Found",
-            "type": "n8n-nodes-base.if",
-            "typeVersion": 1,
-            "position": [
-                1650,
-                300
-            ]
-        },
-        {
-            "parameters": {
-                "sendTo": "={{ $node[\"Gemini Email Finder\"].json[\"content\"].trim() }}",
-                "subject": "Loved your conversation with {{ JSON.parse($node[\"Gemini Researcher\"].json[\"content\"])[\"guest_name\"] }}!",
-                "message": "Hi {{ JSON.parse($node[\"Gemini Researcher\"].json[\"content\"])[\"host_name\"] }},\n\nI just caught your recent episode on YouTube about {{ JSON.parse($node[\"Gemini Researcher\"].json[\"content\"])[\"topic\"] }}.\n\n{{ $node[\"Gemini Pitch Writer\"].json[\"content\"] }}\n\nI’m reaching out because I actually put together a custom slide deck that summarizes the key takeaways and insights from that specific episode. I thought it might be something your audience would find valuable for social media or as a quick-reference guide.\n\nI’d love to send it over to you for free—no strings attached.\n\nWould you be interested in taking a look?\n\nBest,\n[Your Name]\n[Your Company/Website]"
-            },
-            "name": "Gmail Sender",
-            "type": "n8n-nodes-base.gmail",
-            "typeVersion": 1,
-            "position": [
-                1900,
-                200
-            ]
-        },
-        {
-            "parameters": {
-                "requestMethod": "POST",
-                "url": "https://api.hunter.io/v2/email-finder?domain=youtube.com&api_key=PLACEHOLDER",
+                "url": "=https://api.hunter.io/v2/email-finder?domain={{ $json[\"domain\"] }}&first_name={{ $json[\"first_name\"] }}&last_name={{ $json[\"last_name\"] }}&api_key=YOUR_HUNTER_API_KEY",
                 "options": {}
             },
-            "name": "Hunter.io Enricher (Placeholder)",
+            "name": "Hunter.io Email Finder",
             "type": "n8n-nodes-base.httpRequest",
             "typeVersion": 1,
             "position": [
-                1900,
-                400
+                700,
+                300
             ]
         },
         {
             "parameters": {
-                "sheetId": "YOUR_SHEET_ID",
-                "range": "A:E",
-                "options": {}
+                "operation": "append",
+                "sheetId": "your-google-sheet-id",
+                "range": "Leads!A:Z",
+                "fieldsUI": {
+                    "values": [
+                        {
+                            "name": "Date",
+                            "value": "={{ $now }}"
+                        },
+                        {
+                            "name": "Name",
+                            "value": "={{ $node[\"Get Targets from PG\"].json[\"name\"] }}"
+                        },
+                        {
+                            "name": "Email",
+                            "value": "={{ $json[\"data\"][\"email\"] }}"
+                        },
+                        {
+                            "name": "Pitch",
+                            "value": "={{ $node[\"Gemini Personalized Pitch\"].json[\"content\"] }}"
+                        },
+                        {
+                            "name": "Status",
+                            "value": "READY_TO_SEND"
+                        }
+                    ]
+                }
             },
-            "name": "Google Sheets Log",
+            "name": "Log to Leads Sheet",
             "type": "n8n-nodes-base.googleSheets",
             "typeVersion": 1,
             "position": [
-                2150,
+                900,
                 300
             ]
         }
     ],
     "connections": {
-        "Daily Schedule": {
+        "Daily Growth Signal": {
             "main": [
                 [
                     {
-                        "node": "YouTube Search",
+                        "node": "Get Targets from PG",
                         "type": "main",
                         "index": 0
                     }
                 ]
             ]
         },
-        "YouTube Search": {
+        "Get Targets from PG": {
             "main": [
                 [
                     {
-                        "node": "Limit",
+                        "node": "Gemini Personalized Pitch",
                         "type": "main",
                         "index": 0
                     }
                 ]
             ]
         },
-        "Limit": {
+        "Gemini Personalized Pitch": {
             "main": [
                 [
                     {
-                        "node": "Gemini Researcher",
+                        "node": "Hunter.io Email Finder",
                         "type": "main",
                         "index": 0
                     }
                 ]
             ]
         },
-        "Gemini Researcher": {
+        "Hunter.io Email Finder": {
             "main": [
                 [
                     {
-                        "node": "Gemini Email Finder",
-                        "type": "main",
-                        "index": 0
-                    }
-                ]
-            ]
-        },
-        "Gemini Email Finder": {
-            "main": [
-                [
-                    {
-                        "node": "Gemini Pitch Writer",
-                        "type": "main",
-                        "index": 0
-                    }
-                ]
-            ]
-        },
-        "Gemini Pitch Writer": {
-            "main": [
-                [
-                    {
-                        "node": "Cost Calculator",
-                        "type": "main",
-                        "index": 0
-                    }
-                ]
-            ]
-        },
-        "Cost Calculator": {
-            "main": [
-                [
-                    {
-                        "node": "If Email Found",
-                        "type": "main",
-                        "index": 0
-                    }
-                ]
-            ]
-        },
-        "If Email Found": {
-            "main": [
-                [
-                    {
-                        "node": "Gmail Sender",
-                        "type": "main",
-                        "index": 0
-                    }
-                ],
-                [
-                    {
-                        "node": "Hunter.io Enricher (Placeholder)",
-                        "type": "main",
-                        "index": 0
-                    }
-                ]
-            ]
-        },
-        "Gmail Sender": {
-            "main": [
-                [
-                    {
-                        "node": "Google Sheets Log",
-                        "type": "main",
-                        "index": 0
-                    }
-                ]
-            ]
-        },
-        "Hunter.io Enricher (Placeholder)": {
-            "main": [
-                [
-                    {
-                        "node": "Google Sheets Log",
+                        "node": "Log to Leads Sheet",
                         "type": "main",
                         "index": 0
                     }

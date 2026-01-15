@@ -1,57 +1,89 @@
 {
-    "name": "Self-Healing Error Loop",
+    "name": "Phase 12 - ADMIN (Global Health & Error Trigger)",
     "nodes": [
         {
-            "parameters": {},
-            "name": "Error Trigger",
-            "type": "n8n-nodes-base.errorTrigger",
+            "parameters": {
+                "path": "error-webhook",
+                "options": {}
+            },
+            "name": "Error Catch Hook",
+            "type": "n8n-nodes-base.webhook",
             "typeVersion": 1,
             "position": [
-                250,
+                100,
                 300
             ]
         },
         {
             "parameters": {
-                "method": "POST",
-                "url": "https://YOUR-REPLIT-URL.replit.app/debug-fix",
-                "sendHeaders": true,
-                "headerParameters": {
-                    "parameters": [
+                "operation": "append",
+                "sheetId": "your-google-sheet-id",
+                "range": "Health!A:Z",
+                "fieldsUI": {
+                    "values": [
                         {
-                            "name": "x-n8n-auth",
-                            "value": "YOUR_AUTH_SECRET_TOKEN"
-                        }
-                    ]
-                },
-                "bodyParameters": {
-                    "parameters": [
-                        {
-                            "name": "node",
-                            "value": "={{$node[\"Error Trigger\"].json[\"execution\"][\"lastNodeExecuted\"]}}"
+                            "name": "Time",
+                            "value": "={{ $now }}"
                         },
                         {
-                            "name": "message",
-                            "value": "={{$node[\"Error Trigger\"].json[\"message\"]}}"
+                            "name": "Flow",
+                            "value": "={{ $json[\"body\"][\"workflow_name\"] }}"
+                        },
+                        {
+                            "name": "Node",
+                            "value": "={{ $json[\"body\"][\"node\"] }}"
+                        },
+                        {
+                            "name": "Message",
+                            "value": "={{ $json[\"body\"][\"message\"] }}"
                         }
                     ]
                 }
             },
-            "name": "Alert Antigravity",
-            "type": "n8n-nodes-base.httpRequest",
+            "name": "Log to Health Sheet",
+            "type": "n8n-nodes-base.googleSheets",
             "typeVersion": 1,
             "position": [
-                450,
+                300,
+                300
+            ]
+        },
+        {
+            "parameters": {
+                "authentication": "oAuth2",
+                "resource": "message",
+                "operation": "send",
+                "phoneNumberId": "YOUR_META_PHONE_ID",
+                "recipientPhoneNumber": "YOUR_WHATSAPP_NUMBER",
+                "messageType": "text",
+                "text": "=🚨 CRITICAL ERROR: Flow '{{ $json[\"body\"][\"workflow_name\"] }}' failed at node '{{ $json[\"body\"][\"node\"] }}'. System needs manual repair."
+            },
+            "name": "WhatsApp Critical Alert",
+            "type": "n8n-nodes-base.whatsApp",
+            "typeVersion": 1,
+            "position": [
+                500,
                 300
             ]
         }
     ],
     "connections": {
-        "Error Trigger": {
+        "Error Catch Hook": {
             "main": [
                 [
                     {
-                        "node": "Alert Antigravity",
+                        "node": "Log to Health Sheet",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Log to Health Sheet": {
+            "main": [
+                [
+                    {
+                        "node": "WhatsApp Critical Alert",
                         "type": "main",
                         "index": 0
                     }
