@@ -64,7 +64,6 @@ async def process_video_endpoint(
     try:
         result = await process_video_content(video_url, user_tier, user_id)
         return result
-        return result
     except Exception as e:
         print(f"Error processing video: {e}")
         raise HTTPException(status_code=500, detail=str(e))
