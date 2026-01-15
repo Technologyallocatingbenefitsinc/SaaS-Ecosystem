@@ -94,6 +94,14 @@ async def profile_page(request: Request, user = Depends(auth.get_replit_user)):
 async def billing_page(request: Request, user = Depends(auth.get_replit_user)):
     return templates.TemplateResponse(request, "billing.html", {"user": user})
 
+@app.get("/privacy", response_class=HTMLResponse)
+async def privacy_page(request: Request, user = Depends(auth.get_replit_user)):
+    return templates.TemplateResponse(request, "privacy.html", {"user": user})
+
+@app.get("/tos", response_class=HTMLResponse)
+async def tos_page(request: Request):
+    return templates.TemplateResponse(request, "tos.html", {})
+
 @app.post("/invite-students")
 async def invite_students():
     # Trigger n8n Webhook for emails
