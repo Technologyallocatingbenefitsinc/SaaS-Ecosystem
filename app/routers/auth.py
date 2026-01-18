@@ -3,8 +3,18 @@ from sqlalchemy.future import select
 from app.database import get_db
 from app.models import User
 from app.config import settings
+from app.limiter import limiter
 import httpx
 from pydantic import BaseModel
+from passlib.context import CryptContext
+
+pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+
+def hash_password(password: str):
+    return pwd_context.hash(password)
+
+def verify_password(plain_password: str, hashed_password: str):
+    return pwd_context.verify(plain_password, hashed_password)
 
 router = APIRouter()
 
@@ -14,7 +24,8 @@ class UserSignup(BaseModel):
     referral_code: str | None = None
 
 @router.post("/signup", status_code=status.HTTP_201_CREATED)
-async def signup(user: UserSignup, db = Depends(get_db)):
+@limiter.limit("5/minute")
+async def signup(request: Request, user: UserSignup, db = Depends(get_db)):
     # Check if user exists
     result = await db.execute(select(User).where(User.email == user.email))
     if result.scalars().first():
@@ -35,7 +46,7 @@ async def signup(user: UserSignup, db = Depends(get_db)):
     # Create new user
     new_user = User(
         email=user.email,
-        hashed_password=user.password + "not_really_hashed_for_demo", 
+        hashed_password=hash_password(user.password), 
         referral_code=f"REF-{user.email.split('@')[0]}",
         tier="student", 
         credits=initial_credits

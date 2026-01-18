@@ -6,7 +6,7 @@ from app.database import get_db
 
 @pytest.mark.asyncio
 async def test_legal_routes():
-    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as ac:
+    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://localhost") as ac:
         for route in ["/tos", "/trust-center", "/privacy"]:
             response = await ac.get(route)
             assert response.status_code == 200
@@ -26,7 +26,7 @@ async def test_process_video_with_slide_count():
             "slide_count": "11-18"
         }
         
-        async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as ac:
+        async with AsyncClient(transport=ASGITransport(app=app), base_url="http://localhost") as ac:
             response = await ac.post("/process-video", headers=headers, params=params)
         
         assert response.status_code == 200
@@ -39,7 +39,7 @@ async def test_process_video_with_slide_count():
 
 @pytest.mark.asyncio
 async def test_upload_video_form_with_slide_count():
-    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as ac:
+    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://localhost") as ac:
         data = {
             "video_url": "https://youtube.com/watch?v=123",
             "slide_count": "1-5"

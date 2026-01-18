@@ -25,14 +25,14 @@ app.dependency_overrides[get_db] = override_get_db
 
 @pytest.mark.asyncio
 async def test_read_root():
-    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as ac:
+    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://localhost") as ac:
         response = await ac.get("/")
     assert response.status_code in [200, 307]
 
 @pytest.mark.asyncio
 async def test_signup_mocked():
     payload = {"email": "newuser@example.com", "password": "securepassword", "role": "student"}
-    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as ac:
+    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://localhost") as ac:
         response = await ac.post("/auth/signup", json=payload)
     
     assert response.status_code in [200, 201]
@@ -51,7 +51,7 @@ async def test_upload_mocked():
         m.setattr("app.routers.upload.signal_n8n_to_start", AsyncMock(return_value=200))
         
         files = {'file': ('test_mock.txt', b'mock content', 'text/plain')}
-        async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as ac:
+        async with AsyncClient(transport=ASGITransport(app=app), base_url="http://localhost") as ac:
             response = await ac.post("/upload/upload-content", files=files, headers=headers)
         
         assert response.status_code == 200
@@ -64,7 +64,7 @@ async def test_replit_auth_headers():
         "X-Replit-User-Name": "testuser",
         "X-Replit-User-Roles": "student"
     }
-    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as ac:
+    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://localhost") as ac:
         response = await ac.get("/auth/me", headers=headers)
     
     assert response.status_code == 200
@@ -72,7 +72,7 @@ async def test_replit_auth_headers():
 
 @pytest.mark.asyncio
 async def test_billing_page_exists():
-    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as ac:
+    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://localhost") as ac:
         response = await ac.get("/billing")
     assert response.status_code == 200
     assert "stripe-pricing-table" in response.text
@@ -83,7 +83,7 @@ async def test_add_credits_endpoint():
     params = {"user_id": 1, "amount": 100}
     # Note: This will likely fail with 404 because our mock DB returns None for the user lookup
     # But it verifies the endpoint structure and authentication check.
-    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as ac:
+    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://localhost") as ac:
         response = await ac.post("/auth/api/credits/add", headers=headers, params=params)
     
     assert response.status_code in [200, 404]
@@ -96,7 +96,7 @@ async def test_delete_account_logic():
     }
     with pytest.MonkeyPatch.context() as m:
         m.setattr("app.routers.upload.delete_user_folder", AsyncMock(return_value=None))
-        async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as ac:
+        async with AsyncClient(transport=ASGITransport(app=app), base_url="http://localhost") as ac:
             response = await ac.delete("/auth/api/delete-account", headers=headers)
     
     assert response.status_code in [200, 401]

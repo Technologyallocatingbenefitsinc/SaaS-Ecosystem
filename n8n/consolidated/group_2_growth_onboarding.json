@@ -1,0 +1,286 @@
+{
+    "name": "Modifier - Group 2: Growth & Onboarding (Fortified)",
+    "nodes": [
+        {
+            "parameters": {
+                "httpMethod": "POST",
+                "path": "signup",
+                "options": {}
+            },
+            "name": "Signup Webhook",
+            "type": "n8n-nodes-base.webhook",
+            "typeVersion": 1,
+            "position": [
+                100,
+                150
+            ]
+        },
+        {
+            "parameters": {
+                "conditions": {
+                    "string": [
+                        {
+                            "value1": "={{ $json[\"body\"][\"auth_token\"] || $json[\"headers\"][\"x-n8n-auth\"] }}",
+                            "value2": "={{ $env[\"AUTH_SECRET_TOKEN\"] }}"
+                        }
+                    ]
+                }
+            },
+            "name": "Bouncer 1: Signup",
+            "type": "n8n-nodes-base.if",
+            "typeVersion": 1,
+            "position": [
+                300,
+                150
+            ]
+        },
+        {
+            "parameters": {
+                "operation": "appendOrUpdate",
+                "sheetId": "YOUR_SHEET_ID",
+                "range": "A:E",
+                "options": {}
+            },
+            "name": "Log Signup to Sheets",
+            "type": "n8n-nodes-base.googleSheets",
+            "typeVersion": 1,
+            "position": [
+                500,
+                150
+            ]
+        },
+        {
+            "parameters": {
+                "amount": 24,
+                "unit": "hours"
+            },
+            "name": "Wait 24h",
+            "type": "n8n-nodes-base.wait",
+            "typeVersion": 1,
+            "position": [
+                700,
+                150
+            ]
+        },
+        {
+            "parameters": {
+                "subject": "Tip: How to create your first Summary",
+                "message": "Hi there,\n\nDid you know you can turn a 2-hour lecture into a study guide in 60 seconds?\n\n[Link to Dashboard]",
+                "toEmail": "={{ $json[\"email\"] }}"
+            },
+            "name": "Send Welcome Tip",
+            "type": "n8n-nodes-base.gmail",
+            "typeVersion": 1,
+            "position": [
+                900,
+                150
+            ]
+        },
+        {
+            "parameters": {
+                "httpMethod": "POST",
+                "path": "professor-invite",
+                "options": {}
+            },
+            "name": "Prof Invite Webhook",
+            "type": "n8n-nodes-base.webhook",
+            "typeVersion": 1,
+            "position": [
+                100,
+                350
+            ]
+        },
+        {
+            "parameters": {
+                "conditions": {
+                    "string": [
+                        {
+                            "value1": "={{ $json[\"body\"][\"auth_token\"] || $json[\"headers\"][\"x-n8n-auth\"] }}",
+                            "value2": "={{ $env[\"AUTH_SECRET_TOKEN\"] }}"
+                        }
+                    ]
+                }
+            },
+            "name": "Bouncer 2: Invite",
+            "type": "n8n-nodes-base.if",
+            "typeVersion": 1,
+            "position": [
+                300,
+                350
+            ]
+        },
+        {
+            "parameters": {
+                "subject": "Important: Your Study Materials for [Course Name] are now on Modifier!",
+                "message": "Dear Students,\n\nI'm excited to introduce a new tool... Modifier.\n\nGetting Started:\n1. Click this link: {{ $json[\"body\"][\"invite_link\"] }}\n2. Create your free account.\n\nBest,\nProfessor {{ $json[\"body\"][\"professor_name\"] }}",
+                "toEmail": "student@example.edu"
+            },
+            "name": "Send Prof Invite",
+            "type": "n8n-nodes-base.gmail",
+            "typeVersion": 1,
+            "position": [
+                500,
+                350
+            ]
+        },
+        {
+            "parameters": {
+                "rule": {
+                    "interval": [
+                        {
+                            "field": "cronExpression",
+                            "expression": "0 9 * * *"
+                        }
+                    ]
+                }
+            },
+            "name": "Daily Lead Gen Trigger",
+            "type": "n8n-nodes-base.cron",
+            "typeVersion": 1,
+            "position": [
+                100,
+                550
+            ]
+        },
+        {
+            "parameters": {
+                "operation": "executeQuery",
+                "query": "SELECT * FROM potential_leads WHERE status = 'PENDING' LIMIT 15"
+            },
+            "name": "Fetch Leads from PG",
+            "type": "n8n-nodes-base.postgres",
+            "typeVersion": 1,
+            "position": [
+                300,
+                550
+            ]
+        },
+        {
+            "parameters": {
+                "model": "gemini-1.5-flash",
+                "prompt": "=Write a personalized cold email pitch to {{ $json[\"name\"] }} from Modifier. Mention their recent video/post about {{ $json[\"topic\"] }}. Keep it under 100 words. Focus on how our AI summary tools save professors and podcasters 10 hours a week."
+            },
+            "name": "Gemini AI Pitch",
+            "type": "n8n-nodes-base.googleGemini",
+            "typeVersion": 1,
+            "position": [
+                500,
+                550
+            ]
+        },
+        {
+            "parameters": {
+                "url": "=https://api.hunter.io/v2/email-finder?domain={{ $json[\"domain\"] }}&first_name={{ $json[\"first_name\"] }}&last_name={{ $json[\"last_name\"] }}&api_key=YOUR_HUNTER_API_KEY",
+                "options": {}
+            },
+            "name": "Hunter Email Finder",
+            "type": "n8n-nodes-base.httpRequest",
+            "typeVersion": 1,
+            "position": [
+                700,
+                550
+            ]
+        }
+    ],
+    "connections": {
+        "Signup Webhook": {
+            "main": [
+                [
+                    {
+                        "node": "Bouncer 1: Signup",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Bouncer 1: Signup": {
+            "main": [
+                [
+                    {
+                        "node": "Log Signup to Sheets",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Log Signup to Sheets": {
+            "main": [
+                [
+                    {
+                        "node": "Wait 24h",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Wait 24h": {
+            "main": [
+                [
+                    {
+                        "node": "Send Welcome Tip",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Prof Invite Webhook": {
+            "main": [
+                [
+                    {
+                        "node": "Bouncer 2: Invite",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Bouncer 2: Invite": {
+            "main": [
+                [
+                    {
+                        "node": "Send Prof Invite",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Daily Lead Gen Trigger": {
+            "main": [
+                [
+                    {
+                        "node": "Fetch Leads from PG",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Fetch Leads from PG": {
+            "main": [
+                [
+                    {
+                        "node": "Gemini AI Pitch",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Gemini AI Pitch": {
+            "main": [
+                [
+                    {
+                        "node": "Hunter Email Finder",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        }
+    }
+}

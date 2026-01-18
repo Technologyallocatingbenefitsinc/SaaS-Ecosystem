@@ -23,7 +23,7 @@ async def test_watermark_free_trial():
     app.dependency_overrides[get_db] = override_get_db
     app.dependency_overrides[get_replit_user] = mock_get_student_user
     
-    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as ac:
+    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://localhost") as ac:
         response = await ac.post("/editor/export-pdf", json={"text": "Hello World"})
         
     assert response.status_code == 200
@@ -35,7 +35,7 @@ async def test_no_watermark_paid_tier():
     app.dependency_overrides[get_db] = override_get_db
     app.dependency_overrides[get_replit_user] = mock_get_prof_user
     
-    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as ac:
+    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://localhost") as ac:
         response = await ac.post("/editor/export-pdf", json={"text": "Hello World"})
         
     assert response.status_code == 200

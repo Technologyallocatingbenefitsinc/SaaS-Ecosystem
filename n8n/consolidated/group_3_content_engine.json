@@ -1,0 +1,164 @@
+{
+    "name": "Modifier - Group 3: Content Engine (Fortified)",
+    "nodes": [
+        {
+            "parameters": {
+                "httpMethod": "POST",
+                "path": "process-upload",
+                "options": {}
+            },
+            "name": "Content Upload Webhook",
+            "type": "n8n-nodes-base.webhook",
+            "typeVersion": 1,
+            "position": [
+                100,
+                300
+            ]
+        },
+        {
+            "parameters": {
+                "conditions": {
+                    "string": [
+                        {
+                            "value1": "={{ $json[\"body\"][\"auth_token\"] || $json[\"headers\"][\"x-n8n-auth\"] }}",
+                            "value2": "={{ $env[\"AUTH_SECRET_TOKEN\"] }}"
+                        }
+                    ]
+                }
+            },
+            "name": "Bouncer Check",
+            "type": "n8n-nodes-base.if",
+            "typeVersion": 1,
+            "position": [
+                300,
+                300
+            ]
+        },
+        {
+            "parameters": {
+                "operation": "executeQuery",
+                "query": "SELECT id FROM content_summary WHERE file_hash = $1;",
+                "additionalFields": {
+                    "queryParams": "={{ $json[\"body\"][\"file_hash\"] }}"
+                }
+            },
+            "name": "Check for Duplicates",
+            "type": "n8n-nodes-base.postgres",
+            "typeVersion": 1,
+            "position": [
+                500,
+                300
+            ]
+        },
+        {
+            "parameters": {
+                "conditions": {
+                    "boolean": [
+                        {
+                            "value1": "={{ $json[\"id\"] }}",
+                            "operation": "isEmpty"
+                        }
+                    ]
+                }
+            },
+            "name": "New Content?",
+            "type": "n8n-nodes-base.if",
+            "typeVersion": 1,
+            "position": [
+                700,
+                300
+            ]
+        },
+        {
+            "parameters": {
+                "prompt": "=Summarize this lecture content: {{ $json[\"body\"][\"file_path\"] }}. Focus on creating {{ $node[\"Content Upload Webhook\"].json[\"body\"][\"slide_count\"] || '6-10' }} slides.",
+                "model": "gemini-1.5-flash"
+            },
+            "name": "Gemini Content Processor",
+            "type": "n8n-nodes-base.googleGemini",
+            "typeVersion": 1,
+            "position": [
+                900,
+                200
+            ]
+        },
+        {
+            "parameters": {
+                "subject": "Your Modifier Summary is Ready!",
+                "message": "=Hi {{ $node[\"Content Upload Webhook\"].json[\"body\"][\"user_name\"] || 'there' }},\n\nWe finished processing your file: {{ $node[\"Content Upload Webhook\"].json[\"body\"][\"filename\"] }}.\n\nView it here: [Dashboard Link]",
+                "toEmail": "={{ $node[\"Content Upload Webhook\"].json[\"body\"][\"user_email\"] }}"
+            },
+            "name": "Completion Email",
+            "type": "n8n-nodes-base.gmail",
+            "typeVersion": 1,
+            "position": [
+                1100,
+                300
+            ]
+        }
+    ],
+    "connections": {
+        "Content Upload Webhook": {
+            "main": [
+                [
+                    {
+                        "node": "Bouncer Check",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Bouncer Check": {
+            "main": [
+                [
+                    {
+                        "node": "Check for Duplicates",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Check for Duplicates": {
+            "main": [
+                [
+                    {
+                        "node": "New Content?",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "New Content?": {
+            "main": [
+                [
+                    {
+                        "node": "Gemini Content Processor",
+                        "type": "main",
+                        "index": 0
+                    }
+                ],
+                [
+                    {
+                        "node": "Completion Email",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Gemini Content Processor": {
+            "main": [
+                [
+                    {
+                        "node": "Completion Email",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        }
+    }
+}

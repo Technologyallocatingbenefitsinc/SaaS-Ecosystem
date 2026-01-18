@@ -1,0 +1,369 @@
+{
+    "name": "Modifier - Group 4: Security & Support (Fortified)",
+    "nodes": [
+        {
+            "parameters": {
+                "httpMethod": "POST",
+                "path": "error-webhook",
+                "options": {}
+            },
+            "name": "Self-Healing Hook",
+            "type": "n8n-nodes-base.webhook",
+            "typeVersion": 1,
+            "position": [
+                100,
+                150
+            ]
+        },
+        {
+            "parameters": {
+                "conditions": {
+                    "string": [
+                        {
+                            "value1": "={{ $json[\"body\"][\"auth_token\"] || $json[\"headers\"][\"x-n8n-auth\"] }}",
+                            "value2": "={{ $env[\"AUTH_SECRET_TOKEN\"] }}"
+                        }
+                    ]
+                }
+            },
+            "name": "Bouncer 1: Health",
+            "type": "n8n-nodes-base.if",
+            "typeVersion": 1,
+            "position": [
+                300,
+                150
+            ]
+        },
+        {
+            "parameters": {
+                "operation": "append",
+                "sheetId": "your-google-sheet-id",
+                "range": "Health!A:Z",
+                "fieldsUI": {
+                    "values": [
+                        {
+                            "name": "Time",
+                            "value": "={{ $now }}"
+                        },
+                        {
+                            "name": "Flow",
+                            "value": "={{ $json[\"body\"][\"workflow_name\"] }}"
+                        },
+                        {
+                            "name": "Node",
+                            "value": "={{ $json[\"body\"][\"node\"] }}"
+                        },
+                        {
+                            "name": "Message",
+                            "value": "={{ $json[\"body\"][\"message\"] }}"
+                        }
+                    ]
+                }
+            },
+            "name": "Log Error to Health",
+            "type": "n8n-nodes-base.googleSheets",
+            "typeVersion": 1,
+            "position": [
+                500,
+                150
+            ]
+        },
+        {
+            "parameters": {
+                "authentication": "oAuth2",
+                "resource": "message",
+                "operation": "send",
+                "phoneNumberId": "YOUR_META_PHONE_ID",
+                "recipientPhoneNumber": "YOUR_WHATSAPP_NUMBER",
+                "messageType": "text",
+                "text": "=🚨 CRITICAL ERROR: Flow '{{ $json[\"body\"][\"workflow_name\"] }}' failed at node '{{ $json[\"body\"][\"node\"] }}'. Modifier needs repair!"
+            },
+            "name": "WhatsApp Alert",
+            "type": "n8n-nodes-base.whatsApp",
+            "typeVersion": 1,
+            "position": [
+                700,
+                150
+            ]
+        },
+        {
+            "parameters": {
+                "httpMethod": "POST",
+                "path": "purge-user",
+                "options": {}
+            },
+            "name": "GDPR Purge Hook",
+            "type": "n8n-nodes-base.webhook",
+            "typeVersion": 1,
+            "position": [
+                100,
+                350
+            ]
+        },
+        {
+            "parameters": {
+                "conditions": {
+                    "string": [
+                        {
+                            "value1": "={{ $json[\"body\"][\"auth_token\"] || $json[\"headers\"][\"x-n8n-auth\"] }}",
+                            "value2": "={{ $env[\"AUTH_SECRET_TOKEN\"] }}"
+                        }
+                    ]
+                }
+            },
+            "name": "Bouncer 2: Purge",
+            "type": "n8n-nodes-base.if",
+            "typeVersion": 1,
+            "position": [
+                300,
+                350
+            ]
+        },
+        {
+            "parameters": {
+                "operation": "update",
+                "sheetId": "your-sheet-id",
+                "columnToMatch": "Email",
+                "valueToMatch": "={{ $json[\"body\"][\"email\"] }}",
+                "valuesSend": "fields",
+                "fields": [
+                    {
+                        "name": "Status",
+                        "value": "DELETED"
+                    }
+                ]
+            },
+            "name": "Mark User Deleted",
+            "type": "n8n-nodes-base.googleSheets",
+            "typeVersion": 1,
+            "position": [
+                500,
+                350
+            ]
+        },
+        {
+            "parameters": {
+                "httpMethod": "POST",
+                "path": "sar-request",
+                "options": {}
+            },
+            "name": "GDPR SAR Hook",
+            "type": "n8n-nodes-base.webhook",
+            "typeVersion": 1,
+            "position": [
+                100,
+                550
+            ]
+        },
+        {
+            "parameters": {
+                "conditions": {
+                    "string": [
+                        {
+                            "value1": "={{ $json[\"body\"][\"auth_token\"] || $json[\"headers\"][\"x-n8n-auth\"] }}",
+                            "value2": "={{ $env[\"AUTH_SECRET_TOKEN\"] }}"
+                        }
+                    ]
+                }
+            },
+            "name": "Bouncer 3: SAR",
+            "type": "n8n-nodes-base.if",
+            "typeVersion": 1,
+            "position": [
+                300,
+                550
+            ]
+        },
+        {
+            "parameters": {
+                "operation": "listFiles",
+                "path": "=/user_uploads/{{ $json[\"body\"][\"user_id\"] }}"
+            },
+            "name": "Gather User Data",
+            "type": "n8n-nodes-base.readBinaryFile",
+            "typeVersion": 1,
+            "position": [
+                500,
+                550
+            ]
+        },
+        {
+            "parameters": {
+                "operation": "create",
+                "archiveFormat": "zip",
+                "binaryPropertyName": "data"
+            },
+            "name": "Create Data Zip",
+            "type": "n8n-nodes-base.compression",
+            "typeVersion": 1,
+            "position": [
+                700,
+                550
+            ]
+        },
+        {
+            "parameters": {
+                "resource": "message",
+                "operation": "send",
+                "to": "={{ $node[\"Bouncer 3: SAR\"].json[\"body\"][\"email\"] }}",
+                "subject": "Your Modifier Data Export (SAR)",
+                "text": "Hello, attached is your complete data export as requested.",
+                "attachments": "data"
+            },
+            "name": "Email Export Zip",
+            "type": "n8n-nodes-base.gmail",
+            "typeVersion": 2,
+            "position": [
+                900,
+                550
+            ]
+        },
+        {
+            "parameters": {
+                "filters": {
+                    "labelIds": [
+                        "INBOX"
+                    ],
+                    "q": "is:unread (Refund OR Helping OR Support)"
+                }
+            },
+            "name": "Watch Help Inbox",
+            "type": "n8n-nodes-base.gmail",
+            "typeVersion": 2,
+            "position": [
+                100,
+                750
+            ]
+        },
+        {
+            "parameters": {
+                "authentication": "oAuth2",
+                "resource": "message",
+                "operation": "send",
+                "phoneNumberId": "YOUR_META_PHONE_ID",
+                "recipientPhoneNumber": "YOUR_WHATSAPP_NUMBER",
+                "messageType": "text",
+                "text": "=💬 SUPPORT REQUEST: Incoming email from {{ $json[\"from\"][\"email\"] }} with subject '{{ $json[\"subject\"] }}'"
+            },
+            "name": "WhatsApp VA Alert",
+            "type": "n8n-nodes-base.whatsApp",
+            "typeVersion": 1,
+            "position": [
+                300,
+                750
+            ]
+        }
+    ],
+    "connections": {
+        "Self-Healing Hook": {
+            "main": [
+                [
+                    {
+                        "node": "Bouncer 1: Health",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Bouncer 1: Health": {
+            "main": [
+                [
+                    {
+                        "node": "Log Error to Health",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Log Error to Health": {
+            "main": [
+                [
+                    {
+                        "node": "WhatsApp Alert",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "GDPR Purge Hook": {
+            "main": [
+                [
+                    {
+                        "node": "Bouncer 2: Purge",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Bouncer 2: Purge": {
+            "main": [
+                [
+                    {
+                        "node": "Mark User Deleted",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "GDPR SAR Hook": {
+            "main": [
+                [
+                    {
+                        "node": "Bouncer 3: SAR",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Bouncer 3: SAR": {
+            "main": [
+                [
+                    {
+                        "node": "Gather User Data",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Gather User Data": {
+            "main": [
+                [
+                    {
+                        "node": "Create Data Zip",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Create Data Zip": {
+            "main": [
+                [
+                    {
+                        "node": "Email Export Zip",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Watch Help Inbox": {
+            "main": [
+                [
+                    {
+                        "node": "WhatsApp VA Alert",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        }
+    }
+}

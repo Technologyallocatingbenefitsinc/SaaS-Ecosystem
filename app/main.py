@@ -2,6 +2,11 @@ from fastapi import FastAPI, Depends, HTTPException, Header, Request, Form
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from fastapi.responses import HTMLResponse, RedirectResponse
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.middleware.trustedhost import TrustedHostMiddleware
+from app.limiter import limiter
+from slowapi import _rate_limit_exceeded_handler
+from slowapi.errors import RateLimitExceeded
 from contextlib import asynccontextmanager
 from sqlalchemy import select
 from app.database import engine, get_db, Base
@@ -19,6 +24,22 @@ async def lifespan(app: FastAPI):
     await engine.dispose()
 
 app = FastAPI(lifespan=lifespan)
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
+
+# Security Middlewares
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"], # In production, replace with specific domains
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+app.add_middleware(
+    TrustedHostMiddleware, 
+    allowed_hosts=["localhost", "127.0.0.1", "*.replit.app", "*.replit.dev"]
+)
 
 # Mount Static & Templates
 app.mount("/static", StaticFiles(directory="app/static"), name="static")

@@ -1,0 +1,234 @@
+{
+    "name": "Modifier - Group 1: Revenue & Ledger (Fortified)",
+    "nodes": [
+        {
+            "parameters": {
+                "httpMethod": "POST",
+                "path": "stripe-checkout-completed",
+                "options": {}
+            },
+            "name": "Stripe Webhook",
+            "type": "n8n-nodes-base.webhook",
+            "typeVersion": 1,
+            "position": [
+                100,
+                150
+            ],
+            "webhookId": "stripe-webhook-credits"
+        },
+        {
+            "parameters": {
+                "conditions": {
+                    "string": [
+                        {
+                            "value1": "={{ $json[\"body\"][\"auth_token\"] || $json[\"headers\"][\"x-n8n-auth\"] }}",
+                            "value2": "={{ $env[\"AUTH_SECRET_TOKEN\"] }}"
+                        }
+                    ]
+                }
+            },
+            "name": "Bouncer 1",
+            "type": "n8n-nodes-base.if",
+            "typeVersion": 1,
+            "position": [
+                300,
+                150
+            ]
+        },
+        {
+            "parameters": {
+                "keepOnlySet": true,
+                "values": {
+                    "number": [
+                        {
+                            "name": "user_id",
+                            "value": "={{$json[\"body\"][\"data\"][\"object\"][\"client_reference_id\"]}}"
+                        },
+                        {
+                            "name": "amount",
+                            "value": "={{$json[\"body\"][\"data\"][\"object\"][\"amount_total\"] / 100}}"
+                        }
+                    ]
+                },
+                "options": {}
+            },
+            "name": "Extract Stripe Data",
+            "type": "n8n-nodes-base.set",
+            "typeVersion": 1,
+            "position": [
+                500,
+                150
+            ]
+        },
+        {
+            "parameters": {
+                "method": "POST",
+                "url": "={{$env[\"APP_URL\"]}}/auth/api/credits/add",
+                "authentication": "genericCredentialType",
+                "genericAuthType": "httpHeaderAuth",
+                "sendHeaders": true,
+                "headerParameters": {
+                    "parameters": [
+                        {
+                            "name": "x-n8n-auth",
+                            "value": "={{$env[\"AUTH_SECRET_TOKEN\"]}}"
+                        }
+                    ]
+                },
+                "sendQueryParameters": true,
+                "queryParameters": {
+                    "parameters": [
+                        {
+                            "name": "user_id",
+                            "value": "={{$json[\"user_id\"]}}"
+                        },
+                        {
+                            "name": "amount",
+                            "value": "={{$json[\"amount\"]}}"
+                        }
+                    ]
+                },
+                "options": {}
+            },
+            "name": "Update App Balance",
+            "type": "n8n-nodes-base.httpRequest",
+            "typeVersion": 4.1,
+            "position": [
+                700,
+                150
+            ]
+        },
+        {
+            "parameters": {
+                "httpMethod": "POST",
+                "path": "token-logger",
+                "options": {}
+            },
+            "name": "Usage Webhook",
+            "type": "n8n-nodes-base.webhook",
+            "typeVersion": 1,
+            "position": [
+                100,
+                350
+            ]
+        },
+        {
+            "parameters": {
+                "conditions": {
+                    "string": [
+                        {
+                            "value1": "={{ $json[\"body\"][\"auth_token\"] || $json[\"headers\"][\"x-n8n-auth\"] }}",
+                            "value2": "={{ $env[\"AUTH_SECRET_TOKEN\"] }}"
+                        }
+                    ]
+                }
+            },
+            "name": "Bouncer 2",
+            "type": "n8n-nodes-base.if",
+            "typeVersion": 1,
+            "position": [
+                300,
+                350
+            ]
+        },
+        {
+            "parameters": {
+                "operation": "append",
+                "sheetId": "your-google-sheet-id",
+                "range": "MasterLedger!A:Z",
+                "fieldsUI": {
+                    "values": [
+                        {
+                            "name": "Date",
+                            "value": "={{ $now }}"
+                        },
+                        {
+                            "name": "User ID",
+                            "value": "={{ $json[\"body\"][\"user_id\"] }}"
+                        },
+                        {
+                            "name": "Plan",
+                            "value": "={{ $json[\"body\"][\"plan\"] }}"
+                        },
+                        {
+                            "name": "Tokens In",
+                            "value": "={{ $json[\"body\"][\"tokens_in\"] }}"
+                        },
+                        {
+                            "name": "Tokens Out",
+                            "value": "={{ $json[\"body\"][\"tokens_out\"] }}"
+                        },
+                        {
+                            "name": "Cost USD",
+                            "value": "={{ $json[\"body\"][\"cost_usd\"] }}"
+                        }
+                    ]
+                }
+            },
+            "name": "Log to Master Ledger",
+            "type": "n8n-nodes-base.googleSheets",
+            "typeVersion": 1,
+            "position": [
+                500,
+                350
+            ]
+        }
+    ],
+    "connections": {
+        "Stripe Webhook": {
+            "main": [
+                [
+                    {
+                        "node": "Bouncer 1",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Bouncer 1": {
+            "main": [
+                [
+                    {
+                        "node": "Extract Stripe Data",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Extract Stripe Data": {
+            "main": [
+                [
+                    {
+                        "node": "Update App Balance",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Usage Webhook": {
+            "main": [
+                [
+                    {
+                        "node": "Bouncer 2",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Bouncer 2": {
+            "main": [
+                [
+                    {
+                        "node": "Log to Master Ledger",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        }
+    }
+}

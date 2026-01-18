@@ -22,7 +22,7 @@ async def log_token_usage(user_id, plan_type, prompt_tokens, response_tokens):
         "tokens_in": prompt_tokens,
         "tokens_out": response_tokens,
         "cost_usd": estimated_cost,
-        "secret": settings.AUTH_SECRET_TOKEN
+        "auth_token": settings.AUTH_SECRET_TOKEN
     }
 
     async with httpx.AsyncClient() as client:

@@ -1,4 +1,4 @@
-from fastapi import APIRouter, UploadFile, File, HTTPException, BackgroundTasks, Form
+from fastapi import APIRouter, UploadFile, File, HTTPException, BackgroundTasks, Form, Request
 import shutil
 import os
 import aiofiles
@@ -10,6 +10,7 @@ from app.config import settings
 from app.routers import auth
 from fastapi import Depends
 from app.database import get_db
+from app.limiter import limiter
 
 router = APIRouter()
 
@@ -62,7 +63,9 @@ async def delete_user_folder(user_id: int):
         print(f"GDPR: Wiped storage for User {user_id}")
 
 @router.post("/upload-content")
+@limiter.limit("10/minute")
 async def upload_local_file(
+    request: Request,
     background_tasks: BackgroundTasks,
     file: UploadFile = File(...),
     user = Depends(auth.get_replit_user)
