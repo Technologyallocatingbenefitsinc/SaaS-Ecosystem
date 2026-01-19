@@ -1,5 +1,5 @@
 {
-    "name": "Modifier - Group 3: Content Engine (Fortified)",
+    "name": "MODYFIRE - Group 3: Content Engine (Fortified)",
     "nodes": [
         {
             "parameters": {
@@ -84,7 +84,7 @@
         },
         {
             "parameters": {
-                "subject": "Your Modifier Summary is Ready!",
+                "subject": "Your MODYFIRE Summary is Ready!",
                 "message": "=Hi {{ $node[\"Content Upload Webhook\"].json[\"body\"][\"user_name\"] || 'there' }},\n\nWe finished processing your file: {{ $node[\"Content Upload Webhook\"].json[\"body\"][\"filename\"] }}.\n\nView it here: [Dashboard Link]",
                 "toEmail": "={{ $node[\"Content Upload Webhook\"].json[\"body\"][\"user_email\"] }}"
             },

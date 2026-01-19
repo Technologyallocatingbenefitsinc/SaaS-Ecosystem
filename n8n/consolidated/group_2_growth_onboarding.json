@@ -1,5 +1,5 @@
 {
-    "name": "Modifier - Group 2: Growth & Onboarding (Fortified)",
+    "name": "MODYFIRE - Group 2: Growth & Onboarding (Fortified)",
     "nodes": [
         {
             "parameters": {
@@ -111,8 +111,8 @@
         },
         {
             "parameters": {
-                "subject": "Important: Your Study Materials for [Course Name] are now on Modifier!",
-                "message": "Dear Students,\n\nI'm excited to introduce a new tool... Modifier.\n\nGetting Started:\n1. Click this link: {{ $json[\"body\"][\"invite_link\"] }}\n2. Create your free account.\n\nBest,\nProfessor {{ $json[\"body\"][\"professor_name\"] }}",
+                "subject": "Important: Your Study Materials for [Course Name] are now on MODYFIRE!",
+                "message": "Dear Students,\n\nI'm excited to introduce a new tool... MODYFIRE.\n\nGetting Started:\n1. Click this link: {{ $json[\"body\"][\"invite_link\"] }}\n2. Create your free account.\n\nBest,\nProfessor {{ $json[\"body\"][\"professor_name\"] }}",
                 "toEmail": "student@example.edu"
             },
             "name": "Send Prof Invite",
@@ -158,7 +158,7 @@
         {
             "parameters": {
                 "model": "gemini-1.5-flash",
-                "prompt": "=Write a personalized cold email pitch to {{ $json[\"name\"] }} from Modifier. Mention their recent video/post about {{ $json[\"topic\"] }}. Keep it under 100 words. Focus on how our AI summary tools save professors and podcasters 10 hours a week."
+                "prompt": "=Write a personalized cold email pitch to {{ $json[\"name\"] }} from MODYFIRE. Mention their recent video/post about {{ $json[\"topic\"] }}. Keep it under 100 words. Focus on how our AI summary tools save professors and podcasters 10 hours a week."
             },
             "name": "Gemini AI Pitch",
             "type": "n8n-nodes-base.googleGemini",

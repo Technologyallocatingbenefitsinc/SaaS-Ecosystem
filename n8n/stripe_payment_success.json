@@ -52,7 +52,7 @@
         },
         {
             "parameters": {
-                "fromEmail": "growth@modifier.com",
+                "fromEmail": "growth@modyfire.com",
                 "toEmail": "={{ $json[\"body\"][\"customer_details\"][\"email\"] }}",
                 "subject": "Credits Added! 🚀",
                 "text": "Your tank is full! 100 credits have been added to your account. Go build something amazing!",

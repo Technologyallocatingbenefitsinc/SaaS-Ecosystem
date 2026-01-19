@@ -36,7 +36,7 @@
         {
             "parameters": {
                 "model": "gemini-1.5-flash",
-                "prompt": "=Write a personalized cold email pitch to {{ $json[\"name\"] }} from Modifier. Mention their recent video/post about {{ $json[\"topic\"] }}. Keep it under 100 words. Focus on how our AI summary tools save professors and podcasters 10 hours a week."
+                "prompt": "=Write a personalized cold email pitch to {{ $json[\"name\"] }} from MODYFIRE. Mention their recent video/post about {{ $json[\"topic\"] }}. Keep it under 100 words. Focus on how our AI summary tools save professors and podcasters 10 hours a week."
             },
             "name": "Gemini Personalized Pitch",
             "type": "n8n-nodes-base.googleGemini",

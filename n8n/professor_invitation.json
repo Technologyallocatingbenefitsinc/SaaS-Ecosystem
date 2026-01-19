@@ -17,8 +17,8 @@
         },
         {
             "parameters": {
-                "subject": "Important: Your Study Materials for [Course Name] are now on Modifier!",
-                "message": "Dear Students,\n\nI'm excited to introduce a new tool... [Your App Name].\n\nGetting Started:\n1. Click this link: {{ $json[\"body\"][\"invite_link\"] }}\n2. Create your free account.\n\nBest,\nProfessor {{ $json[\"body\"][\"professor_name\"] }}",
+                "subject": "Important: Your Study Materials for [Course Name] are now on MODYFIRE!",
+                "message": "Dear Students,\n\nI'm excited to introduce a new tool... MODYFIRE.\n\nGetting Started:\n1. Click this link: {{ $json[\"body\"][\"invite_link\"] }}\n2. Create your free account.\n\nBest,\nProfessor {{ $json[\"body\"][\"professor_name\"] }}",
                 "toEmail": "student@example.edu"
             },
             "name": "Gmail Sender",

@@ -10,7 +10,7 @@ async def test_legal_routes():
         for route in ["/tos", "/trust-center", "/privacy"]:
             response = await ac.get(route)
             assert response.status_code == 200
-            assert "Modifier" in response.text
+            assert "MODYFIRE" in response.text
 
 @pytest.mark.asyncio
 async def test_process_video_with_slide_count():

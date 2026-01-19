@@ -1,5 +1,5 @@
 {
-    "name": "Modifier - Group 4: Security & Support (Fortified)",
+    "name": "MODYFIRE - Group 4: Security & Support (Fortified)",
     "nodes": [
         {
             "parameters": {
@@ -76,7 +76,7 @@
                 "phoneNumberId": "YOUR_META_PHONE_ID",
                 "recipientPhoneNumber": "YOUR_WHATSAPP_NUMBER",
                 "messageType": "text",
-                "text": "=🚨 CRITICAL ERROR: Flow '{{ $json[\"body\"][\"workflow_name\"] }}' failed at node '{{ $json[\"body\"][\"node\"] }}'. Modifier needs repair!"
+                "text": "=🚨 CRITICAL ERROR: Flow '{{ $json[\"body\"][\"workflow_name\"] }}' failed at node '{{ $json[\"body\"][\"node\"] }}'. MODYFIRE needs repair!"
             },
             "name": "WhatsApp Alert",
             "type": "n8n-nodes-base.whatsApp",
@@ -206,7 +206,7 @@
                 "resource": "message",
                 "operation": "send",
                 "to": "={{ $node[\"Bouncer 3: SAR\"].json[\"body\"][\"email\"] }}",
-                "subject": "Your Modifier Data Export (SAR)",
+                "subject": "Your MODYFIRE Data Export (SAR)",
                 "text": "Hello, attached is your complete data export as requested.",
                 "attachments": "data"
             },
