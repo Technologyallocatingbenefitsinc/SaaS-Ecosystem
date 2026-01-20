@@ -248,14 +248,19 @@
                             </div>
 
                             <!-- File Input -->
-                            <input type="file" id="fileInput"
-                                class="block w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 mb-4"
-                                onchange="handleFileUpload(this)">
+                            <div class="flex flex-col gap-2 mb-4">
+                                <input type="file" id="fileInput"
+                                    class="block w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100">
+                                <button onclick="triggerFileUpload()"
+                                    class="w-full py-3 bg-slate-900 text-white rounded-xl font-bold hover:bg-slate-800 transition flex items-center justify-center gap-2">
+                                    <i class="fas fa-bolt"></i> Process File
+                                </button>
+                            </div>
 
                             <!-- Progress Bar (Hidden by default) -->
-                            <div id="uploadProgress" class="hidden text-left">
+                            <div id="uploadProgress" class="hidden text-left mb-4">
                                 <div class="flex justify-between mb-1">
-                                    <span class="text-sm font-medium text-blue-700">Uploading...</span>
+                                    <span class="text-sm font-medium text-blue-700">Processing...</span>
                                     <span class="text-sm font-medium text-blue-700" id="progressPercent">0%</span>
                                 </div>
                                 <div class="w-full bg-gray-200 rounded-full h-2.5">
@@ -380,6 +385,15 @@
         }
 
         // --- File Upload Logic (Axios + Progress) ---
+        function triggerFileUpload() {
+            const input = document.getElementById('fileInput');
+            if (input.files.length === 0) {
+                alert("Please select a file first.");
+                return;
+            }
+            handleFileUpload(input);
+        }
+
         async function handleFileUpload(input) {
             const file = input.files[0];
             if (!file) return;
