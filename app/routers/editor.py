@@ -14,6 +14,10 @@ class RewriteRequest(BaseModel):
     text: str
     tone: str
 
+class PPTXRequest(BaseModel):
+    text: str
+    theme: str = "default"
+
 class PDFRequest(BaseModel):
     text: str
 
@@ -66,7 +70,7 @@ async def generate_user_pdf(
 
 @router.post("/export-pptx")
 async def generate_user_pptx(
-    request: PDFRequest, 
+    request: PPTXRequest, 
     user = Depends(get_replit_user)
 ):
     try:
@@ -87,7 +91,7 @@ async def generate_user_pptx(
             should_watermark = True
 
         # 4. Generate PPTX
-        pptx_bytes = generate_pptx(slide_data, watermark=should_watermark)
+        pptx_bytes = generate_pptx(slide_data, watermark=should_watermark, theme_name=request.theme)
         
         return Response(
             content=pptx_bytes,
