@@ -80,12 +80,23 @@ def generate_pptx(slide_data: list, watermark: bool = False, theme_name: str = "
         if len(slide.placeholders) > 1:
             body_shape = slide.placeholders[1]
             tf = body_shape.text_frame
-            tf.text = content_text
+            tf.clear() # Clear existing placeholder text
             
-            # Style Content Paragraphs
-            for paragraph in tf.paragraphs:
-                paragraph.font.color.rgb = body_rgb
-                paragraph.font.size = Pt(18)
+            if isinstance(points, list) and points:
+                for i, point in enumerate(points):
+                    p = tf.add_paragraph() if i > 0 else tf.paragraphs[0]
+                    p.text = point
+                    p.level = 0 # First level bullet
+                    
+                    # Style Content Paragraphs
+                    p.font.color.rgb = body_rgb
+                    p.font.size = Pt(18)
+            else:
+                tf.text = str(content_raw)
+                # Style Single Paragraph
+                for paragraph in tf.paragraphs:
+                    paragraph.font.color.rgb = body_rgb
+                    paragraph.font.size = Pt(18)
                 
     if watermark:
         # Add Watermark Slide

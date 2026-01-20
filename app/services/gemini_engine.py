@@ -1,4 +1,5 @@
 import google.generativeai as genai
+import markdown
 from app.config import settings
 from youtube_transcript_api import YouTubeTranscriptApi
 
@@ -91,7 +92,7 @@ async def process_video_content(video_url: str, user_tier: str, user_id: int, sl
     return {
         "tier": user_tier,
         "model": model_name,
-        "content": response.text
+        "content": markdown.markdown(response.text)
     }
 
 async def convert_text_to_slides_json(text: str, count: int = 10):
@@ -101,7 +102,10 @@ async def convert_text_to_slides_json(text: str, count: int = 10):
     Create exactly {count} slides.
     Output must be a plain JSON list of objects. Each object must have:
     - "title": string
-    - "content": string (bullet points separated by newlines)
+    - "points": list of strings (each string is a bullet point)
+    - "notes": string (speaker notes for the slide)
+    
+    Ensure the JSON is valid and properly formatted. Do not include markdown code blocks.
     
     Text:
     {text}
