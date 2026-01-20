@@ -38,6 +38,7 @@ async def test_signup_mocked():
     assert response.status_code in [200, 201]
     data = response.json()
     assert data["email"] == "newuser@example.com"
+    assert data["credits"] == 1
 
 @pytest.mark.asyncio
 async def test_upload_mocked():

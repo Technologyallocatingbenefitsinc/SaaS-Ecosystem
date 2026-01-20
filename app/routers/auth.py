@@ -32,7 +32,7 @@ async def signup(request: Request, user: UserSignup, db = Depends(get_db)):
         raise HTTPException(status_code=400, detail="Email already registered")
     
     # Check Referral Code logic
-    initial_credits = 0
+    initial_credits = 1
     if user.referral_code:
         # Find referrer
         ref_result = await db.execute(select(User).where(User.referral_code == user.referral_code))
@@ -85,7 +85,7 @@ async def get_replit_user(request: Request, db = Depends(get_db)):
             replit_id=user_id,
             username=user_name,
             tier="student", # Default
-            credits=5 # Welcome bonus
+            credits=1 # 1 Free Trial Credit
         )
         db.add(user)
         await db.commit()

@@ -40,8 +40,8 @@ async def generate_user_pdf(
         pdf.set_font("Helvetica", size=12)
         pdf.multi_cell(0, 10, text=request.text)
         
-        # 🛡️ Watermark for Free Trial / Students
-        if not user or user.tier == "student":
+        # 🛡️ Watermark for Free Trial (Student with <= 1 credit)
+        if not user or (user.tier == "student" and user.credits <= 1):
             pdf.set_y(-15)
             pdf.set_font("Helvetica", 'I', 8)
             pdf.set_text_color(169, 169, 169)
