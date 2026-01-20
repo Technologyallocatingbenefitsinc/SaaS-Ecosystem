@@ -151,7 +151,12 @@ async def workspace(request: Request):
     return templates.TemplateResponse(request, "workspace.html")
 
 @app.post("/upload-video")
-async def upload_video_form(video_url: str = Form(...), slide_count: str = Form("6-10")):
-    # Wrapper to handle form submission from dashboard
-    # In production, this would trigger process-video asynchronously
-    return {"status": "Processing Started", "url": video_url, "length": slide_count}
+async def upload_video_form(video_url: str = Form(...), slide_count: str = Form("6-10"), user = Depends(auth.get_replit_user)):
+    user_tier = user.tier if user else "student"
+    user_id = user.id if user else 1
+    try:
+        result = await process_video_content(video_url, user_tier, user_id, slide_count)
+        return result
+    except Exception as e:
+        print(f"Error processing video: {e}")
+        return {"status": "Error", "message": str(e)}
