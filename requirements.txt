@@ -17,3 +17,7 @@ python-docx
 moviepy
 aiofiles
 python-pptx
+slowapi
+passlib
+bcrypt
+requests

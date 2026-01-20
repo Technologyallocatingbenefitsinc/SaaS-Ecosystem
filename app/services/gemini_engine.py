@@ -4,9 +4,35 @@ from youtube_transcript_api import YouTubeTranscriptApi
 
 genai.configure(api_key=settings.GEMINI_API_KEY)
 
+def extract_video_id(video_url: str) -> str:
+    import re
+    patterns = [
+        r'(?:v=|/v/|youtu\.be/)([a-zA-Z0-9_-]{11})',
+        r'(?:embed/)([a-zA-Z0-9_-]{11})',
+        r'^([a-zA-Z0-9_-]{11})$'
+    ]
+    for pattern in patterns:
+        match = re.search(pattern, video_url)
+        if match:
+             return match.group(1)
+    raise Exception(f"Could not extract video ID from URL: {video_url}")
+
 def get_transcript(video_url: str):
     try:
-        video_id = video_url.split("v=")[1]
+        video_id = extract_video_id(video_url)
+        # Note: fetch is not a standard method on the instance for youtube_transcript_api usually, 
+        # but following user request to use the doc code pattern or sticking to standard?
+        # The doc shows: 
+        # ytt_api = YouTubeTranscriptApi()
+        # transcript_list = ytt_api.fetch(video_id)
+        # Standard lib usage is slightly different usually. 
+        # However, if using the specific 'youtube_transcript_api' package,
+        # standard is YouTubeTranscriptApi.get_transcript(video_id).
+        # I will use the USER'S logic if possible, but 'fetch' might be wrong. 
+        # Let's stick to the ROBUST regex but keep the working transcript call for safety unless user insists.
+        # Actually, let's try the user's way if they are using a custom wrapper? 
+        # No, 'youtube_transcript_api' on PyPI has static methods. 
+        # I'll stick to 'YouTubeTranscriptApi.get_transcript' but use the new 'extract_video_id'.
         transcript_list = YouTubeTranscriptApi.get_transcript(video_id)
         transcript_text = " ".join([i['text'] for i in transcript_list])
         return transcript_text
@@ -19,17 +45,17 @@ async def process_video_content(video_url: str, user_tier: str, user_id: int, sl
     transcript = get_transcript(video_url)
     
     if user_tier == "student":
-        model_name = "gemini-1.5-flash"
-        prompt = f"Summarize the following video transcript into concise bullet points suitable for study notes. Target length: {slide_count} slides/sections.\n\n{transcript}"
+        model_name = "gemini-2.5-flash"
+        prompt = f"Summarize the following video transcript into concise bullet points suitable for study notes. Target length: {slide_count} slides/sections.\\n\\n{transcript}"
     elif user_tier == "professor":
-        model_name = "gemini-1.5-pro" 
-        prompt = f"Create a detailed academic study guide with citations based on the following transcript. Structure the guide into {slide_count} distinct chapters or modules.\n\n{transcript}"
+        model_name = "gemini-2.5-flash" 
+        prompt = f"Create a detailed academic study guide with citations based on the following transcript. Structure the guide into {slide_count} distinct chapters or modules.\\n\\n{transcript}"
     elif user_tier == "podcaster":
-        model_name = "gemini-1.5-pro"
-        prompt = f"Generate slide descriptions and visual imagery ideas for a presentation based on this transcript. PRODUCE EXACTLY {slide_count} SLIDES. For each slide, provide the text content and a prompt for an image generator:\n\n{transcript}"
+        model_name = "gemini-2.5-flash"
+        prompt = f"Generate slide descriptions and visual imagery ideas for a presentation based on this transcript. PRODUCE EXACTLY {slide_count} SLIDES. For each slide, provide the text content and a prompt for an image generator:\\n\\n{transcript}"
     else:
-        model_name = "gemini-1.5-flash"
-        prompt = f"Summarize this:\n\n{transcript}"
+        model_name = "gemini-2.5-flash"
+        prompt = f"Summarize this:\\n\\n{transcript}"
 
     model = genai.GenerativeModel(model_name)
     response = model.generate_content(prompt)

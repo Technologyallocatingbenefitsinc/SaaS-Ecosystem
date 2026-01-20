@@ -13,6 +13,7 @@ from app.database import engine, get_db, Base
 from app.config import settings
 from app.services.gemini_engine import process_video_content
 from app.routers import auth, editor, legal, upload
+import httpx
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
