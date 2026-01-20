@@ -81,8 +81,13 @@ async def generate_user_pptx(
             # Fallback for malformed JSON - wrap entire text in one slide
             slide_data = [{"title": "Study Notes", "content": request.text}]
             
-        # 3. Generate PPTX
-        pptx_bytes = generate_pptx(slide_data)
+        # 3. Check Watermark Condition
+        should_watermark = False
+        if not user or (user.tier == "student" and user.credits <= 1):
+            should_watermark = True
+
+        # 4. Generate PPTX
+        pptx_bytes = generate_pptx(slide_data, watermark=should_watermark)
         
         return Response(
             content=pptx_bytes,
