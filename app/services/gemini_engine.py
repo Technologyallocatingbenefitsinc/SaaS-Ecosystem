@@ -79,7 +79,7 @@ async def process_video_content(video_url: str, user_tier: str, user_id: int, sl
     }
 
 async def convert_text_to_slides_json(text: str, count: int = 10):
-    model = genai.GenerativeModel("gemini-1.5-flash")
+    model = genai.GenerativeModel("gemini-2.5-flash")
     prompt = f"""
     Convert the following study notes into a JSON structure for a PowerPoint presentation.
     Create exactly {count} slides.

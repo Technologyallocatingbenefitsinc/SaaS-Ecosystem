@@ -20,12 +20,18 @@ if "postgres" in DATABASE_URL:
     except Exception:
         pass
 
+engine_args = {
+    "pool_pre_ping": True,
+    "echo": False
+}
+
+if "sqlite" not in DATABASE_URL:
+    engine_args["pool_size"] = 20
+    engine_args["max_overflow"] = 10
+
 engine = create_async_engine(
     DATABASE_URL,
-    pool_size=20,          # Keeps 20 connections ready at all times
-    max_overflow=10,       # Can open 10 extra during traffic spikes
-    pool_pre_ping=True,    # Prevents 'Connection Lost' errors on Replit
-    echo=False
+    **engine_args
 )
 
 AsyncSessionLocal = sessionmaker(
