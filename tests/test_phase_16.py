@@ -39,14 +39,26 @@ async def test_process_video_with_slide_count():
 
 @pytest.mark.asyncio
 async def test_upload_video_form_with_slide_count():
-    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://localhost") as ac:
-        data = {
-            "video_url": "https://youtube.com/watch?v=123",
-            "slide_count": "1-5"
+    with patch("app.main.process_video_content", new_callable=AsyncMock) as mock_process:
+        # We mock what the service returns
+        mock_process.return_value = {
+            "tier": "student",
+            "model": "gemini-2.5-flash", 
+            "content": "Mocked summary content"
         }
-        response = await ac.post("/upload-video", data=data)
         
-    assert response.status_code == 200
-    res_data = response.json()
-    assert res_data["length"] == "1-5"
-    assert res_data["url"] == "https://youtube.com/watch?v=123"
+        async with AsyncClient(transport=ASGITransport(app=app), base_url="http://localhost") as ac:
+            data = {
+                "video_url": "https://youtube.com/watch?v=123",
+                "slide_count": "1-5"
+            }
+            response = await ac.post("/upload-video", data=data)
+            
+        assert response.status_code == 200
+        res_data = response.json()
+        assert res_data["content"] == "Mocked summary content"
+        # We also verify the mock was called with correct args
+        mock_process.assert_called_once()
+        call_args = mock_process.call_args
+        assert call_args[0][0] == "https://youtube.com/watch?v=123"
+        assert call_args[0][3] == "1-5"
