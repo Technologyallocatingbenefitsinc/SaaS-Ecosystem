@@ -443,23 +443,62 @@
         async function submitUrl() {
             const url = document.getElementById('urlInput').value;
             const slideCount = document.getElementById('slideCount').value;
+            const goBtn = document.getElementById('goBtn');
+            const originalText = goBtn.innerText;
+
             if (url) {
-                const form = document.createElement('form');
-                form.method = 'POST';
-                form.action = '/upload-video';
+                goBtn.disabled = true;
+                goBtn.innerText = "Processing...";
 
-                const urlInput = document.createElement('input');
-                urlInput.name = 'video_url';
-                urlInput.value = url;
-                form.appendChild(urlInput);
+                // Show progress bar (fake/indeterminate for URL processing)
+                const progressDiv = document.getElementById('uploadProgress');
+                const progressBar = document.getElementById('progressBar');
+                const progressPercent = document.getElementById('progressPercent');
+                progressDiv.classList.remove('hidden');
+                progressBar.classList.add('animate-pulse');
+                progressBar.style.width = '100%';
+                progressPercent.innerText = "Analyzing Video...";
 
-                const slideInput = document.createElement('input');
-                slideInput.name = 'slide_count';
-                slideInput.value = slideCount;
-                form.appendChild(slideInput);
+                try {
+                    const formData = new FormData();
+                    formData.append('video_url', url);
+                    formData.append('slide_count', slideCount);
 
-                document.body.appendChild(form);
-                form.submit();
+                    const response = await axios.post('/upload-video', formData);
+
+                    if (response.data.content) {
+                        // Success! Save to LocalStorage for Workspace to pick up
+                        localStorage.setItem('pendingSummary', response.data.content);
+                        localStorage.setItem('pendingTitle', "Video Summary");
+
+                        progressPercent.innerText = "Done! Redirecting...";
+                        progressBar.classList.add('bg-green-500');
+
+                        setTimeout(() => {
+                            window.location.href = '/workspace';
+                        }, 500);
+                    } else if (response.data.status === "Error") {
+                        alert("Error: " + response.data.message);
+                        resetUI();
+                    } else {
+                        // Fallback
+                        alert("Unexpected response.");
+                        resetUI();
+                    }
+
+                } catch (error) {
+                    console.error("Submission failed", error);
+                    alert("Failed to process video. Please check the URL.");
+                    resetUI();
+                }
+            }
+
+            function resetUI() {
+                goBtn.disabled = false;
+                goBtn.innerText = originalText;
+                document.getElementById('uploadProgress').classList.add('hidden');
+                document.getElementById('progressBar').classList.remove('animate-pulse');
+                document.getElementById('progressBar').style.width = '0%';
             }
         }
 

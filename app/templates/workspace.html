@@ -78,9 +78,13 @@
                         const tipTapEditor = new Editor({
                             element: editorRef.current,
                             extensions: [StarterKit],
-                            content: '<p>Start writing or paste your lecture summary here...</p>',
+                            content: localStorage.getItem('pendingSummary') || '<p>Start writing or paste your lecture summary here...</p>',
                             autofocus: true,
                         });
+
+                        // Clean up
+                        localStorage.removeItem('pendingSummary');
+
                         setEditor(tipTapEditor);
                     }
                 };
