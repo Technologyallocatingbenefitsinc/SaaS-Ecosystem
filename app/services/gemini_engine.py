@@ -51,3 +51,21 @@ async def process_video_content(video_url: str, user_tier: str, user_id: int, sl
         "model": model_name,
         "content": response.text
     }
+
+async def convert_text_to_slides_json(text: str, count: int = 10):
+    model = genai.GenerativeModel("gemini-1.5-flash")
+    prompt = f"""
+    Convert the following study notes into a JSON structure for a PowerPoint presentation.
+    Create exactly {count} slides.
+    Output must be a plain JSON list of objects. Each object must have:
+    - "title": string
+    - "content": string (bullet points separated by newlines)
+    
+    Text:
+    {text}
+    """
+    response = model.generate_content(prompt)
+    
+    # Clean markdown if present
+    cleaned_text = response.text.replace("```json", "").replace("```", "").strip()
+    return cleaned_text

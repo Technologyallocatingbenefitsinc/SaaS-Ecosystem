@@ -4,6 +4,9 @@ from fpdf import FPDF
 import io
 import google.generativeai as genai
 from app.config import settings
+from app.services.pptx_engine import generate_pptx
+from app.services.gemini_engine import convert_text_to_slides_json
+import json
 
 router = APIRouter()
 
@@ -59,6 +62,35 @@ async def generate_user_pdf(
         )
     except Exception as e:
         print(f"PDF Gen Error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.post("/export-pptx")
+async def generate_user_pptx(
+    request: PDFRequest, 
+    user = Depends(get_replit_user)
+):
+    try:
+        # 1. Convert text to JSON Structure via Gemini
+        # We explicitly ask for 10 slides or derive from text length logic if needed
+        json_str = await convert_text_to_slides_json(request.text, count=10)
+        
+        # 2. Parse JSON
+        try:
+            slide_data = json.loads(json_str)
+        except json.JSONDecodeError:
+            # Fallback for malformed JSON - wrap entire text in one slide
+            slide_data = [{"title": "Study Notes", "content": request.text}]
+            
+        # 3. Generate PPTX
+        pptx_bytes = generate_pptx(slide_data)
+        
+        return Response(
+            content=pptx_bytes,
+            headers={"Content-Disposition": "attachment; filename='study_notes.pptx'"},
+            media_type="application/vnd.openxmlformats-officedocument.presentationml.presentation"
+        )
+    except Exception as e:
+        print(f"PPTX Gen Error: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.post("/rewrite")
