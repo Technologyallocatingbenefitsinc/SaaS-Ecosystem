@@ -20,20 +20,23 @@ def extract_video_id(video_url: str) -> str:
 def get_transcript(video_url: str):
     try:
         video_id = extract_video_id(video_url)
-        # Use the newer list_transcripts API (better for multiple languages/auto-gen)
-        transcript_list = YouTubeTranscriptApi.list_transcripts(video_id)
-        
+        # Attempt to handle different versions of youtube_transcript_api
+        try:
+            # Try the instance-based API (v1.x as reported by user)
+            api = YouTubeTranscriptApi()
+            transcript_list = api.list(video_id)
+        except Exception:
+            # Fallback to standard static API (v0.x or other)
+            transcript_list = YouTubeTranscriptApi.list_transcripts(video_id)
+
         # Try to find a manually created english transcript, or auto-generated one
-        # Prefer manually created English, then auto-generated English
         try:
             transcript = transcript_list.find_manually_created_transcript(['en', 'en-US', 'en-GB'])
         except:
              try:
                  transcript = transcript_list.find_generated_transcript(['en', 'en-US', 'en-GB'])
              except:
-                 # Last resort: just get the first available one (even if not English, better than crash?)
-                 # Or stick to English requirement.
-                 # Let's try flexible search
+                 # Last resort attempt
                  transcript = transcript_list.find_transcript(['en', 'en-US', 'en-GB'])
                  
         transcript_list = transcript.fetch()
