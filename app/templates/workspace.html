@@ -135,6 +135,7 @@
 
             const [isExportModalOpen, setIsExportModalOpen] = useState(false);
             const [selectedTheme, setSelectedTheme] = useState('default');
+            const [selectedFormat, setSelectedFormat] = useState('16:9');
 
             // ... (keep handleAIRewrite, handleExportPDF)
 
@@ -144,13 +145,17 @@
             };
 
             const confirmExportPPT = async () => {
-                setIsThinking(true); // Re-use thinking state for spinner
+                setIsThinking(true);
                 const text = editor.getText();
                 try {
                     const response = await fetch('/editor/export-pptx', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ text: text, theme: selectedTheme })
+                        body: JSON.stringify({
+                            text: text,
+                            theme: selectedTheme,
+                            aspect_ratio: selectedFormat
+                        })
                     });
                     if (response.ok) {
                         const blob = await response.blob();
@@ -175,8 +180,8 @@
             const themes = [
                 { id: 'default', name: 'Clean White', color: 'bg-white border-gray-200' },
                 { id: 'dark', name: 'Dark Mode', color: 'bg-slate-900 border-slate-700 text-white' },
-                { id: 'corporate', name: 'Corporate Blue', color: 'bg-blue-50 border-blue-200' },
-                { id: 'warm', name: 'Warm Paper', color: 'bg-orange-50 border-orange-200' }
+                { id: 'corporate', name: 'Corporate', color: 'bg-blue-50 border-blue-200' },
+                { id: 'warm', name: 'Warm', color: 'bg-orange-50 border-orange-200' }
             ];
 
             return (
@@ -187,7 +192,7 @@
                         <div className="w-6 h-6 bg-slate-700 rounded-full mt-auto"></div>
                     </div>
 
-                    <main className="flex-1 flex flex-col">
+                    <main className="flex-1 flex flex-col relative h-full">
                         <header className="h-16 border-b bg-white flex items-center justify-between px-6">
                             <h1 className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-indigo-600">
                                 Workspace
@@ -233,27 +238,55 @@
                             </div>
                         </div>
 
-                        {/* Export Modal */}
                         {isExportModalOpen && (
                             <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
                                 <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden animate-fade-in-up">
                                     <div className="p-6 border-b border-gray-100">
-                                        <h3 className="text-xl font-bold text-slate-900">Choose Presentation Style</h3>
-                                        <p className="text-sm text-slate-500 mt-1">Select a theme for your PowerPoint.</p>
+                                        <h3 className="text-xl font-bold text-slate-900">Export Presentation</h3>
+                                        <p className="text-sm text-slate-500 mt-1">Select format and style.</p>
                                     </div>
-                                    <div className="p-6 grid grid-cols-2 gap-4">
-                                        {themes.map(theme => (
-                                            <button
-                                                key={theme.id}
-                                                onClick={() => setSelectedTheme(theme.id)}
-                                                className={`p-4 rounded-xl border-2 text-left transition relative ${theme.color} ${selectedTheme === theme.id ? 'ring-2 ring-blue-500 ring-offset-2 border-transparent' : 'border-gray-200 hover:border-blue-300'}`}
-                                            >
-                                                <div className="font-bold">{theme.name}</div>
-                                                {selectedTheme === theme.id && <div className="absolute top-2 right-2 text-blue-500"><i className="fas fa-check-circle"></i></div>}
-                                            </button>
-                                        ))}
+
+                                    <div className="p-6 space-y-6">
+                                        {/* Format Selection */}
+                                        <div>
+                                            <label className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2 block">Format</label>
+                                            <div className="grid grid-cols-2 gap-3">
+                                                <button
+                                                    onClick={() => setSelectedFormat('16:9')}
+                                                    className={`p-3 rounded-lg border-2 flex flex-col items-center gap-2 transition ${selectedFormat === '16:9' ? 'border-blue-500 bg-blue-50 text-blue-700' : 'border-gray-200 hover:border-blue-200 text-slate-600'}`}
+                                                >
+                                                    <div className="w-12 h-8 border-2 border-current rounded-sm"></div>
+                                                    <span className="text-xs font-bold">Standard (16:9)</span>
+                                                </button>
+                                                <button
+                                                    onClick={() => setSelectedFormat('1:1')}
+                                                    className={`p-3 rounded-lg border-2 flex flex-col items-center gap-2 transition ${selectedFormat === '1:1' ? 'border-blue-500 bg-blue-50 text-blue-700' : 'border-gray-200 hover:border-blue-200 text-slate-600'}`}
+                                                >
+                                                    <div className="w-8 h-8 border-2 border-current rounded-sm"></div>
+                                                    <span className="text-xs font-bold">Carousel (1:1)</span>
+                                                </button>
+                                            </div>
+                                        </div>
+
+                                        {/* Theme Selection */}
+                                        <div>
+                                            <label className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2 block">Theme</label>
+                                            <div className="grid grid-cols-2 gap-3">
+                                                {themes.map(theme => (
+                                                    <button
+                                                        key={theme.id}
+                                                        onClick={() => setSelectedTheme(theme.id)}
+                                                        className={`p-3 rounded-lg border-2 text-left transition relative ${theme.color} ${selectedTheme === theme.id ? 'ring-2 ring-blue-500 ring-offset-2 border-transparent' : 'border-gray-200 hover:border-blue-300'}`}
+                                                    >
+                                                        <div className="font-bold text-sm">{theme.name}</div>
+                                                        {selectedTheme === theme.id && <div className="absolute top-2 right-2 text-blue-500"><i className="fas fa-check-circle text-xs"></i></div>}
+                                                    </button>
+                                                ))}
+                                            </div>
+                                        </div>
                                     </div>
-                                    <div className="p-6 bg-gray-50 flex justify-end gap-3">
+
+                                    <div className="p-6 bg-gray-50 flex justify-end gap-3 border-t border-gray-100">
                                         <button
                                             onClick={() => setIsExportModalOpen(false)}
                                             className="px-4 py-2 text-slate-600 font-bold hover:bg-gray-200 rounded-lg transition"
