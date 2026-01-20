@@ -133,28 +133,51 @@
                 }
             };
 
-            const handleExportPPT = async () => {
+            const [isExportModalOpen, setIsExportModalOpen] = useState(false);
+            const [selectedTheme, setSelectedTheme] = useState('default');
+
+            // ... (keep handleAIRewrite, handleExportPDF)
+
+            const openExportModal = () => {
                 if (!editor) return;
+                setIsExportModalOpen(true);
+            };
+
+            const confirmExportPPT = async () => {
+                setIsThinking(true); // Re-use thinking state for spinner
                 const text = editor.getText();
-                // User feedback - maybe standard loading spinner later
-                const response = await fetch('/editor/export-pptx', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ text: text })
-                });
-                if (response.ok) {
-                    const blob = await response.blob();
-                    const url = window.URL.createObjectURL(blob);
-                    const a = document.createElement('a');
-                    a.href = url;
-                    a.download = "study_notes.pptx";
-                    document.body.appendChild(a);
-                    a.click();
-                    a.remove();
-                } else {
-                    alert("Failed to export PPT. Please try again.");
+                try {
+                    const response = await fetch('/editor/export-pptx', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ text: text, theme: selectedTheme })
+                    });
+                    if (response.ok) {
+                        const blob = await response.blob();
+                        const url = window.URL.createObjectURL(blob);
+                        const a = document.createElement('a');
+                        a.href = url;
+                        a.download = "study_notes.pptx";
+                        document.body.appendChild(a);
+                        a.click();
+                        a.remove();
+                        setIsExportModalOpen(false);
+                    } else {
+                        alert("Failed to export PPT. Please try again.");
+                    }
+                } catch (e) {
+                    alert("Export Error: " + e);
+                } finally {
+                    setIsThinking(false);
                 }
             };
+
+            const themes = [
+                { id: 'default', name: 'Clean White', color: 'bg-white border-gray-200' },
+                { id: 'dark', name: 'Dark Mode', color: 'bg-slate-900 border-slate-700 text-white' },
+                { id: 'corporate', name: 'Corporate Blue', color: 'bg-blue-50 border-blue-200' },
+                { id: 'warm', name: 'Warm Paper', color: 'bg-orange-50 border-orange-200' }
+            ];
 
             return (
                 <div className="flex h-screen">
@@ -191,7 +214,7 @@
                                     📥 Export PDF
                                 </button>
                                 <button
-                                    onClick={handleExportPPT}
+                                    onClick={openExportModal}
                                     className="px-4 py-2 bg-orange-600 text-white rounded-lg font-medium hover:bg-orange-700 transition shadow-lg flex items-center gap-2"
                                 >
                                     <span>📊</span> Export PPT
@@ -209,6 +232,45 @@
                                 <div ref={editorRef} />
                             </div>
                         </div>
+
+                        {/* Export Modal */}
+                        {isExportModalOpen && (
+                            <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+                                <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden animate-fade-in-up">
+                                    <div className="p-6 border-b border-gray-100">
+                                        <h3 className="text-xl font-bold text-slate-900">Choose Presentation Style</h3>
+                                        <p className="text-sm text-slate-500 mt-1">Select a theme for your PowerPoint.</p>
+                                    </div>
+                                    <div className="p-6 grid grid-cols-2 gap-4">
+                                        {themes.map(theme => (
+                                            <button
+                                                key={theme.id}
+                                                onClick={() => setSelectedTheme(theme.id)}
+                                                className={`p-4 rounded-xl border-2 text-left transition relative ${theme.color} ${selectedTheme === theme.id ? 'ring-2 ring-blue-500 ring-offset-2 border-transparent' : 'border-gray-200 hover:border-blue-300'}`}
+                                            >
+                                                <div className="font-bold">{theme.name}</div>
+                                                {selectedTheme === theme.id && <div className="absolute top-2 right-2 text-blue-500"><i className="fas fa-check-circle"></i></div>}
+                                            </button>
+                                        ))}
+                                    </div>
+                                    <div className="p-6 bg-gray-50 flex justify-end gap-3">
+                                        <button
+                                            onClick={() => setIsExportModalOpen(false)}
+                                            className="px-4 py-2 text-slate-600 font-bold hover:bg-gray-200 rounded-lg transition"
+                                        >
+                                            Cancel
+                                        </button>
+                                        <button
+                                            onClick={confirmExportPPT}
+                                            disabled={isThinking}
+                                            className="px-6 py-2 bg-blue-600 text-white font-bold rounded-lg hover:bg-blue-700 transition shadow-lg flex items-center gap-2"
+                                        >
+                                            {isThinking ? 'Generating...' : 'Download PPTX'}
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
                     </main>
                 </div>
             );
