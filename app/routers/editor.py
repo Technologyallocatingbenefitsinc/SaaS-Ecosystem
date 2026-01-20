@@ -1,4 +1,4 @@
-from fastapi import APIRouter, HTTPException, Response
+from fastapi import APIRouter, HTTPException, Response, Depends
 from pydantic import BaseModel
 from fpdf import FPDF
 import io
@@ -6,6 +6,7 @@ import google.generativeai as genai
 from app.config import settings
 from app.services.pptx_engine import generate_pptx
 from app.services.gemini_engine import convert_text_to_slides_json
+from app.routers.auth import get_replit_user
 import json
 
 router = APIRouter()
