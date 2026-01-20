@@ -39,9 +39,18 @@ def get_transcript(video_url: str):
                  # Last resort attempt
                  transcript = transcript_list.find_transcript(['en', 'en-US', 'en-GB'])
                  
-        transcript_list = transcript.fetch()
-
-        transcript_text = " ".join([i['text'] for i in transcript_list])
+        transcript_data = transcript.fetch()
+        
+        # Handle both dictionary (standard) and object (some versions) returns
+        text_parts = []
+        for item in transcript_data:
+            if isinstance(item, dict):
+                text_parts.append(item['text'])
+            else:
+                # Assume it's an object with a .text attribute
+                text_parts.append(getattr(item, 'text', str(item)))
+                
+        transcript_text = " ".join(text_parts)
         return transcript_text
     except Exception as e:
         raise Exception(f"Failed to fetch transcript: {str(e)}")
