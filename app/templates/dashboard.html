@@ -229,15 +229,22 @@
                         <!-- Upload Form with Progress -->
                         <div class="w-full max-w-md relative z-10">
                             <!-- URL Input -->
-                            <div class="flex gap-2 mb-4">
-                                <input type="text" id="urlInput" placeholder="Paste YouTube URL..."
-                                    class="flex-1 pl-6 pr-4 py-4 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:outline-none">
-                                <select id="slideCount"
-                                    class="bg-white border border-gray-200 rounded-xl px-4 py-4 text-sm font-bold text-slate-600 focus:ring-2 focus:ring-blue-500 focus:outline-none">
-                                    <option value="1-5">1-5 slides</option>
-                                    <option value="6-10" selected>6-10 slides</option>
-                                    <option value="11-18">11-18 slides</option>
-                                </select>
+                            <div class="flex flex-col gap-2 mb-4">
+                                <div class="flex gap-2">
+                                    <input type="text" id="urlInput" placeholder="Paste YouTube URL..."
+                                        class="flex-1 pl-4 pr-4 py-4 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:outline-none">
+                                    <select id="slideCount"
+                                        class="bg-white border border-gray-200 rounded-xl px-4 py-4 text-sm font-bold text-slate-600 focus:ring-2 focus:ring-blue-500 focus:outline-none">
+                                        <option value="1-5">1-5 slides</option>
+                                        <option value="6-10" selected>6-10 slides</option>
+                                        <option value="11-18">11-18 slides</option>
+                                    </select>
+                                </div>
+                                <button onclick="submitUrl()"
+                                    class="w-full py-3 bg-blue-600 text-white rounded-xl font-bold hover:bg-blue-700 transition flex items-center justify-center gap-2"
+                                    id="processUrlBtn">
+                                    <i class="fas fa-play"></i> Process Video
+                                </button>
                             </div>
 
                             <!-- OR Separator -->
@@ -269,12 +276,6 @@
                                         style="width: 0%"></div>
                                 </div>
                             </div>
-
-                            <button onclick="submitUrl()"
-                                class="absolute right-2 top-2 bg-black text-white px-6 py-2 rounded-lg font-bold hover:scale-105 transition h-[42px]"
-                                id="goBtn">
-                                Go
-                            </button>
                         </div>
                         {% endif %}
                     </div>
@@ -406,12 +407,14 @@
             const progressDiv = document.getElementById('uploadProgress');
             const progressBar = document.getElementById('progressBar');
             const progressPercent = document.getElementById('progressPercent');
-            const goBtn = document.getElementById('goBtn');
+            const processBtn = document.getElementById('processUrlBtn');
             const urlInput = document.getElementById('urlInput');
 
             progressDiv.classList.remove('hidden');
-            goBtn.disabled = true;
-            goBtn.innerText = "Wait";
+            if (processBtn) {
+                processBtn.disabled = true;
+                processBtn.innerText = "Wait...";
+            }
 
             // Optional: Hide URL input to reduce clutter
             urlInput.classList.add('opacity-50');
@@ -438,8 +441,10 @@
                     progressBar.classList.remove('bg-green-500');
                     progressBar.classList.add('bg-blue-600');
                     progressDiv.classList.add('hidden');
-                    goBtn.disabled = false;
-                    goBtn.innerText = "Go";
+                    if (processBtn) {
+                        processBtn.disabled = false;
+                        processBtn.innerHTML = '<i class="fas fa-play"></i> Process Video';
+                    }
                     input.value = '';
                     urlInput.classList.remove('opacity-50');
                 }, 500);
@@ -447,8 +452,10 @@
             } catch (error) {
                 console.error("Upload failed", error);
                 alert("Upload Failed.");
-                goBtn.disabled = false;
-                goBtn.innerText = "Go";
+                if (processBtn) {
+                    processBtn.disabled = false;
+                    processBtn.innerHTML = '<i class="fas fa-play"></i> Process Video';
+                }
                 progressDiv.classList.add('hidden');
                 urlInput.classList.remove('opacity-50');
             }
@@ -457,12 +464,12 @@
         async function submitUrl() {
             const url = document.getElementById('urlInput').value;
             const slideCount = document.getElementById('slideCount').value;
-            const goBtn = document.getElementById('goBtn');
-            const originalText = goBtn.innerText;
+            const processBtn = document.getElementById('processUrlBtn');
+            const originalText = processBtn.innerHTML;
 
             if (url) {
-                goBtn.disabled = true;
-                goBtn.innerText = "Processing...";
+                processBtn.disabled = true;
+                processBtn.innerText = "Processing...";
 
                 // Show progress bar (fake/indeterminate for URL processing)
                 const progressDiv = document.getElementById('uploadProgress');
@@ -508,8 +515,8 @@
             }
 
             function resetUI() {
-                goBtn.disabled = false;
-                goBtn.innerText = originalText;
+                processBtn.disabled = false;
+                processBtn.innerHTML = '<i class="fas fa-play"></i> Process Video';
                 document.getElementById('uploadProgress').classList.add('hidden');
                 document.getElementById('progressBar').classList.remove('animate-pulse');
                 document.getElementById('progressBar').style.width = '0%';
