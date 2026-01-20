@@ -136,6 +136,7 @@
             const [isExportModalOpen, setIsExportModalOpen] = useState(false);
             const [selectedTheme, setSelectedTheme] = useState('default');
             const [selectedFormat, setSelectedFormat] = useState('16:9');
+            const [selectedFileType, setSelectedFileType] = useState('pptx');
 
             // ... (keep handleAIRewrite, handleExportPDF)
 
@@ -147,8 +148,11 @@
             const confirmExportPPT = async () => {
                 setIsThinking(true);
                 const text = editor.getText();
+                const endpoint = selectedFileType === 'pdf' ? '/editor/export-slides-pdf' : '/editor/export-pptx';
+                const filename = selectedFileType === 'pdf' ? 'study_slides.pdf' : 'study_notes.pptx';
+
                 try {
-                    const response = await fetch('/editor/export-pptx', {
+                    const response = await fetch(endpoint, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({
@@ -162,13 +166,13 @@
                         const url = window.URL.createObjectURL(blob);
                         const a = document.createElement('a');
                         a.href = url;
-                        a.download = "study_notes.pptx";
+                        a.download = filename;
                         document.body.appendChild(a);
                         a.click();
                         a.remove();
                         setIsExportModalOpen(false);
                     } else {
-                        alert("Failed to export PPT. Please try again.");
+                        alert("Failed to export. Please try again.");
                     }
                 } catch (e) {
                     alert("Export Error: " + e);
@@ -247,6 +251,25 @@
                                     </div>
 
                                     <div className="p-6 space-y-6">
+                                        {/* File Type Selection */}
+                                        <div>
+                                            <label className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2 block">File Type</label>
+                                            <div className="flex bg-gray-100 p-1 rounded-lg">
+                                                <button
+                                                    onClick={() => setSelectedFileType('pptx')}
+                                                    className={`flex-1 py-2 text-sm font-bold rounded-md transition ${selectedFileType === 'pptx' ? 'bg-white shadow text-blue-600' : 'text-slate-500 hover:text-slate-700'}`}
+                                                >
+                                                    PowerPoint (.pptx)
+                                                </button>
+                                                <button
+                                                    onClick={() => setSelectedFileType('pdf')}
+                                                    className={`flex-1 py-2 text-sm font-bold rounded-md transition ${selectedFileType === 'pdf' ? 'bg-white shadow text-blue-600' : 'text-slate-500 hover:text-slate-700'}`}
+                                                >
+                                                    PDF Presentation (.pdf)
+                                                </button>
+                                            </div>
+                                        </div>
+
                                         {/* Format Selection */}
                                         <div>
                                             <label className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2 block">Format</label>
