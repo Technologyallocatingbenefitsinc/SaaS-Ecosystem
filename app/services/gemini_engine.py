@@ -95,11 +95,11 @@ async def process_video_content(video_url: str, user_tier: str, user_id: int, sl
         "content": markdown.markdown(response.text)
     }
 
-async def convert_text_to_slides_json(text: str, count: int = 10):
+async def convert_text_to_slides_json(text: str, count: int = 10, tone: str = "neutral"):
     model = genai.GenerativeModel("gemini-2.5-flash")
     prompt = f"""
     Convert the following study notes into a JSON structure for a PowerPoint presentation.
-    Create exactly {count} slides.
+    Create exactly {count} slides. Use a {tone} tone/style for the content.
     Output must be a plain JSON list of objects. Each object must have:
     - "title": string
     - "points": list of strings (each string is a bullet point)

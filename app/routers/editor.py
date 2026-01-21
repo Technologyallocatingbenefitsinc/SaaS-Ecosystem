@@ -19,6 +19,7 @@ class PPTXRequest(BaseModel):
     text: str
     theme: str = "default"
     aspect_ratio: str = "16:9" # "16:9" or "1:1"
+    writing_style: str = "neutral"
 
 # ...
 
@@ -29,7 +30,11 @@ async def generate_user_slides_pdf(
 ):
     try:
         # 1. Get Slides
-        json_str = await convert_text_to_slides_json(request.text, count=10)
+        json_str = await convert_text_to_slides_json(
+            request.text, 
+            count=10, 
+            tone=request.writing_style
+        )
         try:
             slide_data = json.loads(json_str)
         except:
@@ -118,7 +123,11 @@ async def generate_user_pptx(
 ):
     try:
         # 1. Convert text to JSON Structure via Gemini
-        json_str = await convert_text_to_slides_json(request.text, count=10)
+        json_str = await convert_text_to_slides_json(
+            request.text, 
+            count=10, 
+            tone=request.writing_style
+        )
         
         # 2. Parse JSON
         try:

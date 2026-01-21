@@ -137,6 +137,7 @@
             const [selectedTheme, setSelectedTheme] = useState('default');
             const [selectedFormat, setSelectedFormat] = useState('16:9');
             const [selectedFileType, setSelectedFileType] = useState('pptx');
+            const [selectedStyle, setSelectedStyle] = useState('neutral');
 
             // ... (keep handleAIRewrite, handleExportPDF)
 
@@ -158,7 +159,8 @@
                         body: JSON.stringify({
                             text: text,
                             theme: selectedTheme,
-                            aspect_ratio: selectedFormat
+                            aspect_ratio: selectedFormat,
+                            writing_style: selectedStyle
                         })
                     });
                     if (response.ok) {
@@ -180,6 +182,13 @@
                     setIsThinking(false);
                 }
             };
+
+            const styles = [
+                { id: 'neutral', name: 'Neutral', icon: '😐' },
+                { id: 'professional', name: 'Professional', icon: '👔' },
+                { id: 'fun', name: 'Fun/Engaging', icon: '🎉' },
+                { id: 'academic', name: 'Academic', icon: '🎓' }
+            ];
 
             const themes = [
                 { id: 'default', name: 'Clean White', color: 'bg-white border-gray-200' },
@@ -267,6 +276,23 @@
                                                 >
                                                     PDF Presentation (.pdf)
                                                 </button>
+                                            </div>
+                                        </div>
+
+                                        {/* Style Selection */}
+                                        <div>
+                                            <label className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2 block">AI Writing Style</label>
+                                            <div className="grid grid-cols-4 gap-2">
+                                                {styles.map(style => (
+                                                    <button
+                                                        key={style.id}
+                                                        onClick={() => setSelectedStyle(style.id)}
+                                                        className={`p-2 rounded-lg border text-center transition ${selectedStyle === style.id ? 'border-blue-500 bg-blue-50 text-blue-700' : 'border-gray-200 hover:bg-gray-50'}`}
+                                                    >
+                                                        <div className="text-xl mb-1">{style.icon}</div>
+                                                        <div className="text-[10px] font-bold">{style.name}</div>
+                                                    </button>
+                                                ))}
                                             </div>
                                         </div>
 
