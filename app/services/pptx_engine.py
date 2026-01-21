@@ -29,6 +29,31 @@ THEMES = {
         "title_color": (120, 53, 15),
         "body_color": (146, 64, 14),
         "accent_color": (217, 119, 6) # Amber-600
+    },
+    # Aesthetic Themes
+    "sunset": {
+        "bg_color": (255, 241, 242), # Rose-50
+        "title_color": (159, 18, 57), # Rose-800
+        "body_color": (136, 19, 55), # Rose-900
+        "accent_color": (251, 113, 133) # Rose-400
+    },
+    "forest": {
+        "bg_color": (240, 253, 244), # Green-50
+        "title_color": (20, 83, 45), # Green-800
+        "body_color": (22, 101, 52), # Green-700
+        "accent_color": (22, 163, 74) # Green-600
+    },
+    "ocean": {
+        "bg_color": (236, 254, 255), # Cyan-50
+        "title_color": (12, 74, 110), # Sky-900
+        "body_color": (8, 51, 68), # Cyan-950
+        "accent_color": (6, 182, 212) # Cyan-500
+    },
+    "luxury": {
+        "bg_color": (24, 24, 27), # Zinc-900
+        "title_color": (234, 179, 8), # Yellow-500 (Gold)
+        "body_color": (228, 228, 231), # Zinc-200
+        "accent_color": (250, 204, 21) # Yellow-400
     }
 }
 
@@ -64,8 +89,40 @@ def draw_theme_layout(slide, theme_name, theme_colors, width, height):
         shape.fill.solid()
         shape.fill.fore_color.rgb = RGBColor(253, 230, 138) # Light yellow accent
         shape.line.fill.background()
-        # Reposition title to be on top of this if needed, but z-order is tricky. 
-        # Usually shapes added first are at back.
+
+    elif theme_name == "sunset":
+        # Bottom accent bar
+        shape = shapes.add_shape(MSO_SHAPE.RECTANGLE, 0, height - Inches(1), width, Inches(1))
+        shape.fill.solid()
+        shape.fill.fore_color.rgb = accent_rgb
+        shape.line.fill.background()
+        
+    elif theme_name == "forest":
+        # Left sidebar thin
+        shape = shapes.add_shape(MSO_SHAPE.RECTANGLE, 0, 0, Inches(0.8), height)
+        shape.fill.solid()
+        shape.fill.fore_color.rgb = accent_rgb
+        shape.line.fill.background()
+
+    elif theme_name == "ocean":
+        # Top wave accent
+        shape = shapes.add_shape(MSO_SHAPE.RECTANGLE, 0, 0, width, Inches(0.5))
+        shape.fill.solid()
+        shape.fill.fore_color.rgb = accent_rgb
+        shape.line.fill.background()
+        
+    elif theme_name == "luxury":
+        # Gold Frame
+        # Top
+        shape = shapes.add_shape(MSO_SHAPE.RECTANGLE, 0, 0, width, Inches(0.1))
+        shape.fill.solid()
+        shape.fill.fore_color.rgb = accent_rgb
+        shape.line.fill.background()
+        # Bottom
+        shape = shapes.add_shape(MSO_SHAPE.RECTANGLE, 0, height - Inches(0.1), width, Inches(0.1))
+        shape.fill.solid()
+        shape.fill.fore_color.rgb = accent_rgb
+        shape.line.fill.background()
 
 def generate_pptx(slide_data: list, watermark: bool = False, theme_name: str = "default", aspect_ratio: str = "16:9") -> bytes:
     """
