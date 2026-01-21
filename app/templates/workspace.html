@@ -138,6 +138,7 @@
             const [selectedFormat, setSelectedFormat] = useState('16:9');
             const [selectedFileType, setSelectedFileType] = useState('pptx');
             const [selectedStyle, setSelectedStyle] = useState('neutral');
+            const [slideCount, setSlideCount] = useState(10);
 
             // ... (keep handleAIRewrite, handleExportPDF)
 
@@ -160,7 +161,8 @@
                             text: text,
                             theme: selectedTheme,
                             aspect_ratio: selectedFormat,
-                            writing_style: selectedStyle
+                            writing_style: selectedStyle,
+                            slide_count: slideCount
                         })
                     });
                     if (response.ok) {
@@ -293,6 +295,27 @@
                                                         <div className="text-[10px] font-bold">{style.name}</div>
                                                     </button>
                                                 ))}
+                                            </div>
+                                        </div>
+
+                                        {/* Slide Count Selection */}
+                                        <div>
+                                            <div className="flex justify-between items-center mb-2">
+                                                <label className="text-xs font-bold text-slate-400 uppercase tracking-wider block">Slide Count</label>
+                                                <span className="text-sm font-bold text-blue-600 bg-blue-50 px-2 py-1 rounded-md">{slideCount} Slides</span>
+                                            </div>
+                                            <input
+                                                type="range"
+                                                min="1"
+                                                max="20"
+                                                value={slideCount}
+                                                onChange={(e) => setSlideCount(parseInt(e.target.value))}
+                                                className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-blue-600"
+                                            />
+                                            <div className="flex justify-between text-[10px] text-gray-400 mt-1">
+                                                <span>1</span>
+                                                <span>10</span>
+                                                <span>20</span>
                                             </div>
                                         </div>
 
