@@ -59,26 +59,35 @@ async def generate_user_slides_pdf(
             pdf.rect(0, 0, width, height, 'F')
             
             # Title
-            pdf.set_font("Helvetica", "B", 24)
+            pdf.set_font("Helvetica", "B", 28) # Larger Title
             pdf.set_text_color(*title_c)
-            pdf.set_xy(10, 15)
-            pdf.multi_cell(width-20, 10, slide.get("title", "Untitled"), align='L')
+            pdf.set_xy(20, 20)
+            pdf.multi_cell(width-40, 14, slide.get("title", "Untitled"), align='L')
             
+            # Divide Line (Optional visual separation)
+            # pdf.set_draw_color(*title_c)
+            # pdf.line(20, pdf.get_y()+5, width-20, pdf.get_y()+5)
+
             # Content (Points)
-            pdf.set_font("Helvetica", "", 14)
+            pdf.set_font("Helvetica", "", 18)
             pdf.set_text_color(*body_c)
-            pdf.set_xy(15, 30)
+            # Dynamic Y positioning
+            current_y = pdf.get_y() + 15
+            pdf.set_y(current_y)
             
             points = slide.get("points", [])
             content_text = slide.get("content", "")
             
             if points and isinstance(points, list):
                 for p in points:
-                    pdf.set_x(15)
-                    pdf.multi_cell(width-30, 8, f"- {p}")
-                    pdf.ln(2)
+                    pdf.set_x(25) # Indent
+                    # Use simple dash for compatibility or try encoding
+                    # using - as bullet for reliability
+                    pdf.multi_cell(width-50, 10, f"-  {p}")
+                    pdf.ln(5) # Add spacing between points
             else:
-                pdf.multi_cell(width-30, 8, str(content_text))
+                pdf.set_x(25)
+                pdf.multi_cell(width-50, 10, str(content_text))
 
         # Watermark
         if not user or (user.tier == "student" and user.credits <= 1):
