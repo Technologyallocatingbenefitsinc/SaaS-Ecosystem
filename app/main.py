@@ -169,16 +169,17 @@ async def upload_video_form(
     try:
         result = await process_video_content(video_url, user_tier, user_id, slide_count)
         
-        # Save to DB for Recent Activity
-        new_deck = SlideDeck(
-            user_id=user_id,
-            video_url=video_url,
-            summary_content=result.get("content", ""),
-            # pdf_path could be generated later or null
-        )
-        db.add(new_deck)
-        await db.commit()
-        await db.refresh(new_deck)
+        # Save to DB for Recent Activity (Only if authenticated)
+        if user:
+            new_deck = SlideDeck(
+                user_id=user.id,
+                video_url=video_url,
+                summary_content=result.get("content", ""),
+                # pdf_path could be generated later or null
+            )
+            db.add(new_deck)
+            await db.commit()
+            await db.refresh(new_deck)
         
         return result
     except Exception as e:
