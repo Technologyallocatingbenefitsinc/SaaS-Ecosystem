@@ -205,6 +205,7 @@
                     <div
                         class="bg-white rounded-[20px] p-12 text-center h-full flex flex-col items-center justify-center">
                         {% if tier == 'professor' %}
+                        <!-- Professor Content (unchanged) -->
                         <div
                             class="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center text-blue-600 text-3xl mb-6">
                             <i class="fas fa-users"></i>
@@ -281,6 +282,17 @@
                     </div>
                 </div>
 
+                <!-- Recent Activity Section -->
+                <section id="recentActivitySection" class="hidden">
+                    <div class="flex items-center justify-between mb-6">
+                        <h2 class="text-2xl font-bold text-slate-800">Recent Activity</h2>
+                        <button class="text-sm text-blue-600 font-bold hover:underline">View All</button>
+                    </div>
+                    <div id="recentActivityGrid" class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <!-- Cards injected by JS -->
+                    </div>
+                </section>
+
                 <!-- Skeleton Loader Example (Simulating processing) -->
                 {% if tier == 'podcaster' %}
                 <section>
@@ -356,6 +368,55 @@
         </div>
     </div>
 
+    <!-- Onboarding Modal -->
+    <div id="onboardingModal"
+        class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white max-w-lg w-full rounded-2xl shadow-2xl overflow-hidden animate-fade-in-up">
+            <div class="bg-gradient-to-r from-blue-600 to-indigo-600 p-6 text-white text-center">
+                <div class="w-16 h-16 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-4 text-3xl">
+                    👋
+                </div>
+                <h2 class="text-2xl font-bold">Welcome to MODYFIRE!</h2>
+                <p class="text-blue-100 mt-2">Let's turn your content into viral assets in seconds.</p>
+            </div>
+            <div class="p-8 space-y-6">
+                <div class="flex gap-4">
+                    <div
+                        class="w-8 h-8 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center font-bold shrink-0">
+                        1</div>
+                    <div>
+                        <h4 class="font-bold text-slate-800">Paste a YouTube URL</h4>
+                        <p class="text-sm text-slate-500">Or upload a video/audio file directly.</p>
+                    </div>
+                </div>
+                <div class="flex gap-4">
+                    <div
+                        class="w-8 h-8 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center font-bold shrink-0">
+                        2</div>
+                    <div>
+                        <h4 class="font-bold text-slate-800">Choose Your Output</h4>
+                        <p class="text-sm text-slate-500">Select how many slides or chapters you need.</p>
+                    </div>
+                </div>
+                <div class="flex gap-4">
+                    <div
+                        class="w-8 h-8 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center font-bold shrink-0">
+                        3</div>
+                    <div>
+                        <h4 class="font-bold text-slate-800">AI Magic & Export</h4>
+                        <p class="text-sm text-slate-500">We'll summarize and format it. You can edit, then export to
+                            PPTX or PDF.</p>
+                    </div>
+                </div>
+
+                <button onclick="closeOnboarding()"
+                    class="w-full py-3 bg-slate-900 text-white rounded-xl font-bold hover:bg-slate-800 transition shadow-lg transform hover:scale-[1.02]">
+                    Get Started 🚀
+                </button>
+            </div>
+        </div>
+    </div>
+
     <script>
         // --- Cookie Logic ---
         const gpc = navigator.globalPrivacyControl;
@@ -366,10 +427,21 @@
                 const banner = document.getElementById('cookieBanner');
                 banner.classList.remove('translate-y-full', 'opacity-0');
             }
+            // Check Onboarding
+            if (!localStorage.getItem('hasSeenDashboardTour')) {
+                setTimeout(() => {
+                    document.getElementById('onboardingModal').classList.remove('hidden');
+                }, 1000);
+            }
             if (gpc) {
                 console.log("GPC Signal Detected: Auto-Rejecting non-essential.");
             }
         });
+
+        function closeOnboarding() {
+            document.getElementById('onboardingModal').classList.add('hidden');
+            localStorage.setItem('hasSeenDashboardTour', 'true');
+        }
 
         function acceptCookies() {
             localStorage.setItem('cookieConsent', 'accepted');
@@ -566,6 +638,61 @@
                 btn.disabled = false;
             }
         }
+
+        // --- Recent Activity Logic ---
+        async function fetchRecentActivity() {
+            try {
+                const response = await fetch('/api/recent-activity');
+                if (response.ok) {
+                    const activities = await response.json();
+                    if (activities.length > 0) {
+                        const grid = document.getElementById('recentActivityGrid');
+                        const section = document.getElementById('recentActivitySection');
+                        section.classList.remove('hidden');
+
+                        grid.innerHTML = activities.map(item => `
+                            <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 hover:shadow-md transition group relative overflow-hidden">
+                                <div class="absolute top-0 left-0 w-1 h-full bg-blue-500 transform -translate-x-full group-hover:translate-x-0 transition duration-300"></div>
+                                <div class="flex justify-between items-start mb-4">
+                                    <div class="w-10 h-10 bg-blue-50 text-blue-600 rounded-lg flex items-center justify-center text-xl">
+                                        <i class="fas fa-file-powerpoint"></i>
+                                    </div>
+                                    <span class="text-xs font-bold text-gray-400 uppercase">${item.date}</span>
+                                </div>
+                                <h3 class="text-lg font-bold text-slate-800 mb-2 line-clamp-1">${item.title}</h3>
+                                <p class="text-sm text-slate-500 mb-4 line-clamp-2">${item.preview || "No preview available."}</p>
+                                <button onclick="loadDeck(${item.id}, '${escapeHtml(item.preview)}')" class="text-sm font-bold text-blue-600 hover:text-blue-800 flex items-center gap-1">
+                                    Open Workspace <i class="fas fa-arrow-right text-xs"></i>
+                                </button>
+                            </div>
+                        `).join('');
+                    }
+                }
+            } catch (e) {
+                console.error("Failed to fetch recent activity", e);
+            }
+        }
+
+        function loadDeck(id, content) {
+            // In a real app, we'd fetch the full content by ID.
+            // For now, we load what we have into localStorage and go.
+            localStorage.setItem('pendingSummary', content);
+            localStorage.setItem('pendingTitle', "Recovered Session"); // or fetch title
+            window.location.href = '/workspace';
+        }
+
+        function escapeHtml(text) {
+            if (!text) return "";
+            return text
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/"/g, "&quot;")
+                .replace(/'/g, "&#039;");
+        }
+
+        // Load on startup
+        fetchRecentActivity();
     </script>
 </body>
 

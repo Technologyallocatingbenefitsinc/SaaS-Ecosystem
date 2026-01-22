@@ -12,6 +12,7 @@ from app.database import engine, get_db, Base
 from app.config import settings
 from app.services.gemini_engine import process_video_content
 from app.routers import auth, editor, legal, upload
+from app.models import SlideDeck
 import httpx
 
 @asynccontextmanager
@@ -50,6 +51,8 @@ app.include_router(auth.router, prefix="/auth", tags=["auth"])
 app.include_router(editor.router, prefix="/editor", tags=["editor"])
 app.include_router(legal.router, prefix="/legal", tags=["legal"])
 app.include_router(upload.router, prefix="/upload", tags=["upload"])
+from app.routers import dashboard
+app.include_router(dashboard.router, prefix="/api", tags=["dashboard"])
 
 @app.get("/", response_class=RedirectResponse)
 async def root():
@@ -150,12 +153,33 @@ async def invite_students():
 async def workspace(request: Request):
     return templates.TemplateResponse(request, "workspace.html")
 
+from app.models import SlideDeck, User # Ensure imports
+
 @app.post("/upload-video")
-async def upload_video_form(video_url: str = Form(...), slide_count: str = Form("6-10"), user = Depends(auth.get_replit_user)):
+async def upload_video_form(
+    video_url: str = Form(...), 
+    slide_count: str = Form("6-10"), 
+    user = Depends(auth.get_replit_user),
+    db = Depends(get_db)
+):
     user_tier = user.tier if user else "student"
-    user_id = user.id if user else 1
+    # Fallback to system user 1 if not logged in (for demo/onboarding)
+    user_id = user.id if user else 1 
+    
     try:
         result = await process_video_content(video_url, user_tier, user_id, slide_count)
+        
+        # Save to DB for Recent Activity
+        new_deck = SlideDeck(
+            user_id=user_id,
+            video_url=video_url,
+            summary_content=result.get("content", ""),
+            # pdf_path could be generated later or null
+        )
+        db.add(new_deck)
+        await db.commit()
+        await db.refresh(new_deck)
+        
         return result
     except Exception as e:
         print(f"Error processing video: {e}")

@@ -36,7 +36,7 @@ async def test_gemini_engine_logging_integration():
             with patch("app.services.gemini_engine.get_transcript", return_value="Mocked Transcript"):
                 result = await process_video_content("http://youtube.com/v=123", "student", 456)
                 
-                assert result["content"] == "Mocked AI Response"
+                assert result["content"] == "<p>Mocked AI Response</p>"
                 mock_logger.assert_called_once_with(
                     user_id=456,
                     plan_type="student",

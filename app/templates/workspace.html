@@ -68,23 +68,58 @@
 
         const DocumentEditor = () => {
             const [editor, setEditor] = useState(null);
-            const [isThinking, setIsThinking] = useState(false);
+            const [isThinking, setIsThinking] = useState(false); // AI Rewrite
+            const [isGenerating, setIsGenerating] = useState(false); // Export/Preview
+            const [saveStatus, setSaveStatus] = useState('saved'); // 'saved', 'saving', 'unsaved'
+            const [isExportModalOpen, setIsExportModalOpen] = useState(false); // Export Modal
+
+            // Add other states that might be missing from view if needed, or rely on defaults if they are defined further down? 
+            // Warning: if I redefine vars that are defined below, it errors. 
+            // But looking at previous view, only editor/isThinking were defined at top.
+            // I'll define these here.
+
+            const [selectedFileType, setSelectedFileType] = useState('pptx');
+            const [selectedStyle, setSelectedStyle] = useState('neutral');
+            const [slideCount, setSlideCount] = useState(10);
+            const [selectedFormat, setSelectedFormat] = useState('16:9');
+            const [selectedTheme, setSelectedTheme] = useState('default');
+
             const editorRef = useRef(null);
+            const saveTimeoutRef = useRef(null);
+
+            // Debounced Save
+            const triggerSave = (content) => {
+                setSaveStatus('saving');
+                if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current);
+
+                saveTimeoutRef.current = setTimeout(() => {
+                    localStorage.setItem('workspace_autosave', content);
+                    setSaveStatus('saved');
+                }, 1000);
+            };
 
             useEffect(() => {
                 const initEditor = async () => {
                     await new Promise(r => setTimeout(r, 500));
                     if (window.Tiptap) {
                         const { Editor, StarterKit, Image } = window.Tiptap;
+
+                        // Load Content: Autosave -> Pending -> Default
+                        const saved = localStorage.getItem('workspace_autosave');
+                        const pending = localStorage.getItem('pendingSummary');
+                        const content = saved || pending || '<p>Start writing or paste your lecture summary here...</p>';
+
                         const tipTapEditor = new Editor({
                             element: editorRef.current,
                             extensions: [StarterKit, Image],
-                            content: localStorage.getItem('pendingSummary') || '<p>Start writing or paste your lecture summary here...</p>',
+                            content: content,
                             autofocus: true,
+                            onUpdate: ({ editor }) => {
+                                triggerSave(editor.getHTML());
+                            }
                         });
 
-                        // Clean up
-                        localStorage.removeItem('pendingSummary');
+                        if (pending) localStorage.removeItem('pendingSummary');
 
                         setEditor(tipTapEditor);
                     }
@@ -166,12 +201,6 @@
                 }
             };
 
-            const [isExportModalOpen, setIsExportModalOpen] = useState(false);
-            const [selectedTheme, setSelectedTheme] = useState('default');
-            const [selectedFormat, setSelectedFormat] = useState('16:9');
-            const [selectedFileType, setSelectedFileType] = useState('pptx');
-            const [selectedStyle, setSelectedStyle] = useState('neutral');
-            const [slideCount, setSlideCount] = useState(10);
 
             // ... (keep handleAIRewrite, handleExportPDF)
 
@@ -180,25 +209,68 @@
                 setIsExportModalOpen(true);
             };
 
-            const confirmExportPPT = async () => {
-                setIsThinking(true);
-                const text = editor.getText();
-                const endpoint = selectedFileType === 'pdf' ? '/editor/export-slides-pdf' : '/editor/export-pptx';
-                const filename = selectedFileType === 'pdf' ? 'study_slides.pdf' : 'study_notes.pptx';
-
+            const handlePreviewPDF = async () => {
+                setIsGenerating(true);
                 try {
-                    const response = await fetch(endpoint, {
+                    const text = editor.getText();
+                    if (!text.trim()) {
+                        alert("Please enter some text first");
+                        setIsGenerating(false);
+                        return;
+                    }
+
+                    const response = await fetch('/editor/preview-pdf', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({
                             text: text,
-                            html_content: editor.getHTML(), // Send HTML for image parsing
+                            html_content: editor.getHTML(),
                             theme: selectedTheme,
                             aspect_ratio: selectedFormat,
                             writing_style: selectedStyle,
                             slide_count: slideCount
                         })
                     });
+
+                    if (response.ok) {
+                        const blob = await response.blob();
+                        const url = window.URL.createObjectURL(blob);
+                        window.open(url, '_blank'); // Open PDF in new tab
+                        setTimeout(() => window.URL.revokeObjectURL(url), 100);
+                        setIsExportModalOpen(false);
+                    } else {
+                        // Extract detailed error message
+                        const errorData = await response.json();
+                        alert("Preview failed: " + (errorData.detail || "Unknown error"));
+                    }
+                } catch (error) {
+                    console.error('Preview error:', error);
+                    alert("An error occurred during preview generation.");
+                } finally {
+                    setIsGenerating(false);
+                }
+            };
+
+            const confirmExportPPT = async () => {
+                setIsGenerating(true);
+                try {
+                    const text = editor.getText();
+                    const endpoint = selectedFileType === 'pdf' ? '/editor/export-slides-pdf' : '/editor/export-pptx';
+                    const filename = selectedFileType === 'pdf' ? 'study_slides.pdf' : 'study_notes.pptx';
+
+                    const response = await fetch(endpoint, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            text: text,
+                            html_content: editor.getHTML(),
+                            theme: selectedTheme,
+                            aspect_ratio: selectedFormat,
+                            writing_style: selectedStyle,
+                            slide_count: slideCount
+                        })
+                    });
+
                     if (response.ok) {
                         const blob = await response.blob();
                         const url = window.URL.createObjectURL(blob);
@@ -208,14 +280,17 @@
                         document.body.appendChild(a);
                         a.click();
                         a.remove();
+                        window.URL.revokeObjectURL(url);
                         setIsExportModalOpen(false);
                     } else {
-                        alert("Failed to export. Please try again.");
+                        const errorData = await response.json();
+                        alert("Export failed: " + (errorData.detail || "Unknown error"));
                     }
                 } catch (e) {
-                    alert("Export Error: " + e);
+                    console.error(e);
+                    alert("An error occurred during export.");
                 } finally {
-                    setIsThinking(false);
+                    setIsGenerating(false);
                 }
             };
 
@@ -278,6 +353,10 @@
                                 >
                                     Aa
                                 </button>
+                                <div className="flex items-center gap-2 px-3 py-1 bg-gray-50 rounded-lg border border-gray-100 mr-2">
+                                    <div className={`w-2 h-2 rounded-full ${saveStatus === 'saved' ? 'bg-green-500' : (saveStatus === 'saving' ? 'bg-yellow-500 animate-pulse' : 'bg-gray-300')}`}></div>
+                                    <span className="text-xs font-medium text-slate-500 capitalize">{saveStatus}</span>
+                                </div>
                                 <button
                                     onClick={handleExportPDF}
                                     className="px-4 py-2 bg-slate-900 text-white rounded-lg font-medium hover:bg-slate-800 transition shadow-lg"
@@ -293,7 +372,32 @@
                             </div>
                         </header>
 
-                        <div className="flex-1 bg-gray-50 overflow-auto p-8 flex justify-center">
+                        <div className="flex-1 bg-gray-50 overflow-auto p-8 flex flex-col items-center">
+
+                            {/* Onboarding Banner */}
+                            {/* Onboarding Banner */}
+                            {!localStorage.getItem('hasSeenWorkspaceTour') && (
+                                <div id="workspaceTourContainer" className="w-full max-w-4xl bg-gradient-to-r from-indigo-500 to-purple-600 text-white p-4 rounded-xl shadow-lg mb-6 flex justify-between items-center animate-fade-in-down">
+                                    <div className="flex gap-3 items-center">
+                                        <div className="bg-white/20 p-2 rounded-lg text-xl">💡</div>
+                                        <div>
+                                            <h4 className="font-bold">Pro Tip:</h4>
+                                            <p className="text-sm opacity-90">Use <span className="font-bold bg-white/20 px-1 rounded">✨ AI Polish</span> to rewrite your notes, and <span className="font-bold bg-white/20 px-1 rounded">📷 Add Media</span> to insert images for your slides.</p>
+                                        </div>
+                                    </div>
+                                    <button
+                                        onClick={() => {
+                                            localStorage.setItem('hasSeenWorkspaceTour', 'true');
+                                            const el = document.getElementById('workspaceTourContainer');
+                                            if (el) el.style.display = 'none';
+                                        }}
+                                        className="text-white/80 hover:text-white hover:bg-white/10 p-2 rounded-full transition"
+                                    >
+                                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" /></svg>
+                                    </button>
+                                </div>
+                            )}
+
                             <div className="w-full max-w-4xl bg-white shadow-xl rounded-xl min-h-[800px] h-fit border border-gray-100 mb-20">
                                 <div className="border-b p-2 flex gap-2 text-gray-500 text-sm">
                                     <button className="hover:text-black">Bold</button>
@@ -409,19 +513,37 @@
                                         </div>
                                     </div>
 
-                                    <div className="p-6 bg-gray-50 flex justify-end gap-3 border-t border-gray-100">
+                                    <div className="flex gap-3 pt-4 border-t border-gray-100">
                                         <button
                                             onClick={() => setIsExportModalOpen(false)}
-                                            className="px-4 py-2 text-slate-600 font-bold hover:bg-gray-200 rounded-lg transition"
+                                            className="flex-1 py-3 text-slate-500 font-bold hover:bg-slate-50 rounded-xl transition"
                                         >
                                             Cancel
                                         </button>
+
+                                        {selectedFileType === 'pdf' && (
+                                            <button
+                                                onClick={handlePreviewPDF}
+                                                disabled={isGenerating}
+                                                className="flex-1 py-3 bg-blue-100 text-blue-700 font-bold rounded-xl hover:bg-blue-200 transition flex items-center justify-center gap-2"
+                                            >
+                                                {isGenerating ? 'Generating...' : '👁️ Preview PDF'}
+                                            </button>
+                                        )}
+
                                         <button
                                             onClick={confirmExportPPT}
-                                            disabled={isThinking}
-                                            className="px-6 py-2 bg-blue-600 text-white font-bold rounded-lg hover:bg-blue-700 transition shadow-lg flex items-center gap-2"
+                                            disabled={isGenerating}
+                                            className="flex-[2] py-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-bold rounded-xl hover:shadow-lg hover:scale-[1.02] transition flex items-center justify-center gap-2 shadow-blue-200 shadow-lg"
                                         >
-                                            {isThinking ? 'Generating...' : 'Download PPTX'}
+                                            {isGenerating ? (
+                                                <span className="animate-pulse">Generating...</span>
+                                            ) : (
+                                                <>
+                                                    <span>Download {selectedFileType === 'pptx' ? 'PPTX' : 'PDF'}</span>
+                                                    <span className="text-xl">✨</span>
+                                                </>
+                                            )}
                                         </button>
                                     </div>
                                 </div>
