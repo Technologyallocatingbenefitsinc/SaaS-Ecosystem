@@ -213,3 +213,61 @@ async def identify_viral_clips(video_url: str):
     response = model.generate_content(prompt)
     cleaned = response.text.replace("```json", "").replace("```", "").strip()
     return cleaned
+
+async def generate_audio_script(transcript_text: str):
+    model = genai.GenerativeModel("gemini-2.0-flash-thinking-exp-01-21")
+    prompt = f"""
+    Convert the following transcript into a natural, engaging podcast dialogue between two hosts:
+    
+    1. **Alex (The Host)**: Curious, enthusiastic, asks clarifying questions, uses analogies.
+    2. **Sam (The Expert)**: Knowledgeable, calm, explains concepts clearly but not dryly.
+    
+    The dialogue should be about 3-5 minutes of reading time (approx 600-800 words).
+    Focus on the core insights. Use "Um", "Exactly", "Right?" to make it sound natural.
+    
+    Output strictly as a JSON list of objects:
+    [
+      {{ "speaker": "Alex", "text": "Welcome back! Today we're diving into..." }},
+      {{ "speaker": "Sam", "text": "It's a fascinating topic, Alex. Essentially..." }}
+    ]
+    
+    Transcript:
+    {transcript_text[:15000]} 
+    """
+    
+    response = model.generate_content(prompt)
+    cleaned = response.text.replace("```json", "").replace("```", "").strip()
+    response = model.generate_content(prompt)
+    cleaned = response.text.replace("```json", "").replace("```", "").strip()
+    return cleaned
+
+async def chat_with_video(transcript_text: str, history: list, question: str):
+    """
+    Answers a question based strictly on the transcript context.
+    History is a list of {"role": "user"|"model", "text": "..."}
+    """
+    model = genai.GenerativeModel("gemini-2.5-flash")
+    
+    # Format history for prompt
+    formatted_history = ""
+    for turn in history:
+        role = "Student" if turn.get("role") == "user" else "Assistant"
+        formatted_history += f"{role}: {turn.get('text', '')}\n"
+    
+    prompt = f"""
+    You are a helpful teaching assistant for this video course. 
+    Answer the student's question based strictly on the provided transcript below.
+    If the answer is not in the transcript, say "I don't see that covered in the video, but generally..." and give a brief general answer if you know it, but be clear it's not in the video.
+    Keep answers concise (2-3 sentences max usually) and conversational.
+    
+    Transcript:
+    {transcript_text}
+    
+    Chat History:
+    {formatted_history}
+    
+    Student Question: {question}
+    """
+    
+    response = model.generate_content(prompt)
+    return response.text

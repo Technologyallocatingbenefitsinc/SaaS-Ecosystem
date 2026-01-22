@@ -352,3 +352,56 @@ async def create_viral_clips(request: ClipsRequest):
         print(f"Clip Gen Error: {e}")
         raise HTTPException(status_code=400, detail=f"Clip generation failed: {str(e)}")
 
+from app.services.gemini_engine import generate_audio_script
+from app.services.audio_engine import synthesize_podcast_audio
+
+class AudioRequest(BaseModel):
+    text: str # The transcript or notes
+
+class ScriptRequest(BaseModel):
+    script: list # The list of [{speaker, text}]
+
+@router.post("/generate-audio-script")
+async def create_audio_script(request: AudioRequest):
+    try:
+        json_str = await generate_audio_script(request.text)
+        try:
+             script_data = json.loads(json_str)
+        except json.JSONDecodeError:
+             raise ValueError("AI failed to generate valid JSON for script.")
+        
+        return {"script": script_data}
+    except Exception as e:
+        print(f"Audio Script Error: {e}")
+        raise HTTPException(status_code=400, detail=str(e))
+
+@router.post("/synthesize-audio")
+async def create_audio_file(request: ScriptRequest):
+    try:
+        # Generate generic filename
+        filename = f"podcast_{io.BytesIO().__hash__()}.mp3"
+        filepath = f"user_uploads/{filename}"
+        
+        synthesize_podcast_audio(request.script, output_filename=filepath)
+        
+        return {"audio_url": f"/uploads/{filename}"}
+    except Exception as e:
+        print(f"Audio Synth Error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+from app.services.gemini_engine import chat_with_video
+
+class ChatRequest(BaseModel):
+    text: str # Transcript
+    history: list = [] # List of {role, text}
+    question: str
+
+@router.post("/chat-video")
+async def ask_video_question(request: ChatRequest):
+    try:
+        answer = await chat_with_video(request.text, request.history, request.question)
+        return {"answer": answer}
+    except Exception as e:
+        print(f"Chat Error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
