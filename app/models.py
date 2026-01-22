@@ -13,6 +13,12 @@ class User(Base):
     credits = Column(Integer, default=0)
     replit_id = Column(String, unique=True, index=True)
     username = Column(String)
+    reset_token = Column(String, nullable=True, index=True)
+    reset_token_expires = Column(DateTime(timezone=True), nullable=True)
+    device_fingerprint = Column(String, nullable=True, index=True)
+    google_id = Column(String, nullable=True, index=True)
+    apple_id = Column(String, nullable=True, index=True)
+    avatar_url = Column(String, nullable=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 
 class Lead(Base):

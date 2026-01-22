@@ -135,6 +135,10 @@ async def tos_page(request: Request):
 async def trust_center_page(request: Request):
     return templates.TemplateResponse(request, "trust-center.html", {})
 
+@app.get("/reset-password", response_class=HTMLResponse)
+async def reset_password_page(request: Request):
+    return templates.TemplateResponse(request, "reset_password.html", {})
+
 @app.post("/invite-students")
 async def invite_students():
     # Trigger n8n Webhook for emails
