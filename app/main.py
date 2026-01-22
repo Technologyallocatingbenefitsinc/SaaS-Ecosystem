@@ -8,7 +8,6 @@ from app.limiter import limiter
 from slowapi import _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
 from contextlib import asynccontextmanager
-from sqlalchemy import select
 from app.database import engine, get_db, Base
 from app.config import settings
 from app.services.gemini_engine import process_video_content
@@ -44,6 +43,7 @@ app.add_middleware(
 
 # Mount Static & Templates
 app.mount("/static", StaticFiles(directory="app/static"), name="static")
+app.mount("/uploads", StaticFiles(directory="user_uploads"), name="uploads")
 templates = Jinja2Templates(directory="app/templates")
 
 app.include_router(auth.router, prefix="/auth", tags=["auth"])

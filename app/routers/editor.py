@@ -21,6 +21,7 @@ class PPTXRequest(BaseModel):
     aspect_ratio: str = "16:9" # "16:9" or "1:1"
     writing_style: str = "neutral"
     slide_count: int = 10
+    html_content: str = None # Optional HTML from editor (with images)
 
 # ...
 
@@ -34,7 +35,8 @@ async def generate_user_slides_pdf(
         json_str = await convert_text_to_slides_json(
             request.text, 
             count=request.slide_count, 
-            tone=request.writing_style
+            tone=request.writing_style,
+            html_content=request.html_content
         )
         try:
             slide_data = json.loads(json_str)
@@ -54,8 +56,14 @@ async def generate_user_slides_pdf(
         bg = theme["bg_color"]
         title_c = theme["title_color"]
         body_c = theme["body_color"]
+        accent_c = theme["accent_color"]
 
         pdf.set_auto_page_break(auto=False)
+        
+        # Check Watermark Condition
+        should_watermark = False
+        if not user or (user.tier == "student" and user.credits <= 1):
+             should_watermark = True
 
         for slide in slide_data:
             pdf.add_page()
@@ -64,46 +72,97 @@ async def generate_user_slides_pdf(
             pdf.set_fill_color(*bg)
             pdf.rect(0, 0, width, height, 'F')
             
-            # Title
-            pdf.set_font("Helvetica", "B", 28) # Larger Title
-            pdf.set_text_color(*title_c)
-            pdf.set_xy(20, 20)
-            pdf.multi_cell(width-40, 14, slide.get("title", "Untitled"), align='L')
+            # --- Draw Theme Layout ---
+            # Using FPDF shapes to match PPTX themes
+            pdf.set_fill_color(*accent_c)
             
-            # Divide Line (Optional visual separation)
-            # pdf.set_draw_color(*title_c)
-            # pdf.line(20, pdf.get_y()+5, width-20, pdf.get_y()+5)
+            if request.theme == "corporate":
+                # Left Accent Bar (approx 12.7mm = 0.5 inch)
+                pdf.rect(0, 0, 12.7, height, 'F')
+                
+            elif request.theme == "dark":
+                # Top thin accent line (2.5mm approx 0.1 inch)
+                pdf.rect(0, 0, width, 3, 'F')
+                # Bottom right accent circle (approx 3 inches = 76mm)
+                # FPDF ellipse: x, y, w, h
+                pdf.ellipse(width - 50, height - 50, 75, 75, 'F')
 
+            elif request.theme == "warm":
+                # Soft top header block (approx 1.2 inches = 30mm)
+                # We need a custom color for this specific theme logic if it differs,
+                # but PPTX used hardcoded RGB(253, 230, 138) for warm header.
+                # Let's match that behavior.
+                pdf.set_fill_color(253, 230, 138)
+                pdf.rect(0, 0, width, 30, 'F')
+                
+            elif request.theme == "sunset":
+                # Bottom accent bar (1 inch = 25.4mm)
+                pdf.rect(0, height - 25, width, 25, 'F')
+                
+            elif request.theme == "forest":
+                # Left sidebar thin (0.8 inch = 20mm)
+                pdf.rect(0, 0, 20, height, 'F')
+                
+            elif request.theme == "ocean":
+                # Top wave accent (0.5 inch = 12.7mm)
+                pdf.rect(0, 0, width, 13, 'F')
+                
+            elif request.theme == "luxury":
+                # Gold Frame (Top and Bottom 0.1 inch = 3mm)
+                pdf.rect(0, 0, width, 3, 'F')
+                pdf.rect(0, height - 3, width, 3, 'F')
+
+            # Title
+            pdf.set_font("Helvetica", "B", 24) # Slightly smaller than 28 for better fit
+            pdf.set_text_color(*title_c)
+            
+            # Title Position Adjustment
+            title_x, title_y = 20, 20
+            if request.theme == "corporate":
+                title_x = 25 # Shift for sidebar
+            elif request.theme == "forest":
+                 title_x = 30 # Shift for sidebar
+            elif request.theme == "warm":
+                title_y = 10 # Adjust for header
+
+            pdf.set_xy(title_x, title_y)
+            pdf.multi_cell(width-40, 12, slide.get("title", "Untitled"), align='L')
+            
             # Content (Points)
-            pdf.set_font("Helvetica", "", 18)
+            pdf.set_font("Helvetica", "", 16) # Adjusted 18 -> 16
             pdf.set_text_color(*body_c)
+            
             # Dynamic Y positioning
-            current_y = pdf.get_y() + 15
+            current_y = pdf.get_y() + 10
             pdf.set_y(current_y)
             
+            # Content X Position
+            content_x = 25
+            if request.theme == "corporate":
+                content_x = 30
+            elif request.theme == "forest":
+                content_x = 35
+
             points = slide.get("points", [])
             content_text = slide.get("content", "")
             
             if points and isinstance(points, list):
                 for p in points:
-                    pdf.set_x(25) # Indent
-                    # Use simple dash for compatibility or try encoding
-                    # using - as bullet for reliability
-                    pdf.multi_cell(width-50, 10, f"-  {p}")
-                    pdf.ln(5) # Add spacing between points
+                    pdf.set_x(content_x) 
+                    pdf.multi_cell(width-(content_x*2), 9, f"-  {p}")
+                    pdf.ln(2) 
             else:
-                pdf.set_x(25)
-                pdf.multi_cell(width-50, 10, str(content_text))
+                pdf.set_x(content_x)
+                pdf.multi_cell(width-(content_x*2), 9, str(content_text))
 
-        # Watermark
-        if not user or (user.tier == "student" and user.credits <= 1):
-             pdf.add_page()
-             pdf.set_fill_color(*bg)
-             pdf.rect(0, 0, width, height, 'F')
-             pdf.set_font("Helvetica", "B", 30)
-             pdf.set_text_color(*title_c)
-             pdf.set_xy(0, height/2 - 10)
-             pdf.cell(width, 20, "Generated by MODYFIRE", align='C')
+            # --- Watermark (Per Slide) ---
+            if should_watermark:
+                pdf.set_xy(0, height - 15)
+                pdf.set_font("Helvetica", "I", 12)
+                # Use a subtle color, maybe gray or theme title color with opacity (FPDF doesn't do alpha easily)
+                # Just use title color or gray
+                pdf.set_text_color(128, 128, 128) 
+                pdf.cell(width, 10, "Generated by MODYFIRE", align='C')
 
         pdf_bytes = pdf.output()
         
@@ -127,7 +186,8 @@ async def generate_user_pptx(
         json_str = await convert_text_to_slides_json(
             request.text, 
             count=request.slide_count, 
-            tone=request.writing_style
+            tone=request.writing_style,
+            html_content=request.html_content
         )
         
         # 2. Parse JSON

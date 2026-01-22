@@ -95,20 +95,28 @@ async def process_video_content(video_url: str, user_tier: str, user_id: int, sl
         "content": markdown.markdown(response.text)
     }
 
-async def convert_text_to_slides_json(text: str, count: int = 10, tone: str = "neutral"):
+async def convert_text_to_slides_json(text: str, count: int = 10, tone: str = "neutral", html_content: str = None):
     model = genai.GenerativeModel("gemini-2.5-flash")
+    
+    # Use HTML content if valid, otherwise fallback to text
+    content_to_process = html_content if html_content and len(html_content) > 50 else text
+
     prompt = f"""
-    Convert the following study notes into a JSON structure for a PowerPoint presentation.
+    Convert the following content into a JSON structure for a PowerPoint presentation.
     Create exactly {count} slides. Use a {tone} tone/style for the content.
+    
+    IMPORTANT: The content may contain HTML <img> tags. If you find an image that is relevant to a specific slide's topic, extract its 'src' attribute and include it in the "image_url" field for that slide.
+    
     Output must be a plain JSON list of objects. Each object must have:
     - "title": string
     - "points": list of strings (each string is a bullet point)
     - "notes": string (speaker notes for the slide)
+    - "image_url": string (optional, the src URL of the image if one belongs on this slide)
     
     Ensure the JSON is valid and properly formatted. Do not include markdown code blocks.
     
-    Text:
-    {text}
+    Content:
+    {content_to_process}
     """
     response = model.generate_content(prompt)
     
