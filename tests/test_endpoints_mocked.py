@@ -21,7 +21,11 @@ async def override_get_db():
     
     yield mock_session
 
-app.dependency_overrides[get_db] = override_get_db
+@pytest.fixture(autouse=True)
+def mock_db_dependency():
+    app.dependency_overrides[get_db] = override_get_db
+    yield
+    app.dependency_overrides.clear()
 
 @pytest.mark.asyncio
 async def test_read_root():
@@ -80,7 +84,7 @@ async def test_billing_page_exists():
 
 @pytest.mark.asyncio
 async def test_add_credits_endpoint():
-    headers = {"x-n8n-auth": "mock_secret"}
+    headers = {"x-n8n-auth": "test"}
     params = {"user_id": 1, "amount": 100}
     # Note: This will likely fail with 404 because our mock DB returns None for the user lookup
     # But it verifies the endpoint structure and authentication check.
@@ -93,7 +97,7 @@ async def test_add_credits_endpoint():
 async def test_delete_account_logic():
     headers = {
         "X-Replit-User-Id": "123",
-        "x-n8n-auth": "mock_secret"
+        "x-n8n-auth": "test"
     }
     with pytest.MonkeyPatch.context() as m:
         m.setattr("app.routers.upload.delete_user_folder", AsyncMock(return_value=None))

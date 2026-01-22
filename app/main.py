@@ -11,7 +11,9 @@ from contextlib import asynccontextmanager
 from app.database import engine, get_db, Base
 from app.config import settings
 from app.services.gemini_engine import process_video_content
-from app.routers import auth, editor, legal, upload
+from app.services.gemini_engine import process_video_content
+from app.routers import auth, editor, legal, upload, analytics
+from app.models import SlideDeck
 from app.models import SlideDeck
 import httpx
 
@@ -50,7 +52,9 @@ templates = Jinja2Templates(directory="app/templates")
 app.include_router(auth.router, prefix="/auth", tags=["auth"])
 app.include_router(editor.router, prefix="/editor", tags=["editor"])
 app.include_router(legal.router, prefix="/legal", tags=["legal"])
+app.include_router(legal.router, prefix="/legal", tags=["legal"])
 app.include_router(upload.router, prefix="/upload", tags=["upload"])
+app.include_router(analytics.router, prefix="/api", tags=["analytics"])
 from app.routers import dashboard
 app.include_router(dashboard.router, prefix="/api", tags=["dashboard"])
 

@@ -24,9 +24,15 @@ async def init_db():
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.drop_all)
 
+@pytest.fixture(autouse=True)
+def mock_db_dependency():
+    app.dependency_overrides[get_db] = override_get_db
+    yield
+    app.dependency_overrides = {}
+
 @pytest.mark.asyncio
 async def test_google_login_flow(monkeypatch):
-    app.dependency_overrides[get_db] = override_get_db
+    # app.dependency_overrides[get_db] = override_get_db # Handled by fixture
     
     # Mock httpx.AsyncClient.get for Google verification
     async def mock_get(*args, **kwargs):
@@ -54,7 +60,7 @@ async def test_google_login_flow(monkeypatch):
 
 @pytest.mark.asyncio
 async def test_apple_login_flow():
-    app.dependency_overrides[get_db] = override_get_db
+    # app.dependency_overrides[get_db] = override_get_db # Handled by fixture
     
     async with AsyncClient(transport=ASGITransport(app=app), base_url="http://localhost") as ac:
         # 1. Apple Login (Mocked Token)

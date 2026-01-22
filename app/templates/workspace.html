@@ -57,6 +57,23 @@
         .font-dyslexic {
             font-family: 'OpenDyslexic', sans-serif !important;
         }
+
+        /* Flashcard Flip Animation */
+        .perspective-1000 {
+            perspective: 1000px;
+        }
+
+        .transform-style-3d {
+            transform-style: preserve-3d;
+        }
+
+        .backface-hidden {
+            backface-visibility: hidden;
+        }
+
+        .rotate-y-180 {
+            transform: rotateY(180deg);
+        }
     </style>
 </head>
 
@@ -71,8 +88,23 @@
             const [isThinking, setIsThinking] = useState(false); // AI Rewrite
             const [isGenerating, setIsGenerating] = useState(false); // Export/Preview
             const [saveStatus, setSaveStatus] = useState('saved'); // 'saved', 'saving', 'unsaved'
+
             const [isExportModalOpen, setIsExportModalOpen] = useState(false); // Export Modal
 
+            // Study Tools State
+            const [isQuizModalOpen, setIsQuizModalOpen] = useState(false);
+            const [isFlashcardModalOpen, setIsFlashcardModalOpen] = useState(false);
+            const [isStudyLoading, setIsStudyLoading] = useState(false);
+            const [quizData, setQuizData] = useState([]);
+            const [flashcardData, setFlashcardData] = useState([]);
+            const [currentCardIndex, setCurrentCardIndex] = useState(0);
+            const [isFlipped, setIsFlipped] = useState(false);
+            const [quizAnswers, setQuizAnswers] = useState({}); // { questionIndex: selectedOption }
+            const [quizScore, setQuizScore] = useState(null);
+            // Social Clips State
+            const [isClipsModalOpen, setIsClipsModalOpen] = useState(false);
+            const [clipsData, setClipsData] = useState([]);
+            const [clipsUrl, setClipsUrl] = useState(''); // User inputs URL here for analysis
             // Add other states that might be missing from view if needed, or rely on defaults if they are defined further down? 
             // Warning: if I redefine vars that are defined below, it errors. 
             // But looking at previous view, only editor/isThinking were defined at top.
@@ -203,6 +235,60 @@
 
 
             // ... (keep handleAIRewrite, handleExportPDF)
+
+
+
+            const generateStudyTool = async (type) => {
+                if (!editor) return;
+                const text = editor.getText();
+                if (!text.trim()) return alert("Please add some notes first!");
+
+                setIsStudyLoading(true);
+
+                try {
+                    const endpoint = type === 'quiz' ? '/editor/generate-quiz' : '/editor/generate-flashcards';
+                    const response = await fetch(endpoint, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ text: text })
+                    });
+
+                    const data = await response.json();
+
+                    if (type === 'quiz') {
+                        if (data.questions) {
+                            setQuizData(data.questions);
+                            setQuizAnswers({});
+                            setQuizScore(null);
+                            setIsQuizModalOpen(true);
+                        } else {
+                            alert("Failed to generate quiz.");
+                        }
+                    } else {
+                        if (data.flashcards) {
+                            setFlashcardData(data.flashcards);
+                            setCurrentCardIndex(0);
+                            setIsFlipped(false);
+                            setIsFlashcardModalOpen(true);
+                        } else {
+                            alert("Failed to generate flashcards.");
+                        }
+                    }
+
+                } catch (e) {
+                    alert("Error: " + e);
+                } finally {
+                    setIsStudyLoading(false);
+                }
+            };
+
+            const submitQuiz = () => {
+                let score = 0;
+                quizData.forEach((q, idx) => {
+                    if (quizAnswers[idx] === q.answer) score++;
+                });
+                setQuizScore(score);
+            };
 
             const openExportModal = () => {
                 if (!editor) return;
@@ -346,6 +432,35 @@
                                 >
                                     📷 Add Media
                                 </button>
+
+                                {/* Study Tools Dropdown Trigger */}
+                                <div className="relative group">
+                                    <button className="px-4 py-2 bg-purple-100 text-purple-700 rounded-lg font-medium hover:bg-purple-200 transition flex items-center gap-2">
+                                        🧠 Study Tools
+                                    </button>
+                                    <div className="absolute right-0 mt-2 w-48 bg-white rounded-xl shadow-xl border border-gray-100 hidden group-hover:block z-50">
+                                        <button
+                                            onClick={() => generateStudyTool('quiz')}
+                                            className="w-full text-left px-4 py-3 hover:bg-gray-50 rounded-t-xl text-sm font-bold text-slate-700 block"
+                                        >
+                                            📝 Generate Quiz
+                                        </button>
+                                        <button
+                                            onClick={() => generateStudyTool('flashcards')}
+                                            className="w-full text-left px-4 py-3 hover:bg-gray-50 rounded-b-xl text-sm font-bold text-slate-700 block"
+                                        >
+                                            📇 Generate Flashcards
+                                        </button>
+                                        <div className="border-t border-gray-100"></div>
+                                        <button
+                                            onClick={() => setIsClipsModalOpen(true)}
+                                            className="w-full text-left px-4 py-3 hover:bg-pink-50 rounded-b-xl text-sm font-bold text-pink-600 block flex items-center gap-2"
+                                        >
+                                            🎬 Social Clips
+                                        </button>
+                                    </div>
+                                </div>
+
                                 <button
                                     onClick={() => document.body.classList.toggle('font-dyslexic')}
                                     className="px-3 py-2 bg-white border border-gray-200 text-slate-600 rounded-lg hover:bg-gray-50 font-bold"
@@ -548,9 +663,210 @@
                                     </div>
                                 </div>
                             </div>
+                        )
+                        }
+
+                        {/* Loading Overlay */}
+                        {
+                            isStudyLoading && (
+                                <div className="fixed inset-0 bg-black/50 z-[60] flex items-center justify-center p-4">
+                                    <div className="bg-white p-6 rounded-2xl shadow-xl flex items-center gap-4 animate-bounce">
+                                        <span className="text-2xl">🧠</span>
+                                        <span className="font-bold text-slate-800">AI is studying your notes...</span>
+                                    </div>
+                                </div>
+                            )
+                        }
+
+                        {/* Quiz Modal */}
+                        {
+                            isQuizModalOpen && (
+                                <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+                                    <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[85vh] overflow-y-auto animate-fade-in-up flex flex-col">
+                                        <div className="p-6 border-b border-gray-100 flex justify-between items-center bg-white sticky top-0 z-10">
+                                            <h3 className="text-xl font-bold text-slate-900">📝 Practice Quiz</h3>
+                                            <button onClick={() => setIsQuizModalOpen(false)} className="text-slate-400 hover:text-slate-600"><i className="fas fa-times"></i></button>
+                                        </div>
+                                        <div className="p-8 space-y-8">
+                                            {quizScore === null ? (
+                                                quizData.map((q, qImg) => (
+                                                    <div key={qImg} className="space-y-3">
+                                                        <p className="font-bold text-lg text-slate-800">{qImg + 1}. {q.question}</p>
+                                                        <div className="grid grid-cols-1 gap-2">
+                                                            {q.options.map((opt, oIdx) => (
+                                                                <button
+                                                                    key={oIdx}
+                                                                    onClick={() => setQuizAnswers({ ...quizAnswers, [qImg]: opt })}
+                                                                    className={`p-3 text-left rounded-lg border transition ${quizAnswers[qImg] === opt ? 'border-purple-500 bg-purple-50 text-purple-700' : 'border-gray-200 hover:bg-gray-50'}`}
+                                                                >
+                                                                    {opt}
+                                                                </button>
+                                                            ))}
+                                                        </div>
+                                                    </div>
+                                                ))
+                                            ) : (
+                                                <div className="text-center py-10">
+                                                    <div className="text-6xl mb-4">🏆</div>
+                                                    <h2 className="text-3xl font-bold text-slate-800 mb-2">You Scored {quizScore} / {quizData.length}</h2>
+                                                    <p className="text-slate-500">Keep practicing to master your notes!</p>
+                                                    <button onClick={() => { setQuizScore(null); setQuizAnswers({}); }} className="mt-6 px-6 py-2 bg-gray-100 text-slate-700 font-bold rounded-lg hover:bg-gray-200">Try Again</button>
+                                                </div>
+                                            )}
+                                        </div>
+                                        {quizScore === null && (
+                                            <div className="p-6 border-t border-gray-100 bg-gray-50 flex justify-end">
+                                                <button
+                                                    onClick={submitQuiz}
+                                                    className="px-6 py-3 bg-purple-600 text-white font-bold rounded-xl hover:bg-purple-700 transition shadow-lg"
+                                                >
+                                                    Submit Answers
+                                                </button>
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
+                            )
+                        }
+
+                        {/* Flashcard Modal */}
+                        {
+                            isFlashcardModalOpen && flashcardData.length > 0 && (
+                                <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+                                    <div className="w-full max-w-xl">
+                                        <div className="flex justify-between items-center mb-4 text-white">
+                                            <h3 className="text-xl font-bold">Flashcards ({currentCardIndex + 1}/{flashcardData.length})</h3>
+                                            <button onClick={() => setIsFlashcardModalOpen(false)} className="text-white/70 hover:text-white"><i className="fas fa-times text-xl"></i></button>
+                                        </div>
+
+                                        <div className="relative h-80 w-full perspective-1000 cursor-pointer group" onClick={() => setIsFlipped(!isFlipped)}>
+                                            <div className={`relative w-full h-full text-center transition-transform duration-500 transform-style-3d ${isFlipped ? 'rotate-y-180' : ''}`}>
+                                                {/* Front */}
+                                                <div className="absolute inset-0 w-full h-full bg-white rounded-2xl shadow-2xl flex flex-col items-center justify-center p-8 backface-hidden">
+                                                    <span className="text-sm font-bold text-slate-400 uppercase tracking-widest mb-4">Term</span>
+                                                    <h2 className="text-3xl font-bold text-slate-900">{flashcardData[currentCardIndex].front}</h2>
+                                                    <p className="absolute bottom-6 text-xs text-slate-400">Click to flip ↻</p>
+                                                </div>
+                                                {/* Back */}
+                                                <div className="absolute inset-0 w-full h-full bg-gradient-to-br from-purple-600 to-indigo-600 text-white rounded-2xl shadow-2xl flex flex-col items-center justify-center p-8 backface-hidden rotate-y-180">
+                                                    <span className="text-sm font-bold text-white/60 uppercase tracking-widest mb-4">Definition</span>
+                                                    <p className="text-xl font-medium leading-relaxed">{flashcardData[currentCardIndex].back}</p>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div className="flex justify-center gap-4 mt-8">
+                                            <button
+                                                onClick={() => {
+                                                    setIsFlipped(false);
+                                                    setCurrentCardIndex(Math.max(0, currentCardIndex - 1));
+                                                }}
+                                                disabled={currentCardIndex === 0}
+                                                className="px-6 py-3 bg-white/10 hover:bg-white/20 text-white rounded-xl font-bold backdrop-blur-md transition disabled:opacity-50"
+                                            >
+                                                ← Previous
+                                            </button>
+                                            <button
+                                                onClick={() => {
+                                                    setIsFlipped(false);
+                                                    setCurrentCardIndex(Math.min(flashcardData.length - 1, currentCardIndex + 1));
+                                                }}
+                                                disabled={currentCardIndex === flashcardData.length - 1}
+                                                className="px-6 py-3 bg-white text-purple-900 rounded-xl font-bold shadow-lg hover:bg-gray-100 transition"
+                                            >
+                                                Next Card →
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            )
+                        }
+
+                        {/* Social Clips Modal */}
+                        {isClipsModalOpen && (
+                            <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+                                <div className="bg-white rounded-2xl shadow-2xl w-full max-w-3xl max-h-[85vh] overflow-y-auto animate-fade-in-up flex flex-col">
+                                    <div className="p-6 border-b border-gray-100 flex justify-between items-center bg-white sticky top-0 z-10">
+                                        <h3 className="text-xl font-bold text-slate-900 flex items-center gap-2">🎬 Social Clips Intelligence <span className="bg-pink-100 text-pink-600 text-xs px-2 py-1 rounded-full">Pro</span></h3>
+                                        <button onClick={() => setIsClipsModalOpen(false)} className="text-slate-400 hover:text-slate-600"><i className="fas fa-times"></i></button>
+                                    </div>
+
+                                    <div className="p-8">
+                                        {clipsData.length === 0 ? (
+                                            <div className="text-center space-y-4">
+                                                <div className="p-4 bg-blue-50 text-blue-800 rounded-lg text-sm mb-6">
+                                                    💡 <strong>Tip:</strong> Paste the original YouTube URL to find viral moments based on audio timestamps.
+                                                </div>
+                                                <input
+                                                    type="text"
+                                                    placeholder="Paste YouTube URL here..."
+                                                    className="w-full p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-pink-500 outline-none"
+                                                    value={clipsUrl}
+                                                    onChange={(e) => setClipsUrl(e.target.value)}
+                                                />
+                                                <button
+                                                    onClick={async () => {
+                                                        if (!clipsUrl) return alert("Please enter a URL");
+                                                        setIsStudyLoading(true);
+                                                        try {
+                                                            const res = await fetch('/editor/generate-clips', {
+                                                                method: 'POST',
+                                                                headers: { 'Content-Type': 'application/json' },
+                                                                body: JSON.stringify({ video_url: clipsUrl })
+                                                            });
+                                                            const data = await res.json();
+                                                            if (data.clips) setClipsData(data.clips);
+                                                            else alert("No clips found or error.");
+                                                        } catch (e) {
+                                                            alert("Error: " + e);
+                                                        } finally {
+                                                            setIsStudyLoading(false);
+                                                        }
+                                                    }}
+                                                    className="px-8 py-3 bg-pink-600 text-white font-bold rounded-xl hover:bg-pink-700 transition shadow-lg w-full flex justify-center items-center gap-2"
+                                                >
+                                                    {isStudyLoading ? 'Analyzing Viral Potential...' : '✨ Find Viral Clips'}
+                                                </button>
+                                            </div>
+                                        ) : (
+                                            <div className="space-y-6">
+                                                <div className="flex justify-between items-center">
+                                                    <h4 className="font-bold text-gray-500 uppercase tracking-wider text-xs">Identified {clipsData.length} Viral Candidates</h4>
+                                                    <button onClick={() => setClipsData([])} className="text-sm text-blue-600 hover:underline">Analyze Another Video</button>
+                                                </div>
+
+                                                {clipsData.map((clip, idx) => (
+                                                    <div key={idx} className="border border-gray-200 rounded-xl p-4 hover:shadow-md transition bg-white group">
+                                                        <div className="flex justify-between items-start mb-2">
+                                                            <div className="flex items-center gap-2">
+                                                                <span className="bg-green-100 text-green-700 font-bold px-2 py-1 rounded text-xs">Viral Score: {clip.viral_score}</span>
+                                                                <span className="text-slate-400 text-xs">Cannot download (Mock)</span>
+                                                            </div>
+                                                            <a
+                                                                href={clipsUrl.includes('?') ? (clipsUrl + '&t=' + Math.floor(clip.start_time) + 's') : (clipsUrl + '?t=' + Math.floor(clip.start_time) + 's')}
+                                                                target="_blank"
+                                                                className="text-pink-600 font-bold text-sm hover:underline flex items-center gap-1"
+                                                            >
+                                                                ▶ Play Segment
+                                                            </a>
+                                                        </div>
+                                                        <h5 className="font-bold text-slate-800 mb-1">"{clip.suggested_caption}"</h5>
+                                                        <p className="text-sm text-slate-500 mb-3">{clip.reason}</p>
+                                                        <div className="bg-gray-50 p-2 rounded text-xs font-mono text-gray-600 flex justify-between">
+                                                            <span>Start: {Math.floor(clip.start_time)}s</span>
+                                                            <span>End: {Math.floor(clip.end_time)}s</span>
+                                                            <span>Duration: {Math.floor(clip.end_time - clip.start_time)}s</span>
+                                                        </div>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
+                            </div>
                         )}
-                    </main>
-                </div>
+                    </main >
+                </div >
             );
         };
 

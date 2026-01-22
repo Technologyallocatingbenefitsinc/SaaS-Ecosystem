@@ -5,7 +5,8 @@ import io
 import google.generativeai as genai
 from app.config import settings
 from app.services.pptx_engine import generate_pptx, THEMES
-from app.services.gemini_engine import convert_text_to_slides_json
+from app.services.pptx_engine import generate_pptx, THEMES
+from app.services.gemini_engine import convert_text_to_slides_json, generate_quiz_from_text, generate_flashcards_from_text, identify_viral_clips
 from app.routers.auth import get_replit_user
 import json
 
@@ -14,6 +15,12 @@ router = APIRouter()
 class RewriteRequest(BaseModel):
     text: str
     tone: str
+
+class StudyRequest(BaseModel):
+    text: str
+
+class ClipsRequest(BaseModel):
+    video_url: str
 
 class PPTXRequest(BaseModel):
     text: str
@@ -248,4 +255,56 @@ async def rewrite_text(request: RewriteRequest):
         return {"rewritten_text": response.text}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+@router.post("/generate-quiz")
+async def create_quiz(request: StudyRequest):
+    try:
+        json_str = await generate_quiz_from_text(request.text)
+        try:
+            quiz_data = json.loads(json_str)
+        except json.JSONDecodeError:
+            # Fallback for simple errors or re-try logic could happen here
+             raise ValueError("AI failed to generate valid JSON for quiz.")
+        
+        return {"questions": quiz_data}
+    except Exception as e:
+        print(f"Quiz Gen Error: {e}")
+        raise HTTPException(status_code=400, detail=f"Quiz generation failed: {str(e)}")
+
+@router.post("/generate-flashcards")
+async def create_flashcards(request: StudyRequest):
+    try:
+        json_str = await generate_flashcards_from_text(request.text)
+        try:
+             cards_data = json.loads(json_str)
+        except json.JSONDecodeError:
+             raise ValueError("AI failed to generate valid JSON for flashcards.")
+             
+        return {"flashcards": cards_data}
+    except Exception as e:
+        print(f"Flashcard Gen Error: {e}")
+    except Exception as e:
+        print(f"Flashcard Gen Error: {e}")
+        raise HTTPException(status_code=400, detail=f"Flashcard generation failed: {str(e)}")
+
+@router.post("/generate-clips")
+async def create_viral_clips(request: ClipsRequest):
+    try:
+        # 1. Check if URL is present
+        if not request.video_url:
+             raise ValueError("Video URL is required for clip analysis")
+
+        # 2. Call Engine
+        json_str = await identify_viral_clips(request.video_url)
+        
+        # 3. Parse and Return
+        try:
+             clips_data = json.loads(json_str)
+        except json.JSONDecodeError:
+             raise ValueError("AI failed to generate valid JSON for clips.")
+             
+        return {"clips": clips_data}
+    except Exception as e:
+        print(f"Clip Gen Error: {e}")
+        raise HTTPException(status_code=400, detail=f"Clip generation failed: {str(e)}")
 

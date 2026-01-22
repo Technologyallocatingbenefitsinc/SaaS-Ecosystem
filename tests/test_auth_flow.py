@@ -27,9 +27,15 @@ async def init_db():
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.drop_all)
 
+@pytest.fixture(autouse=True)
+def mock_db_dependency():
+    app.dependency_overrides[get_db] = override_get_db
+    yield
+    app.dependency_overrides = {}
+
 @pytest.mark.asyncio
 async def test_signup_fingerprint_abuse():
-    app.dependency_overrides[get_db] = override_get_db
+    # app.dependency_overrides[get_db] = override_get_db # Handled by fixture
     
     async with AsyncClient(transport=ASGITransport(app=app), base_url="http://localhost") as ac:
         
@@ -53,7 +59,7 @@ async def test_signup_fingerprint_abuse():
 
 @pytest.mark.asyncio
 async def test_reset_password_flow():
-    app.dependency_overrides[get_db] = override_get_db
+    # app.dependency_overrides[get_db] = override_get_db # Handled by fixture
     
     async with AsyncClient(transport=ASGITransport(app=app), base_url="http://localhost") as ac:
         # Prep: Create user

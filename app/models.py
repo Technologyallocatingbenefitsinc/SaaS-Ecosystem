@@ -39,3 +39,13 @@ class SlideDeck(Base):
     summary_content = Column(Text)
     pdf_path = Column(String)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
+
+class AnalyticsEvent(Base):
+    __tablename__ = "analytics_events"
+
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"), index=True)
+    event_type = Column(String, index=True) # VIEW_VIDEO, DOWNLOAD_PDF, VIEW_CLIP, GENERATE_QUIZ
+    resource_id = Column(String, nullable=True) # video_url or other ID
+    metadata_json = Column(Text, nullable=True) # Any extra data
+    timestamp = Column(DateTime(timezone=True), server_default=func.now())

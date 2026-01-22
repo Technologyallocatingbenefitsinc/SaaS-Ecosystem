@@ -18,7 +18,7 @@ async def test_process_video_with_slide_count():
     with patch("app.main.process_video_content", new_callable=AsyncMock) as mock_process:
         mock_process.return_value = {"status": "success", "content": "mocked slides"}
         
-        headers = {"x-n8n-auth": "mock_secret"}
+        headers = {"x-n8n-auth": "test"}
         params = {
             "video_url": "https://youtube.com/watch?v=123",
             "user_id": 1,

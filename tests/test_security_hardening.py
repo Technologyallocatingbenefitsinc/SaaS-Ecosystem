@@ -22,7 +22,11 @@ async def override_get_db():
     
     yield mock_session
 
-app.dependency_overrides[get_db] = override_get_db
+@pytest.fixture(autouse=True)
+def mock_db_dependency():
+    app.dependency_overrides[get_db] = override_get_db
+    yield
+    app.dependency_overrides.clear()
 
 @pytest.mark.asyncio
 async def test_password_hashing_signup():

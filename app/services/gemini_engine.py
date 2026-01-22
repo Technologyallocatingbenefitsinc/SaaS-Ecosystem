@@ -18,37 +18,35 @@ def extract_video_id(video_url: str) -> str:
              return match.group(1)
     raise Exception(f"Could not extract video ID from URL: {video_url}")
 
-def get_transcript(video_url: str):
+def get_transcript(video_url: str, return_timestamps=False):
     try:
         video_id = extract_video_id(video_url)
-        # Attempt to handle different versions of youtube_transcript_api
         try:
-            # Try the instance-based API (v1.x as reported by user)
             api = YouTubeTranscriptApi()
             transcript_list = api.list(video_id)
         except Exception:
-            # Fallback to standard static API (v0.x or other)
             transcript_list = YouTubeTranscriptApi.list_transcripts(video_id)
 
-        # Try to find a manually created english transcript, or auto-generated one
         try:
             transcript = transcript_list.find_manually_created_transcript(['en', 'en-US', 'en-GB'])
         except:
              try:
                  transcript = transcript_list.find_generated_transcript(['en', 'en-US', 'en-GB'])
              except:
-                 # Last resort attempt
                  transcript = transcript_list.find_transcript(['en', 'en-US', 'en-GB'])
                  
         transcript_data = transcript.fetch()
         
+        # If raw timestamps requested, return the list of dicts directly
+        if return_timestamps:
+            return transcript_data
+
         # Handle both dictionary (standard) and object (some versions) returns
         text_parts = []
         for item in transcript_data:
             if isinstance(item, dict):
                 text_parts.append(item['text'])
             else:
-                # Assume it's an object with a .text attribute
                 text_parts.append(getattr(item, 'text', str(item)))
                 
         transcript_text = " ".join(text_parts)
@@ -123,3 +121,95 @@ async def convert_text_to_slides_json(text: str, count: int = 10, tone: str = "n
     # Clean markdown if present
     cleaned_text = response.text.replace("```json", "").replace("```", "").strip()
     return cleaned_text
+
+async def generate_quiz_from_text(text: str):
+    model = genai.GenerativeModel("gemini-2.5-flash")
+    prompt = f"""
+    Create a multiple-choice quiz based on the following text.
+    Generate 5 to 10 questions.
+    
+    Output strictly as a JSON list of objects:
+    [
+      {{
+        "question": "Question text?",
+        "options": ["Option A", "Option B", "Option C", "Option D"],
+        "answer": "Option B"
+      }}
+    ]
+    
+    Text:
+    {text}
+    """
+    response = model.generate_content(prompt)
+    cleaned = response.text.replace("```json", "").replace("```", "").strip()
+    return cleaned
+
+async def generate_flashcards_from_text(text: str):
+    model = genai.GenerativeModel("gemini-2.5-flash")
+    prompt = f"""
+    Create a set of flashcards based on the key concepts in the following text.
+    Generate 5 to 15 cards.
+    
+    Output strictly as a JSON list of objects:
+    [
+      {{
+        "front": "Term or Concept",
+        "back": "Definition or Explanation"
+      }}
+    ]
+    
+    Text:
+    {text}
+    """
+    response = model.generate_content(prompt)
+    cleaned = response.text.replace("```json", "").replace("```", "").strip()
+    cleaned = response.text.replace("```json", "").replace("```", "").strip()
+    return cleaned
+
+async def identify_viral_clips(video_url: str):
+    # 1. Fetch transcript with timestamps
+    transcript_data = get_transcript(video_url, return_timestamps=True)
+    
+    # Check if we got list of dicts or objects. Ensure list of dicts for generic use
+    cleaned_transcript = []
+    for item in transcript_data:
+        if isinstance(item, dict):
+            cleaned_transcript.append(item)
+        else:
+            # Convert object to dict if needed (fallback)
+            cleaned_transcript.append({
+                "text": getattr(item, 'text', ""),
+                "start": getattr(item, 'start', 0),
+                "duration": getattr(item, 'duration', 0)
+            })
+
+    # Limit transcript size for prompt context window if needed, but for now send all
+    # To save tokens, we might format it compactly
+    transcript_str = str(cleaned_transcript[:1000]) # send first 1000 chunks ~ maybe 10-15 mins?
+    if len(cleaned_transcript) > 1000:
+        transcript_str += "... (continues)"
+
+    model = genai.GenerativeModel("gemini-2.0-flash-thinking-exp-01-21")
+    prompt = f"""
+    Analyze the following transcript data (list of {{text, start, duration}}).
+    Identify 3-5 distinct segments (30-90 seconds long) that are most likely to go viral on TikTok/Shorts.
+    Look for: High energy, strong hooks, controversial statements, or "aha" moments.
+
+    Output strictly as a JSON list of objects:
+    [
+      {{
+        "start_time": 120.5,
+        "end_time": 165.0,
+        "viral_score": 95,
+        "reason": "Strong emotional hook about failure.",
+        "suggested_caption": "Wait for the end... 🤯 #motivation"
+      }}
+    ]
+
+    Transcript Data:
+    {transcript_str}
+    """
+    
+    response = model.generate_content(prompt)
+    cleaned = response.text.replace("```json", "").replace("```", "").strip()
+    return cleaned
