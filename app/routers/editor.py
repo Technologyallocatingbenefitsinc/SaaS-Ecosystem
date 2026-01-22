@@ -12,6 +12,9 @@ import json
 
 router = APIRouter()
 
+# Ensure genai is configured even if gemini_engine wasn't imported first
+genai.configure(api_key=settings.GEMINI_API_KEY)
+
 class RewriteRequest(BaseModel):
     text: str
     tone: str
@@ -248,12 +251,13 @@ async def generate_user_pptx(
 @router.post("/rewrite")
 async def rewrite_text(request: RewriteRequest):
     try:
-        model = genai.GenerativeModel("gemini-1.5-flash")
+        model = genai.GenerativeModel("gemini-2.5-flash")
         prompt = f"Rewrite the following text to be {request.tone}. Keep the meaning the same but adjust the style.\n\nText: {request.text}"
         
         response = model.generate_content(prompt)
         return {"rewritten_text": response.text}
     except Exception as e:
+        print(f"Rewrite Error: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.post("/generate-quiz")
