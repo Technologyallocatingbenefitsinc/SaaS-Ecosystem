@@ -237,20 +237,21 @@
                     method: 'POST',
                     body: formData
                 })
-                    .then(response => response.json())
+                    .then(response => {
+                        if (!response.ok) throw new Error("Server error: " + response.status);
+                        return response.json();
+                    })
                     .then(data => {
-                        if (data.path) {
-                            // Hacky fix: replace "user_uploads" with "/uploads"
-                            let webPath = data.path.replace('user_uploads', '/uploads');
-
+                        if (data.url) {
+                            const webPath = data.url;
                             editor.chain().focus().setImage({ src: webPath }).run();
                         } else {
-                            alert("Upload failed");
+                            alert("Upload failed: No URL returned. " + (data.message || ''));
                         }
                     })
                     .catch(err => {
                         console.error(err);
-                        alert("Error uploading image");
+                        alert("Error uploading image: " + err.message);
                     });
             };
 
@@ -688,9 +689,14 @@
                         {isExportModalOpen && (
                             <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
                                 <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md max-h-[85vh] overflow-y-auto animate-fade-in-up flex flex-col">
-                                    <div className="p-6 border-b border-gray-100 flex-shrink-0 bg-white sticky top-0 z-10">
-                                        <h3 className="text-xl font-bold text-slate-900">Export Presentation</h3>
-                                        <p className="text-sm text-slate-500 mt-1">Select format and style.</p>
+                                    <div className="p-6 border-b border-gray-100 flex-shrink-0 bg-white sticky top-0 z-10 flex justify-between items-center">
+                                        <div>
+                                            <h3 className="text-xl font-bold text-slate-900">Export Presentation</h3>
+                                            <p className="text-sm text-slate-500 mt-1">Select format and style.</p>
+                                        </div>
+                                        <button onClick={() => setIsExportModalOpen(false)} className="text-slate-400 hover:text-slate-600 p-2">
+                                            <i className="fas fa-times text-xl"></i>
+                                        </button>
                                     </div>
 
                                     <div className="p-6 space-y-6">

@@ -79,52 +79,55 @@ async def upload_local_file(
     file: UploadFile = File(...),
     user = Depends(auth.get_replit_user)
 ):
-    if not user:
-         raise HTTPException(status_code=401, detail="Please sign in via Replit Auth to upload files.")
+    # For demo/local testing, fallback to user 1 if not on Replit
+    user_obj = user
+    user_id = user_obj.id if user_obj else 1
+    user_email = user_obj.email if user_obj else "demo@example.com"
+    user_role = user_obj.tier if user_obj else "student"
     
+    print(f"DEBUG: Upload request from User ID {user_id}")
+
     try:
-        user_id = user.id 
-        user_email = user.email
-        user_role = user.tier
-        
         content = await file.read()
-        file_hash = await calculate_file_hash(file.filename.encode() + content[:100]) # simplified hash for in-memory
+        # Clean filename: replace spaces with underscores to avoid URL issues
+        safe_filename = file.filename.replace(" ", "_")
+        file_hash = await calculate_file_hash(safe_filename.encode() + content[:100])
 
         # CHECK FOR SUPABASE CONFIG
         if settings.SUPABASE_URL and settings.SUPABASE_KEY and create_client:
             try:
                 supabase: Client = create_client(settings.SUPABASE_URL, settings.SUPABASE_KEY)
-                file_path = f"{user_id}/{file.filename}"
+                supabase_path = f"{user_id}/{safe_filename}"
                 
                 # Upload
-                res = supabase.storage.from_(settings.SUPABASE_BUCKET).upload(
-                    file_path,
+                supabase.storage.from_(settings.SUPABASE_BUCKET).upload(
+                    supabase_path,
                     content,
                     {"content-type": file.content_type, "upsert": "true"}
                 )
                 
                 # Get Public URL
-                public_url = supabase.storage.from_(settings.SUPABASE_BUCKET).get_public_url(file_path)
+                public_url = supabase.storage.from_(settings.SUPABASE_BUCKET).get_public_url(supabase_path)
                 
                 # Signal N8N with URL
                 background_tasks.add_task(signal_n8n_to_start, public_url, user_email, user_role, file_hash)
                 
                 return {
-                    "message": "Upload successful (Supabase). Processing started.", 
+                    "message": "Upload successful (Supabase).", 
                     "path": public_url,
-                    "filename": file.filename,
+                    "url": public_url,
+                    "filename": safe_filename,
                     "hash": file_hash,
                     "storage": "supabase"
                 }
             except Exception as supabase_e:
                 print(f"Supabase Upload Failed: {supabase_e}. Falling back to local.")
-                # Fallback to local
         
         # LOCAL STORAGE FALLBACK
         user_dir = UPLOAD_BASE_DIR / str(user_id)
         user_dir.mkdir(exist_ok=True)
         
-        file_path = user_dir / file.filename
+        file_path = user_dir / safe_filename
         
         async with aiofiles.open(file_path, 'wb') as out_file:
             await out_file.write(content)
@@ -135,13 +138,18 @@ async def upload_local_file(
         # Signal n8n
         background_tasks.add_task(signal_n8n_to_start, str(file_path.absolute()), user_email, user_role, file_hash)
 
+        # Build appropriate web path
+        web_path = f"/uploads/{user_id}/{safe_filename}"
+
         return {
-            "message": "Upload successful. Processing started.", 
+            "message": "Upload successful.", 
             "path": str(file_path),
-            "filename": file.filename,
+            "url": web_path,
+            "filename": safe_filename,
             "hash": file_hash,
             "storage": "local"
         }
         
     except Exception as e:
+        print(f"Upload Error: {e}")
         raise HTTPException(status_code=500, detail=str(e))

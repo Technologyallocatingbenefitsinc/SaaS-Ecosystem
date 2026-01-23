@@ -1,25 +1,27 @@
-from fastapi import APIRouter, Depends
-from sqlalchemy.orm import Session
+from fastapi import APIRouter, Depends, Request
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import select
 from app.database import get_db
 from app.models import SlideDeck
-from app.routers.auth import get_replit_user
+from app.routers import auth
 
 router = APIRouter()
 
 @router.get("/recent-activity")
-async def get_recent_activity(user = Depends(get_replit_user), db: Session = Depends(get_db)):
+async def get_recent_activity(user = Depends(auth.get_replit_user), db: AsyncSession = Depends(get_db)):
     if not user:
         return []
         
-    recent_decks = db.query(SlideDeck).filter(
-        SlideDeck.user_id == user.id
-    ).order_by(SlideDeck.created_at.desc()).limit(5).all()
+    result = await db.execute(
+        select(SlideDeck).where(SlideDeck.user_id == user.id).order_by(SlideDeck.created_at.desc()).limit(5)
+    )
+    recent_decks = result.scalars().all()
     
     return [
         {
             "id": deck.id,
-            "title": "Video Summary", # We might want to parse title from content later, or store it.
-            "date": deck.created_at.strftime("%b %d, %Y"),
+            "title": "Video Summary", 
+            "date": deck.created_at.strftime("%b %d, %Y") if deck.created_at else "Recently",
             "url": deck.video_url,
             "preview": deck.summary_content[:100] + "..." if deck.summary_content else ""
         }

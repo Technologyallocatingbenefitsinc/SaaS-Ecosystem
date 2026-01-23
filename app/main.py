@@ -55,9 +55,13 @@ app.include_router(analytics.router, prefix="/api", tags=["analytics"])
 from app.routers import dashboard
 app.include_router(dashboard.router, prefix="/api", tags=["dashboard"])
 
-@app.get("/", response_class=RedirectResponse)
-async def root():
-    return RedirectResponse(url="/dashboard")
+@app.get("/", response_class=HTMLResponse)
+async def root(request: Request):
+    return templates.TemplateResponse(request, "landing.html", {})
+
+@app.get("/favicon.ico", include_in_schema=False)
+async def favicon():
+    return RedirectResponse(url="/static/images/modyfire_logo.jpg")
 
 @app.get("/login", response_class=HTMLResponse)
 async def login(request: Request):
@@ -92,7 +96,7 @@ async def process_video_endpoint(
         raise HTTPException(status_code=500, detail=str(e))
 
 @app.get("/dashboard", response_class=HTMLResponse)
-async def dashboard(request: Request, tier: str = None, user = Depends(auth.get_replit_user)):
+async def dashboard_view(request: Request, tier: str = None, user = Depends(auth.get_replit_user)):
     user_tier = tier or (user.tier if user else "professor")
     mock_stats = {
         "credits": user.credits if user else 25,

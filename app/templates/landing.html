@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MODYFIRE | AI-Powered Study Assistant</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="icon" type="image/x-icon" href="/static/favicon.ico">
+    <style>
+        .gradient-text {
+            background: linear-gradient(90deg, #3b82f6, #8b5cf6);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .hero-bg {
+            background: radial-gradient(circle at 50% 50%, rgba(59, 130, 246, 0.1) 0%, rgba(255, 255, 255, 1) 70%);
+        }
+    </style>
+</head>
+
+<body class="bg-white text-slate-900 font-sans">
+    <!-- Nav -->
+    <nav class="flex justify-between items-center px-8 py-6 max-w-7xl mx-auto">
+        <div class="flex items-center gap-2">
+            <img src="/static/images/modyfire_logo.jpg" alt="Logo" class="h-8 w-auto rounded">
+            <span class="text-xl font-black">MODY<span class="text-blue-600">FIRE</span></span>
+        </div>
+        <div class="hidden md:flex gap-8 font-bold text-sm text-slate-500 uppercase tracking-widest">
+            <a href="#features" class="hover:text-blue-600">Features</a>
+            <a href="#pricing" class="hover:text-blue-600">Pricing</a>
+            <a href="/tos" class="hover:text-blue-600">ToS</a>
+        </div>
+        <a href="/dashboard"
+            class="bg-blue-600 text-white px-6 py-2 rounded-full font-bold hover:bg-blue-700 transition">
+            Launch App
+        </a>
+    </nav>
+
+    <!-- Hero -->
+    <section class="hero-bg py-24 text-center px-6">
+        <div class="max-w-4xl mx-auto space-y-8">
+            <h1 class="text-5xl md:text-7xl font-black tracking-tight leading-tight">
+                Turn Lectures into <span class="gradient-text">Study Assets</span> in Seconds.
+            </h1>
+            <p class="text-xl text-slate-500 max-w-2xl mx-auto">
+                The ultimate AI companion for students and professors. Summarize YouTube lectures, generate flashcards,
+                and create interactive audio overviews automatically.
+            </p>
+            <div class="flex flex-col md:flex-row gap-4 justify-center">
+                <a href="/dashboard?tier=student"
+                    class="bg-slate-900 text-white px-8 py-4 rounded-2xl font-bold flex items-center gap-3 hover:bg-slate-800 transition">
+                    <i class="fas fa-graduation-cap"></i> For Students
+                </a>
+                <a href="/dashboard?tier=professor"
+                    class="bg-white border-2 border-slate-200 text-slate-900 px-8 py-4 rounded-2xl font-bold flex items-center gap-3 hover:border-blue-600 transition">
+                    <i class="fas fa-chalkboard-teacher text-blue-600"></i> For Professors
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Stats -->
+    <section class="py-20 border-y border-slate-100 bg-slate-50/50">
+        <div class="max-w-7xl mx-auto grid grid-cols-2 md:grid-cols-4 gap-8 px-6 text-center">
+            <div>
+                <h4 class="text-3xl font-black text-blue-600">10k+</h4>
+                <p class="text-xs text-slate-400 font-bold uppercase tracking-widest mt-2">Videos Processed</p>
+            </div>
+            <div>
+                <h4 class="text-3xl font-black text-blue-600">500k+</h4>
+                <p class="text-xs text-slate-400 font-bold uppercase tracking-widest mt-2">Flashcards Created</p>
+            </div>
+            <div>
+                <h4 class="text-3xl font-black text-blue-600">99%</h4>
+                <p class="text-xs text-slate-400 font-bold uppercase tracking-widest mt-2">AI Accuracy</p>
+            </div>
+            <div>
+                <h4 class="text-3xl font-black text-blue-600">24/7</h4>
+                <p class="text-xs text-slate-400 font-bold uppercase tracking-widest mt-2">Study Support</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="py-12 border-t border-slate-100 text-center">
+        <p class="text-slate-400 text-sm">&copy; 2026 MODYFIRE. Designed for the Future of Education.</p>
+    </footer>
+</body>
+
+</html>

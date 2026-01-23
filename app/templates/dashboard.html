@@ -209,28 +209,19 @@
                     class="bg-gradient-to-br from-blue-500 to-indigo-600 rounded-3xl p-1 shadow-2xl transform hover:scale-[1.01] transition duration-300">
                     <div
                         class="bg-white rounded-[20px] p-12 text-center h-full flex flex-col items-center justify-center">
-                        {% if tier == 'professor' %}
-                        <!-- Professor Content (unchanged) -->
-                        <div
-                            class="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center text-blue-600 text-3xl mb-6">
-                            <i class="fas fa-users"></i>
+                        <h3 class="text-2xl font-bold mb-2">Create & Manage</h3>
+                        <p class="text-slate-500 mb-6 max-w-md">Send automated welcome emails to all your students or
+                            transform a lecture into slides.</p>
+                        <div class="flex gap-4 w-full max-w-md justify-center mb-8">
+                            <button onclick="inviteStudents()"
+                                class="bg-black text-white px-8 py-3 rounded-xl font-bold hover:opacity-80 transition flex-1">
+                                Send Invites
+                            </button>
                         </div>
-                        <h3 class="text-2xl font-bold mb-2">Invite Your Class</h3>
-                        <p class="text-slate-500 mb-6 max-w-md">Send automated welcome emails to all your students with
-                            one click.</p>
-                        <button onclick="inviteStudents()"
-                            class="bg-black text-white px-8 py-3 rounded-xl font-bold hover:opacity-80 transition w-full max-w-xs">
-                            Send Invites
-                        </button>
-                        {% else %}
-                        <!-- Default Upload for others -->
-                        <div
-                            class="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center text-blue-600 text-3xl mb-6">
-                            <i class="fas fa-magic"></i>
-                        </div>
-                        <h3 class="text-2xl font-bold mb-2">
-                            {% if tier == 'student' %}Summarize Lecture{% else %}Create Content{% endif %}
-                        </h3>
+
+                        <div class="w-full bg-slate-100 h-px mb-8"></div>
+
+                        <h3 class="text-xl font-bold mb-6 text-slate-400">Transform Content</h3>
 
                         <!-- Upload Form with Progress -->
                         <div class="w-full max-w-md relative z-10">
@@ -258,7 +249,7 @@
                                 </div>
                                 <button onclick="submitUrl()"
                                     class="w-full py-3 bg-blue-600 text-white rounded-xl font-bold hover:bg-blue-700 transition flex items-center justify-center gap-2"
-                                    id="submitBtn">
+                                    id="processUrlBtn">
                                     <span>Transform Content</span>
                                     <i class="fas fa-arrow-right"></i>
                                 </button>
@@ -271,9 +262,6 @@
                                     </button>
                                 </div>
                                 {% endif %}
-                                id="processUrlBtn">
-                                <i class="fas fa-play"></i> Process Video
-                                </button>
                             </div>
 
                             <!-- OR Separator -->
@@ -294,7 +282,11 @@
                             </div>
 
                             <!-- Progress Bar (Hidden by default) -->
-                            <div id="uploadProgress" class="hidden text-left mb-4">
+                            <div id="uploadProgress" class="hidden text-left mb-4 p-4 bg-blue-50 rounded-xl relative">
+                                <button onclick="document.getElementById('uploadProgress').classList.add('hidden')"
+                                    class="absolute top-2 right-2 text-slate-400 hover:text-slate-600">
+                                    <i class="fas fa-times"></i>
+                                </button>
                                 <div class="flex justify-between mb-1">
                                     <span class="text-sm font-medium text-blue-700">Processing...</span>
                                     <span class="text-sm font-medium text-blue-700" id="progressPercent">0%</span>
@@ -306,7 +298,6 @@
                                 </div>
                             </div>
                         </div>
-                        {% endif %}
                     </div>
                 </div>
 
@@ -419,7 +410,11 @@
     <div id="cmdKModal"
         class="fixed inset-0 bg-black/20 backdrop-blur-sm z-50 hidden flex items-start justify-center pt-[20vh]">
         <div
-            class="bg-white w-full max-w-xl rounded-xl shadow-2xl overflow-hidden animate-fade-in-down border border-gray-200">
+            class="bg-white w-full max-w-xl rounded-xl shadow-2xl overflow-hidden animate-fade-in-down border border-gray-200 relative">
+            <button onclick="document.getElementById('cmdKModal').classList.add('hidden')"
+                class="absolute top-4 right-4 text-slate-400 hover:text-slate-600 z-10 p-2">
+                <i class="fas fa-times text-xl"></i>
+            </button>
             <div class="border-b px-4 flex items-center gap-3">
                 <i class="fas fa-search text-slate-400"></i>
                 <input type="text" placeholder="Type a command or search..."
@@ -449,7 +444,11 @@
     <!-- Login/Signup Modal -->
     <div id="loginModal"
         class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
-        <div class="bg-white max-w-md w-full rounded-2xl shadow-2xl overflow-hidden animate-fade-in-up p-8">
+        <div class="bg-white max-w-md w-full rounded-2xl shadow-2xl overflow-hidden animate-fade-in-up p-8 relative">
+            <button onclick="document.getElementById('loginModal').classList.add('hidden')"
+                class="absolute top-4 right-4 text-slate-400 hover:text-slate-600 p-2">
+                <i class="fas fa-times text-xl"></i>
+            </button>
             <h2 class="text-2xl font-bold text-center mb-6" id="authTitle">Welcome Back</h2>
 
             <!-- Tabs -->
@@ -486,12 +485,16 @@
 
             <div class="space-y-3">
                 <!-- Google Button Wrapper -->
-                <div id="g_id_onload" data-client_id="YOUR_GOOGLE_CLIENT_ID" data-context="signin" data-ux_mode="popup"
+                {% if google_client_id %}
+                <div id="g_id_onload" data-client_id="{{ google_client_id }}" data-context="signin" data-ux_mode="popup"
                     data-callback="handleGoogleCredentialResponse" data-auto_prompt="false">
                 </div>
                 <div class="g_id_signin" data-type="standard" data-shape="rectangular" data-theme="outline"
                     data-text="continue_with" data-size="large" data-logo_alignment="left" data-width="350">
                 </div>
+                {% else %}
+                <!-- Google Auth Not Configured -->
+                {% endif %}
 
                 <!-- Apple Button Mock -->
                 <button onclick="handleAppleLogin()"
@@ -514,7 +517,12 @@
     <!-- Recovery Modal -->
     <div id="recoveryModal"
         class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
-        <div class="bg-white max-w-md w-full rounded-2xl shadow-2xl overflow-hidden animate-fade-in-up p-8 text-center">
+        <div
+            class="bg-white max-w-md w-full rounded-2xl shadow-2xl overflow-hidden animate-fade-in-up p-8 text-center relative">
+            <button onclick="document.getElementById('recoveryModal').classList.add('hidden')"
+                class="absolute top-4 right-4 text-slate-400 hover:text-slate-600 p-2">
+                <i class="fas fa-times text-xl"></i>
+            </button>
             <div
                 class="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4 text-blue-600 text-2xl">
                 <i class="fas fa-key"></i>
@@ -559,7 +567,10 @@
     <!-- Onboarding Modal -->
     <div id="onboardingModal"
         class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
-        <div class="bg-white max-w-lg w-full rounded-2xl shadow-2xl overflow-hidden animate-fade-in-up">
+        <div class="bg-white max-w-lg w-full rounded-2xl shadow-2xl overflow-hidden animate-fade-in-up relative">
+            <button onclick="closeOnboarding()" class="absolute top-4 right-4 text-white/60 hover:text-white p-2 z-20">
+                <i class="fas fa-times text-xl"></i>
+            </button>
             <div class="bg-gradient-to-r from-blue-600 to-indigo-600 p-6 text-white text-center">
                 <div class="w-16 h-16 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-4 text-3xl">
                     👋

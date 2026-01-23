@@ -18,6 +18,32 @@ def extract_video_id(video_url: str) -> str:
              return match.group(1)
     raise ValueError(f"Invalid YouTube URL: {video_url}")
 
+import subprocess
+import json
+import os
+
+def get_video_metadata(video_url: str):
+    """Uses yt-dlp to fetch video metadata as a fallback for transcripts"""
+    try:
+        # Get only the essential info in JSON format
+        cmd = ["yt-dlp", "-j", "--skip-download", video_url]
+        result = subprocess.run(cmd, capture_output=True, text=True, timeout=15)
+        if result.returncode == 0:
+            data = json.loads(result.stdout)
+            title = data.get("title", "")
+            description = data.get("description", "")
+            channel = data.get("uploader", "")
+            tags = ", ".join(data.get("tags", [])) if data.get("tags") else ""
+            
+            combined_text = f"TITLE: {title}\nCHANNEL: {channel}\nTAGS: {tags}\n\nDESCRIPTION:\n{description}"
+            return combined_text
+        else:
+            print(f"yt-dlp failed: {result.stderr}")
+            return None
+    except Exception as e:
+        print(f"Metadata Fallback Error: {e}")
+        return None
+
 def get_transcript(video_url: str, return_timestamps=False):
     try:
         video_id = extract_video_id(video_url)
@@ -32,7 +58,7 @@ def get_transcript(video_url: str, return_timestamps=False):
                      # Standard API: static method .list_transcripts()
                      transcript_list = YouTubeTranscriptApi.list_transcripts(video_id)
             except Exception as e:
-                print(f"List Transcripts failed: {e}")
+                print(f"List Transcripts failed for {video_id}: {e}")
                 # Try fallback static method if instance failed completely (e.g. init error)
                 try:
                      transcript_list = YouTubeTranscriptApi.list_transcripts(video_id)
@@ -49,7 +75,7 @@ def get_transcript(video_url: str, return_timestamps=False):
                 except:
                     # 3. Fallback: Take ANY available transcript
                     try:
-                        transcript = transcript_list.find_transcript(['en', 'en-US', 'en-GB']) # Redundant retry?
+                        transcript = transcript_list.find_transcript(['en', 'en-US', 'en-GB'])
                     except:
                         # Just grab the first one we can find?
                         for t in transcript_list:
@@ -61,10 +87,17 @@ def get_transcript(video_url: str, return_timestamps=False):
 
             transcript_data = transcript.fetch()
         
-        except TranscriptsDisabled:
-            raise ValueError("Subtitles are disabled for this video. Cannot generate summary.")
-        except NoTranscriptFound:
-            raise ValueError("No suitable English subtitles found for this video. Cannot generate summary.")
+        except (TranscriptsDisabled, NoTranscriptFound) as trans_err:
+            print(f"Transcripts unavailable for {video_id}: {trans_err}. Trying metadata fallback...")
+            metadata_text = get_video_metadata(video_url)
+            if metadata_text:
+                return f"[FALLBACK MESSAGE: Transcripts were disabled for this video. Summary is based on video metadata/description.]\n\n{metadata_text}"
+            
+            # If metadata also fails, raise the original error
+            if isinstance(trans_err, TranscriptsDisabled):
+                raise ValueError("Subtitles are disabled for this video, and no metadata could be fetched. Cannot generate summary.")
+            else:
+                raise ValueError("No suitable subtitles found, and no metadata could be fetched. Cannot generate summary.")
         except Exception as e:
             # Check for age restriction or cookies
             if "Sign in" in str(e) or "cookies" in str(e):
