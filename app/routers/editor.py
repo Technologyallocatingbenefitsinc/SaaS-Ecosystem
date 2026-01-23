@@ -75,6 +75,18 @@ async def _generate_pdf_bytes(request: PPTXRequest, user) -> bytes:
     if not user or (user.tier == "student" and user.credits <= 1):
             should_watermark = True
 
+    # Helper to clean text for FPDF (Latin-1 only)
+    def _sanitize(text: str) -> str:
+         # Replace common smart quotes/bullets first
+        replacements = {
+            "\u201c": '"', "\u201d": '"', "\u2018": "'", "\u2019": "'",
+            "\u2013": "-", "\u2014": "-", "\u2022": "-", "\u2026": "..."
+        }
+        for k, v in replacements.items():
+            text = text.replace(k, v)
+        # Strip remaining unsupported characters (like emojis)
+        return text.encode('latin-1', 'replace').decode('latin-1')
+
     for slide in slide_data:
         pdf.add_page()
         
@@ -133,7 +145,7 @@ async def _generate_pdf_bytes(request: PPTXRequest, user) -> bytes:
             title_y = 10 # Adjust for header
 
         pdf.set_xy(title_x, title_y)
-        pdf.multi_cell(width-40, 12, slide.get("title", "Untitled"), align='L')
+        pdf.multi_cell(width-40, 12, _sanitize(slide.get("title", "Untitled")), align='L')
         
         # Content (Points)
         pdf.set_font("Helvetica", "", 16) # Adjusted 18 -> 16
@@ -156,11 +168,11 @@ async def _generate_pdf_bytes(request: PPTXRequest, user) -> bytes:
         if points and isinstance(points, list):
             for p in points:
                 pdf.set_x(content_x) 
-                pdf.multi_cell(width-(content_x*2), 9, f"-  {p}")
+                pdf.multi_cell(width-(content_x*2), 9, f"-  {_sanitize(p)}")
                 pdf.ln(2) 
         else:
             pdf.set_x(content_x)
-            pdf.multi_cell(width-(content_x*2), 9, str(content_text))
+            pdf.multi_cell(width-(content_x*2), 9, _sanitize(str(content_text)))
 
         # --- Watermark (Per Slide) ---
         if should_watermark:
