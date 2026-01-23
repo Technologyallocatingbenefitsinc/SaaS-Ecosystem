@@ -136,15 +136,19 @@
                 const initEditor = async () => {
                     try {
                         // Dynamic Import for better error handling
-                        const [
-                            { Editor },
-                            { default: StarterKit },
-                            { default: Image }
-                        ] = await Promise.all([
-                            import('https://esm.sh/@tiptap/core'),
-                            import('https://esm.sh/@tiptap/starter-kit'),
-                            import('https://esm.sh/@tiptap/extension-image')
-                        ]);
+                        // Load modules individually to debug specific failures
+                        const coreModule = await import('https://esm.sh/@tiptap/core');
+                        const starterKitModule = await import('https://esm.sh/@tiptap/starter-kit');
+                        const imageModule = await import('https://esm.sh/@tiptap/extension-image');
+
+                        // Safe access - esm.sh sometimes exports default, sometimes named depending on version/caching
+                        const Editor = coreModule.Editor || coreModule.default.Editor;
+                        const StarterKit = starterKitModule.default || starterKitModule;
+                        const Image = imageModule.default || imageModule;
+
+                        if (!Editor || !StarterKit) {
+                            throw new Error("Modules loaded but exports were missing.");
+                        }
 
                         // Load Content: Pending (New) -> Autosave (Old) -> Default
                         const saved = localStorage.getItem('workspace_autosave');
