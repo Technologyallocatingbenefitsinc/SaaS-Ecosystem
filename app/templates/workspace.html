@@ -402,13 +402,14 @@
                 }
             };
 
-            const confirmExportPPT = async () => {
+            const confirmExportPPT = async (type = 'pptx') => {
                 setIsGenerating(true);
                 try {
                     const text = editor.getText();
-                    const endpoint = selectedFileType === 'pdf' ? '/editor/export-slides-pdf' : '/editor/export-pptx';
-                    const filename = selectedFileType === 'pdf' ? 'study_slides.pdf' : 'study_notes.pptx';
+                    const endpoint = type === 'pdf' ? '/editor/export-slides-pdf' : '/editor/export-pptx';
+                    const filename = type === 'pdf' ? 'study_slides.pdf' : 'study_notes.pptx';
 
+                    // Reduced timeouts / clearer error handling could go here
                     const response = await fetch(endpoint, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
@@ -432,14 +433,15 @@
                         a.click();
                         a.remove();
                         window.URL.revokeObjectURL(url);
-                        setIsExportModalOpen(false);
+                        if (type === 'pptx') setIsExportModalOpen(false); // Only close on PPTX, maybe keep open for PDF?
+                        else setIsExportModalOpen(false);
                     } else {
                         const errorData = await response.json();
                         alert("Export failed: " + (errorData.detail || "Unknown error"));
                     }
                 } catch (e) {
                     console.error(e);
-                    alert("An error occurred during export.");
+                    alert("An error occurred during export. Please try again.");
                 } finally {
                     setIsGenerating(false);
                 }
@@ -552,9 +554,9 @@
                                 </div>
                                 <button
                                     onClick={handleExportPDF}
-                                    className="px-4 py-2 bg-slate-900 text-white rounded-lg font-medium hover:bg-slate-800 transition shadow-lg"
+                                    className="px-4 py-2 bg-slate-900 text-white rounded-lg font-medium hover:bg-slate-800 transition shadow-lg text-sm"
                                 >
-                                    📥 Export PDF
+                                    📄 Report PDF
                                 </button>
                                 <button
                                     onClick={openExportModal}
@@ -610,24 +612,7 @@
                                     </div>
 
                                     <div className="p-6 space-y-6">
-                                        {/* File Type Selection */}
-                                        <div>
-                                            <label className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2 block">File Type</label>
-                                            <div className="flex bg-gray-100 p-1 rounded-lg">
-                                                <button
-                                                    onClick={() => setSelectedFileType('pptx')}
-                                                    className={`flex-1 py-2 text-sm font-bold rounded-md transition ${selectedFileType === 'pptx' ? 'bg-white shadow text-blue-600' : 'text-slate-500 hover:text-slate-700'}`}
-                                                >
-                                                    PowerPoint (.pptx)
-                                                </button>
-                                                <button
-                                                    onClick={() => setSelectedFileType('pdf')}
-                                                    className={`flex-1 py-2 text-sm font-bold rounded-md transition ${selectedFileType === 'pdf' ? 'bg-white shadow text-blue-600' : 'text-slate-500 hover:text-slate-700'}`}
-                                                >
-                                                    PDF Presentation (.pdf)
-                                                </button>
-                                            </div>
-                                        </div>
+                                        {/* Remove File Type Selection - We will show both buttons */}
 
                                         {/* Style Selection */}
                                         <div>
@@ -706,37 +691,44 @@
                                         </div>
                                     </div>
 
-                                    <div className="flex gap-3 pt-4 border-t border-gray-100">
-                                        <button
-                                            onClick={() => setIsExportModalOpen(false)}
-                                            className="flex-1 py-3 text-slate-500 font-bold hover:bg-slate-50 rounded-xl transition"
-                                        >
-                                            Cancel
-                                        </button>
-
-                                        {selectedFileType === 'pdf' && (
+                                    <div className="flex flex-col gap-3 p-4 border-t border-gray-100 bg-gray-50 rounded-b-2xl">
+                                        <div className="flex gap-2">
                                             <button
                                                 onClick={handlePreviewPDF}
                                                 disabled={isGenerating}
-                                                className="flex-1 py-3 bg-blue-100 text-blue-700 font-bold rounded-xl hover:bg-blue-200 transition flex items-center justify-center gap-2"
+                                                className="flex-1 py-3 bg-white border border-blue-200 text-blue-700 font-bold rounded-xl hover:bg-blue-50 transition shadow-sm flex items-center justify-center gap-2"
                                             >
-                                                {isGenerating ? 'Generating...' : '👁️ Preview PDF'}
+                                                {isGenerating ? 'Wait...' : '👁️ Preview PDF'}
                                             </button>
-                                        )}
+
+                                            <button
+                                                onClick={() => confirmExportPPT('pdf')}
+                                                disabled={isGenerating}
+                                                className="flex-1 py-3 bg-red-100 text-red-700 font-bold rounded-xl hover:bg-red-200 transition shadow-sm flex items-center justify-center gap-2"
+                                            >
+                                                {isGenerating ? 'Wait...' : '📥 PDF Slides'}
+                                            </button>
+                                        </div>
 
                                         <button
-                                            onClick={confirmExportPPT}
+                                            onClick={() => confirmExportPPT('pptx')}
                                             disabled={isGenerating}
-                                            className="flex-[2] py-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-bold rounded-xl hover:shadow-lg hover:scale-[1.02] transition flex items-center justify-center gap-2 shadow-blue-200 shadow-lg"
+                                            className="w-full py-3 bg-gradient-to-r from-orange-500 to-red-600 text-white font-bold rounded-xl hover:shadow-lg hover:scale-[1.01] transition shadow-orange-200"
                                         >
                                             {isGenerating ? (
-                                                <span className="animate-pulse">Generating...</span>
+                                                <span className="animate-pulse">Generating Presentation... (takes ~20s)</span>
                                             ) : (
-                                                <>
-                                                    <span>Download {selectedFileType === 'pptx' ? 'PPTX' : 'PDF'}</span>
-                                                    <span className="text-xl">✨</span>
-                                                </>
+                                                <span className="flex items-center justify-center gap-2">
+                                                    <span>📊</span> Download PowerPoint (.pptx)
+                                                </span>
                                             )}
+                                        </button>
+
+                                        <button
+                                            onClick={() => setIsExportModalOpen(false)}
+                                            className="w-full text-center text-slate-400 text-sm hover:text-slate-600"
+                                        >
+                                            Cancel
                                         </button>
                                     </div>
                                 </div>
