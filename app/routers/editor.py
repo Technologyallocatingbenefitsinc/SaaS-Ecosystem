@@ -68,14 +68,25 @@ async def _generate_pdf_bytes(request: PPTXRequest, user) -> bytes:
     body_c = theme["body_color"]
     accent_c = theme["accent_color"]
 
-    pdf.set_auto_page_break(auto=False)
+    # Register Custom Fonts
+    try:
+        pdf.add_font("Caveat", "", "app/static/fonts/Caveat-Regular.ttf", uni=True)
+        pdf.add_font("Caveat", "B", "app/static/fonts/Caveat-Bold.ttf", uni=True)
+    except Exception as e:
+        print(f"Font loading warning: {e}")
+
+    # Determine Font Family based on Theme
+    font_family = "Helvetica"
+    # Themes that use handwriting style
+    if request.theme in ["fun", "warm", "sunset", "ocean"]:
+        font_family = "Caveat"
     
     # Check Watermark Condition
     should_watermark = False
     if not user or (user.tier == "student" and user.credits <= 1):
             should_watermark = True
 
-    # Helper to clean text for FPDF (Latin-1 only)
+    # Helper to clean text for FPDF (Latin-1 only for standard fonts, UTF-8 for TTF)
     def _sanitize(text: str) -> str:
          # Replace common smart quotes/bullets first
         replacements = {
@@ -84,7 +95,15 @@ async def _generate_pdf_bytes(request: PPTXRequest, user) -> bytes:
         }
         for k, v in replacements.items():
             text = text.replace(k, v)
-        # Strip remaining unsupported characters (like emojis)
+        
+        # If using standard Helvetica, we must strip to Latin-1
+        if font_family == "Helvetica":
+            return text.encode('latin-1', 'replace').decode('latin-1')
+        # If using loaded TTF (Caveat), FPDF (uni=True) handles UTF-8 better, 
+        # but we still want to avoid complex emojis that the font doesn't support.
+        # However, FPDF2 might still prefer clean text. Let's keep strict for safety 
+        # but maybe allow slightly more if we trusted the font (Caveat doesn't have emojis).
+        # Safe bet: still strip to latin-1 or similar compatible range to prevent "character not in font" error
         return text.encode('latin-1', 'replace').decode('latin-1')
 
     for slide in slide_data:
@@ -132,7 +151,9 @@ async def _generate_pdf_bytes(request: PPTXRequest, user) -> bytes:
             pdf.rect(0, height - 3, width, 3, 'F')
 
         # Title
-        pdf.set_font("Helvetica", "B", 24) # Slightly smaller than 28 for better fit
+        # Adjust size for handwriting font (usually looks smaller)
+        title_size = 28 if font_family == "Caveat" else 24
+        pdf.set_font(font_family, "B", title_size) 
         pdf.set_text_color(*title_c)
         
         # Title Position Adjustment
@@ -148,7 +169,8 @@ async def _generate_pdf_bytes(request: PPTXRequest, user) -> bytes:
         pdf.multi_cell(width-40, 12, _sanitize(slide.get("title", "Untitled")), align='L')
         
         # Content (Points)
-        pdf.set_font("Helvetica", "", 16) # Adjusted 18 -> 16
+        body_size = 20 if font_family == "Caveat" else 16
+        pdf.set_font(font_family, "", body_size) 
         pdf.set_text_color(*body_c)
         
         # Dynamic Y positioning
