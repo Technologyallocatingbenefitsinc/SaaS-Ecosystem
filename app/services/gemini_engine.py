@@ -93,21 +93,21 @@ def get_transcript(video_url: str, return_timestamps=False):
 
 from app.services.usage_logger import log_token_usage
 
-async def process_video_content(video_url: str, user_tier: str, user_id: int, slide_count: str = "6-10"):
+async def process_video_content(video_url: str, user_tier: str, user_id: int, slide_count: str = "6-10", language: str = "English"):
     transcript = get_transcript(video_url)
     
     if user_tier == "student":
         model_name = "gemini-2.5-flash"
-        prompt = f"Summarize the following video transcript into concise bullet points suitable for study notes. Target length: {slide_count} slides/sections.\\n\\n{transcript}"
+        prompt = f"Summarize the following video transcript into concise bullet points suitable for study notes. Target length: {slide_count} slides/sections. OUTPUT LANGUAGE: {language}.\\n\\n{transcript}"
     elif user_tier == "professor":
         model_name = "gemini-2.5-flash" 
-        prompt = f"Create a detailed academic study guide with citations based on the following transcript. Structure the guide into {slide_count} distinct chapters or modules.\\n\\n{transcript}"
+        prompt = f"Create a detailed academic study guide with citations based on the following transcript. Structure the guide into {slide_count} distinct chapters or modules. OUTPUT LANGUAGE: {language}.\\n\\n{transcript}"
     elif user_tier == "podcaster":
         model_name = "gemini-2.5-flash"
-        prompt = f"Generate slide descriptions and visual imagery ideas for a presentation based on this transcript. PRODUCE EXACTLY {slide_count} SLIDES. For each slide, provide the text content and a prompt for an image generator:\\n\\n{transcript}"
+        prompt = f"Generate slide descriptions and visual imagery ideas for a presentation based on this transcript. PRODUCE EXACTLY {slide_count} SLIDES. For each slide, provide the text content and a prompt for an image generator. OUTPUT LANGUAGE: {language}.\\n\\n{transcript}"
     else:
         model_name = "gemini-2.5-flash"
-        prompt = f"Summarize this:\\n\\n{transcript}"
+        prompt = f"Summarize this. OUTPUT LANGUAGE: {language}.\\n\\n{transcript}"
 
     model = genai.GenerativeModel(model_name)
     response = model.generate_content(prompt)
@@ -130,7 +130,7 @@ async def process_video_content(video_url: str, user_tier: str, user_id: int, sl
         "content": markdown.markdown(response.text)
     }
 
-async def convert_text_to_slides_json(text: str, count: int = 10, tone: str = "neutral", html_content: str = None):
+async def convert_text_to_slides_json(text: str, count: int = 10, tone: str = "neutral", html_content: str = None, language: str = "English"):
     model = genai.GenerativeModel("gemini-2.5-flash")
     
     # Use HTML content if valid, otherwise fallback to text
@@ -151,13 +151,14 @@ async def convert_text_to_slides_json(text: str, count: int = 10, tone: str = "n
     
     STYLE INSTRUCTION: {specific_instruction}
     Tone: {tone}
+    OUTPUT LANGUAGE: {language}
     
     IMPORTANT: The content may contain HTML <img> tags. If you find an image that is relevant to a specific slide's topic, extract its 'src' attribute and include it in the "image_url" field for that slide.
     
     Output must be a plain JSON list of objects. Each object must have:
-    - "title": string
-    - "points": list of strings (each string is a bullet point)
-    - "notes": string (speaker notes for the slide)
+    - "title": string (translated to {language})
+    - "points": list of strings (translated to {language})
+    - "notes": string (translated to {language})
     - "image_url": string (optional, the src URL of the image if one belongs on this slide)
     
     Ensure the JSON is valid and properly formatted. Do not include markdown code blocks.
@@ -171,11 +172,12 @@ async def convert_text_to_slides_json(text: str, count: int = 10, tone: str = "n
     cleaned_text = response.text.replace("```json", "").replace("```", "").strip()
     return cleaned_text
 
-async def generate_quiz_from_text(text: str):
+async def generate_quiz_from_text(text: str, language: str = "English"):
     model = genai.GenerativeModel("gemini-2.5-flash")
     prompt = f"""
     Create a multiple-choice quiz based on the following text.
     Generate 5 to 10 questions.
+    OUTPUT LANGUAGE: {language}
     
     Output strictly as a JSON list of objects:
     [
@@ -193,11 +195,12 @@ async def generate_quiz_from_text(text: str):
     cleaned = response.text.replace("```json", "").replace("```", "").strip()
     return cleaned
 
-async def generate_flashcards_from_text(text: str):
+async def generate_flashcards_from_text(text: str, language: str = "English"):
     model = genai.GenerativeModel("gemini-2.5-flash")
     prompt = f"""
     Create a set of flashcards based on the key concepts in the following text.
     Generate 5 to 15 cards.
+    OUTPUT LANGUAGE: {language}
     
     Output strictly as a JSON list of objects:
     [
@@ -212,7 +215,7 @@ async def generate_flashcards_from_text(text: str):
     """
     response = model.generate_content(prompt)
     cleaned = response.text.replace("```json", "").replace("```", "").strip()
-    cleaned = response.text.replace("```json", "").replace("```", "").strip()
+    # Remove accidental double cleaning
     return cleaned
 
 async def identify_viral_clips(video_url: str):
@@ -263,7 +266,7 @@ async def identify_viral_clips(video_url: str):
     cleaned = response.text.replace("```json", "").replace("```", "").strip()
     return cleaned
 
-async def generate_audio_script(transcript_text: str):
+async def generate_audio_script(transcript_text: str, language: str = "English"):
     model = genai.GenerativeModel("gemini-2.0-flash-thinking-exp-01-21")
     prompt = f"""
     Convert the following transcript into a natural, engaging podcast dialogue between two hosts:
@@ -273,6 +276,7 @@ async def generate_audio_script(transcript_text: str):
     
     The dialogue should be about 3-5 minutes of reading time (approx 600-800 words).
     Focus on the core insights. Use "Um", "Exactly", "Right?" to make it sound natural.
+    OUTPUT LANGUAGE: {language}
     
     Output strictly as a JSON list of objects:
     [
@@ -284,8 +288,6 @@ async def generate_audio_script(transcript_text: str):
     {transcript_text[:15000]} 
     """
     
-    response = model.generate_content(prompt)
-    cleaned = response.text.replace("```json", "").replace("```", "").strip()
     response = model.generate_content(prompt)
     cleaned = response.text.replace("```json", "").replace("```", "").strip()
     return cleaned

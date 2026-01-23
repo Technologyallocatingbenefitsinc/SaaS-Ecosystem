@@ -157,6 +157,7 @@
             const [slideCount, setSlideCount] = useState(10);
             const [selectedFormat, setSelectedFormat] = useState('16:9');
             const [selectedTheme, setSelectedTheme] = useState('default');
+            const [selectedLanguage, setSelectedLanguage] = useState('English');
 
             const editorRef = useRef(null);
             const saveTimeoutRef = useRef(null);
@@ -315,7 +316,7 @@
                     const response = await fetch(endpoint, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ text: text })
+                        body: JSON.stringify({ text: text, language: selectedLanguage })
                     });
 
                     const data = await response.json();
@@ -379,7 +380,8 @@
                             theme: selectedTheme,
                             aspect_ratio: selectedFormat,
                             writing_style: selectedStyle,
-                            slide_count: slideCount
+                            slide_count: slideCount,
+                            language: selectedLanguage
                         })
                     });
 
@@ -419,7 +421,8 @@
                             theme: selectedTheme,
                             aspect_ratio: selectedFormat,
                             writing_style: selectedStyle,
-                            slide_count: slideCount
+                            slide_count: slideCount,
+                            language: selectedLanguage
                         })
                     });
 
@@ -447,11 +450,73 @@
                 }
             };
 
+            const handleGenerateAudioScript = async () => {
+                if (!editor) return;
+                const text = editor.getText();
+                if (!text.trim()) return alert("Please add some notes first!");
+
+                setIsAudioLoading(true);
+                try {
+                    const response = await fetch('/editor/generate-audio-script', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ text: text, language: selectedLanguage })
+                    });
+                    const data = await response.json();
+                    if (data.script) {
+                        setAudioScript(data.script);
+                    } else {
+                        alert("Failed to generate script: " + (data.detail || "Unknown error"));
+                    }
+                } catch (e) {
+                    alert("Error: " + e);
+                } finally {
+                    setIsAudioLoading(false);
+                }
+            };
+
+            const handleSynthesizeAudio = async () => {
+                if (audioScript.length === 0) return;
+                setIsAudioLoading(true);
+                try {
+                    const response = await fetch('/editor/synthesize-audio', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ script: audioScript })
+                    });
+                    const data = await response.json();
+                    if (data.audio_url) {
+                        setAudioUrl(data.audio_url);
+                    } else {
+                        alert("Audio generation failed");
+                    }
+                } catch (e) {
+                    alert("Error: " + e);
+                } finally {
+                    setIsAudioLoading(false);
+                }
+            };
+
             const styles = [
                 { id: 'neutral', name: 'Neutral', icon: '😐' },
                 { id: 'professional', name: 'Professional', icon: '👔' },
                 { id: 'fun', name: 'Fun/Engaging', icon: '🎉' },
                 { id: 'academic', name: 'Academic', icon: '🎓' }
+            ];
+
+            const languages = [
+                { code: 'English', label: '🇺🇸 English' },
+                { code: 'Spanish', label: '🇪🇸 Spanish' },
+                { code: 'French', label: '🇫🇷 French' },
+                { code: 'German', label: '🇩🇪 German' },
+                { code: 'Hindi', label: '🇮🇳 Hindi' },
+                { code: 'Mandarin', label: '🇨🇳 Mandarin' },
+                { code: 'Portuguese', label: '🇧🇷 Portuguese' },
+                { code: 'Italian', label: '🇮🇹 Italian' },
+                { code: 'Arabic', label: '🇸🇦 Arabic' },
+                { code: 'Russian', label: '🇷🇺 Russian' },
+                { code: 'Japanese', label: '🇯🇵 Japanese' },
+                { code: 'Korean', label: '🇰🇷 Korean' }
             ];
 
             const themes = [
@@ -486,6 +551,23 @@
                                 </h1>
                             </div>
                             <div className="flex gap-2">
+                                <div className="relative group z-50">
+                                    <button className="px-3 py-2 bg-slate-100 text-slate-700 rounded-lg font-medium hover:bg-slate-200 transition text-sm flex items-center gap-1">
+                                        {languages.find(l => l.code === selectedLanguage)?.label?.split(' ')[0] || '🇺🇸'} ▼
+                                    </button>
+                                    <div className="absolute right-0 mt-2 w-40 bg-white rounded-xl shadow-xl border border-gray-100 hidden group-hover:block max-h-60 overflow-y-auto">
+                                        {languages.map(lang => (
+                                            <button
+                                                key={lang.code}
+                                                onClick={() => setSelectedLanguage(lang.code)}
+                                                className={`w-full text-left px-4 py-2 hover:bg-gray-50 text-sm ${selectedLanguage === lang.code ? 'bg-blue-50 text-blue-600 font-bold' : 'text-slate-700'}`}
+                                            >
+                                                {lang.label}
+                                            </button>
+                                        ))}
+                                    </div>
+                                </div>
+
                                 <button
                                     onClick={handleAIRewrite}
                                     disabled={isThinking}

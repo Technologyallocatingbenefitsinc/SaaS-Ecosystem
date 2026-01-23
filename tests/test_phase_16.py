@@ -34,7 +34,8 @@ async def test_process_video_with_slide_count():
             "https://youtube.com/watch?v=123", 
             "podcaster", 
             1, 
-            "11-18"
+            "11-18",
+            language="English"
         )
 
 @pytest.mark.asyncio

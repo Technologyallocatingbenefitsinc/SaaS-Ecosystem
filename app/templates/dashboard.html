@@ -245,6 +245,16 @@
                                         <option value="6-10" selected>6-10 slides</option>
                                         <option value="11-18">11-18 slides</option>
                                     </select>
+                                    <select id="languageSelect"
+                                        class="bg-white border border-gray-200 rounded-xl px-4 py-4 text-sm font-bold text-slate-600 focus:ring-2 focus:ring-blue-500 focus:outline-none">
+                                        <option value="English">🇺🇸 English</option>
+                                        <option value="Spanish">🇪🇸 Spanish</option>
+                                        <option value="French">🇫🇷 French</option>
+                                        <option value="German">🇩🇪 German</option>
+                                        <option value="Mandarin">🇨🇳 Mandarin</option>
+                                        <option value="Hindi">🇮🇳 Hindi</option>
+                                        <option value="Portuguese">🇧🇷 Portuguese</option>
+                                    </select>
                                 </div>
                                 <button onclick="submitUrl()"
                                     class="w-full py-3 bg-blue-600 text-white rounded-xl font-bold hover:bg-blue-700 transition flex items-center justify-center gap-2"
@@ -731,9 +741,11 @@
                 progressPercent.innerText = "Analyzing Video...";
 
                 try {
+                    const language = document.getElementById('languageSelect').value;
                     const formData = new FormData();
                     formData.append('video_url', url);
                     formData.append('slide_count', slideCount);
+                    formData.append('language', language);
 
                     const response = await axios.post('/upload-video', formData);
 
