@@ -107,6 +107,37 @@
             const [audioUrl, setAudioUrl] = useState(null);
             const [isAudioLoading, setIsAudioLoading] = useState(false);
 
+            // Chat Assistant State
+            const [isChatOpen, setIsChatOpen] = useState(false);
+            const [chatHistory, setChatHistory] = useState([{ role: 'assistant', text: "Hi! I've watched the video. Ask me anything!" }]);
+            const [chatInput, setChatInput] = useState('');
+            const [isChatLoading, setIsChatLoading] = useState(false);
+
+            const handleChatSubmit = async (e) => {
+                e.preventDefault();
+                if (!chatInput.trim()) return;
+
+                const userMsg = chatInput;
+                setChatInput('');
+                setChatHistory(prev => [...prev, { role: 'user', text: userMsg }]);
+                setIsChatLoading(true);
+
+                try {
+                    const response = await fetch('/editor/chat-video', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ message: userMsg, context: editor ? editor.getText() : "" })
+                    });
+                    const data = await response.json();
+                    setChatHistory(prev => [...prev, { role: 'assistant', text: data.response || "I didn't get a response." }]);
+                } catch (err) {
+                    console.error(err);
+                    setChatHistory(prev => [...prev, { role: 'assistant', text: "Sorry, I'm having trouble connecting right now." }]);
+                } finally {
+                    setIsChatLoading(false);
+                }
+            };
+
             // Add other states that might be missing from view if needed, or rely on defaults if they are defined further down? 
             // Warning: if I redefine vars that are defined below, it errors. 
             // But looking at previous view, only editor/isThinking were defined at top.
