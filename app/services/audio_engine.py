@@ -1,4 +1,4 @@
-from gTTS import gTTS
+from gtts import gTTS
 import os
 from pathlib import Path
 

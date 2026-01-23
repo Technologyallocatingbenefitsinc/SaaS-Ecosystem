@@ -3,8 +3,8 @@ import sys
 from unittest.mock import MagicMock
 
 # Mock gTTS before importing app modules
-sys.modules["gTTS"] = MagicMock()
-sys.modules["gTTS.gTTS"] = MagicMock()
+sys.modules["gtts"] = MagicMock()
+sys.modules["gtts.gTTS"] = MagicMock()
 
 from httpx import AsyncClient, ASGITransport
 from app.main import app
