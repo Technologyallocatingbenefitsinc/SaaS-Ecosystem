@@ -194,17 +194,38 @@ def generate_pptx(slide_data: list, watermark: bool = False, theme_name: str = "
             tf.clear() # Clear existing placeholder text
             
             if isinstance(points, list) and points:
+                # Add text
                 for i, point in enumerate(points):
                     p = tf.add_paragraph() if i > 0 else tf.paragraphs[0]
                     p.text = point
                     p.level = 0
                     p.font.color.rgb = body_rgb
-                    p.font.size = Pt(24) # Increased font size for modern look
+                    p.font.size = Pt(24) # Start size
+
+                # Auto-fit Logic: Reduce font size if overflowing
+                # Heuristic: Check rough character count vs box size
+                # Better: pptx doesn't give us calculated h, so we just safeguard with smaller fonts for long lists
+                total_chars = sum(len(p) for p in points)
+                if total_chars > 300:
+                    for p in tf.paragraphs:
+                        p.font.size = Pt(18)
+                elif total_chars > 500:
+                    for p in tf.paragraphs:
+                        p.font.size = Pt(14)
+                
             else:
                 tf.text = str(content_raw)
                 for paragraph in tf.paragraphs:
                     paragraph.font.color.rgb = body_rgb
                     paragraph.font.size = Pt(24)
+                
+                # Auto-fit for block text
+                if len(str(content_raw)) > 400:
+                    for p in tf.paragraphs:
+                        p.font.size = Pt(18)
+                if len(str(content_raw)) > 700:
+                    for p in tf.paragraphs:
+                        p.font.size = Pt(14)
 
         # --- Add Image (if present) ---
         image_url = slide_info.get("image_url")

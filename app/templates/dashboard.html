@@ -248,8 +248,21 @@
                                 </div>
                                 <button onclick="submitUrl()"
                                     class="w-full py-3 bg-blue-600 text-white rounded-xl font-bold hover:bg-blue-700 transition flex items-center justify-center gap-2"
-                                    id="processUrlBtn">
-                                    <i class="fas fa-play"></i> Process Video
+                                    id="submitBtn">
+                                    <span>Transform Content</span>
+                                    <i class="fas fa-arrow-right"></i>
+                                </button>
+
+                                {% if tier == 'student' %}
+                                <div class="mt-4 text-center">
+                                    <button onclick="joinClass()"
+                                        class="text-sm text-slate-500 hover:text-blue-600 font-bold underline">
+                                        Join a Class (Enter Code)
+                                    </button>
+                                </div>
+                                {% endif %}
+                                id="processUrlBtn">
+                                <i class="fas fa-play"></i> Process Video
                                 </button>
                             </div>
 
@@ -1038,28 +1051,60 @@
             }
         });
 
-        // --- Professor Invite Logic ---
+        // --- Professor Invite & Student Join Logic ---
         async function inviteStudents() {
             const btn = document.querySelector('button[onclick="inviteStudents()"]');
             const originalText = btn.innerText;
-            btn.innerText = "Sending...";
+            btn.innerText = "Generating Code...";
             btn.disabled = true;
 
             try {
                 const res = await fetch('/invite-students', { method: 'POST' });
+                const data = await res.json();
+
                 if (res.ok) {
-                    btn.innerText = "Invites Sent! ✅";
+                    btn.innerText = "Code: " + data.class_code;
                     btn.classList.add('bg-green-600', 'text-white');
+
+                    // Show detailed modal or alert
+                    alert(`Your Class Code is: ${data.class_code}\n\nShare this code with your students. They can enter it in the "Join Class" section to link their accounts.`);
+
+                    // Keep the code visible on button for a while
                     setTimeout(() => {
                         btn.innerText = originalText;
                         btn.classList.remove('bg-green-600');
                         btn.disabled = false;
-                    }, 3000);
+                    }, 10000);
+                } else {
+                    throw new Error(data.detail || "Failed");
                 }
             } catch (e) {
-                alert("Error sending invites.");
+                alert("Error generating invite code: " + e.message);
                 btn.innerText = originalText;
                 btn.disabled = false;
+            }
+        }
+
+        async function joinClass() {
+            const code = prompt("Enter your Professor's Class Code (e.g., CLASS-X9Y2):");
+            if (!code) return;
+
+            try {
+                const res = await fetch('/join-class', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ code: code.trim() })
+                });
+                const data = await res.json();
+
+                if (res.ok) {
+                    alert(data.message);
+                    window.location.reload(); // Refresh to update UI if needed
+                } else {
+                    alert("Join failed: " + (data.detail || "Unknown error"));
+                }
+            } catch (e) {
+                alert("Network error: " + e);
             }
         }
 

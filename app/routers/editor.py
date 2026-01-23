@@ -225,8 +225,18 @@ async def generate_text_report(request: ReportRequest):
         
         # Content
         pdf.set_font("Helvetica", "", 12)
-        # Replace newlines to safe latin-1
-        safe_text = request.text.encode('latin-1', 'replace').decode('latin-1')
+        # Replace newlines/unsupported chars to safe latin-1
+        # Also clean common markdown artifacts if present
+        safe_text = request.text.replace('**', '').replace('##', '')
+        
+        replacements = {
+            "\u201c": '"', "\u201d": '"', "\u2018": "'", "\u2019": "'",
+            "\u2013": "-", "\u2014": "-", "\u2022": "-", "\u2026": "..."
+        }
+        for k, v in replacements.items():
+            safe_text = safe_text.replace(k, v)
+            
+        safe_text = safe_text.encode('latin-1', 'replace').decode('latin-1')
         pdf.multi_cell(0, 10, safe_text)
         
         # Footer
@@ -237,6 +247,7 @@ async def generate_text_report(request: ReportRequest):
         pdf_bytes = pdf.output()
         return Response(
             content=bytes(pdf_bytes),
+            # Force Attachment to ensure "Download" behavior, not "View"
             headers={"Content-Disposition": "attachment; filename='summary_report.pdf'"},
             media_type="application/pdf"
         )
@@ -412,11 +423,18 @@ async def create_audio_script(request: AudioRequest):
 @router.post("/synthesize-audio")
 async def create_audio_file(request: ScriptRequest):
     try:
-        # Generate generic filename
-        filename = f"podcast_{io.BytesIO().__hash__()}.mp3"
+        # Generate secure unique filename
+        import uuid
+        filename = f"podcast_{uuid.uuid4().hex}.mp3"
+        # Ensure directory exists (redundant safe check)
+        os.makedirs("user_uploads", exist_ok=True)
+        
         filepath = f"user_uploads/{filename}"
         
-        synthesize_podcast_audio(request.script, output_filename=filepath)
+        # Determine absolute path for synthesis engine to avoid CWD ambiguity
+        abs_path = os.path.abspath(filepath)
+        
+        synthesize_podcast_audio(request.script, output_filename=abs_path)
         
         return {"audio_url": f"/uploads/{filename}"}
     except Exception as e:

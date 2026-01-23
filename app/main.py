@@ -144,18 +144,53 @@ async def reset_password_page(request: Request):
     return templates.TemplateResponse(request, "reset_password.html", {})
 
 @app.post("/invite-students")
-async def invite_students():
-    # Trigger n8n Webhook for emails
-    # In production: Fetch user's class list from DB
-    async with httpx.AsyncClient() as client:
-        try:
-            # Replace with ACTUAL n8n Production URL
-            # await client.post("https://your-n8n-instance.com/webhook/professor-invite", json={"professor_id": 123})
-            print("Simulating n8n Invite Webhook Trigger...")
-            pass 
-        except Exception as e:
-            print(f"Failed to trigger n8n: {e}")
-    return {"status": "Invites Queued"}
+async def invite_students(user = Depends(auth.get_replit_user), db = Depends(get_db)):
+    if not user:
+        raise HTTPException(status_code=401, detail="Unauthorized")
+    
+    # Generate Class Code if missing
+    import random, string
+    code = user.my_class_code
+    if not code:
+        code = "CLASS-" + ''.join(random.choices(string.ascii_uppercase + string.digits, k=6))
+        user.my_class_code = code
+        db.add(user)
+        await db.commit()
+        await db.refresh(user)
+    
+    # In production: Trigger n8n email loop here
+    print(f"Invite Code Generated: {code}")
+    
+    return {"status": "success", "class_code": code}
+
+@app.post("/join-class")
+async def join_class(
+    request: Request, 
+    user = Depends(auth.get_replit_user), 
+    db = Depends(get_db)
+):
+    if not user:
+        raise HTTPException(status_code=401, detail="Unauthorized")
+        
+    data = await request.json()
+    code = data.get("code")
+    
+    if not code:
+        raise HTTPException(status_code=400, detail="Class code required")
+        
+    # Find Professor with this code
+    from sqlalchemy import select
+    res = await db.execute(select(User).where(User.my_class_code == code))
+    professor = res.scalars().first()
+    
+    if not professor:
+        raise HTTPException(status_code=404, detail="Invalid Class Code")
+        
+    user.joined_class_code = code
+    db.add(user)
+    await db.commit()
+    
+    return {"status": "success", "message": f"Successfully joined {professor.username}'s class!"}
 
 @app.get("/workspace", response_class=HTMLResponse)
 async def workspace(request: Request):
