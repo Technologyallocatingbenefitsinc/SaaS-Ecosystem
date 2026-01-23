@@ -168,9 +168,10 @@
                     try {
                         // Dynamic Import for better error handling
                         // Load modules individually to debug specific failures
-                        const coreModule = await import('https://esm.sh/@tiptap/core');
-                        const starterKitModule = await import('https://esm.sh/@tiptap/starter-kit');
-                        const imageModule = await import('https://esm.sh/@tiptap/extension-image');
+                        // Pinning version to 2.1.13 to avoid "require is not defined" error in newer bundles
+                        const coreModule = await import('https://esm.sh/@tiptap/core@2.1.13');
+                        const starterKitModule = await import('https://esm.sh/@tiptap/starter-kit@2.1.13');
+                        const imageModule = await import('https://esm.sh/@tiptap/extension-image@2.1.13');
 
                         // Safe access - esm.sh sometimes exports default, sometimes named depending on version/caching
                         // Use && to prevent crash if .default is undefined
