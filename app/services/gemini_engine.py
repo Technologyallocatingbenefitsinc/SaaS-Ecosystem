@@ -1,7 +1,7 @@
 import google.generativeai as genai
 import markdown
 from app.config import settings
-from youtube_transcript_api import YouTubeTranscriptApi
+from youtube_transcript_api import YouTubeTranscriptApi, TranscriptsDisabled, NoTranscriptFound
 
 genai.configure(api_key=settings.GEMINI_API_KEY)
 
@@ -16,26 +16,60 @@ def extract_video_id(video_url: str) -> str:
         match = re.search(pattern, video_url)
         if match:
              return match.group(1)
-    raise Exception(f"Could not extract video ID from URL: {video_url}")
+    raise ValueError(f"Invalid YouTube URL: {video_url}")
 
 def get_transcript(video_url: str, return_timestamps=False):
     try:
         video_id = extract_video_id(video_url)
         try:
-            api = YouTubeTranscriptApi()
-            transcript_list = api.list(video_id)
-        except Exception:
-            transcript_list = YouTubeTranscriptApi.list_transcripts(video_id)
+            # 1. Try listing available transcripts
+            try:
+                # Environment specific: v1.2.3 uses instance method .list()
+                api = YouTubeTranscriptApi()
+                try:
+                    transcript_list = api.list(video_id)
+                except AttributeError:
+                     # Standard API: static method .list_transcripts()
+                     transcript_list = YouTubeTranscriptApi.list_transcripts(video_id)
+            except Exception as e:
+                print(f"List Transcripts failed: {e}")
+                # Try fallback static method if instance failed completely (e.g. init error)
+                try:
+                     transcript_list = YouTubeTranscriptApi.list_transcripts(video_id)
+                except:
+                     raise e
 
-        try:
-            transcript = transcript_list.find_manually_created_transcript(['en', 'en-US', 'en-GB'])
-        except:
-             try:
-                 transcript = transcript_list.find_generated_transcript(['en', 'en-US', 'en-GB'])
-             except:
-                 transcript = transcript_list.find_transcript(['en', 'en-US', 'en-GB'])
-                 
-        transcript_data = transcript.fetch()
+            # 2. Try English (Manual or Generated)
+            transcript = None
+            try:
+                transcript = transcript_list.find_manually_created_transcript(['en', 'en-US', 'en-GB'])
+            except:
+                try:
+                    transcript = transcript_list.find_generated_transcript(['en', 'en-US', 'en-GB'])
+                except:
+                    # 3. Fallback: Take ANY available transcript
+                    try:
+                        transcript = transcript_list.find_transcript(['en', 'en-US', 'en-GB']) # Redundant retry?
+                    except:
+                        # Just grab the first one we can find?
+                        for t in transcript_list:
+                            transcript = t
+                            break
+            
+            if not transcript:
+                 raise NoTranscriptFound(video_id)
+
+            transcript_data = transcript.fetch()
+        
+        except TranscriptsDisabled:
+            raise ValueError("Subtitles are disabled for this video. Cannot generate summary.")
+        except NoTranscriptFound:
+            raise ValueError("No suitable English subtitles found for this video. Cannot generate summary.")
+        except Exception as e:
+            # Check for age restriction or cookies
+            if "Sign in" in str(e) or "cookies" in str(e):
+                 raise ValueError("This video is age-restricted or requires sign-in. Cannot access content.")
+            raise e
         
         # If raw timestamps requested, return the list of dicts directly
         if return_timestamps:
@@ -51,8 +85,11 @@ def get_transcript(video_url: str, return_timestamps=False):
                 
         transcript_text = " ".join(text_parts)
         return transcript_text
+    except ValueError as ve:
+        raise ve # Pass through friendly errors
     except Exception as e:
-        raise Exception(f"Failed to fetch transcript: {str(e)}")
+        print(f"Transcript Error: {e}")
+        raise ValueError(f"Failed to fetch transcript. The video might be private or unavailable. ({str(e)})")
 
 from app.services.usage_logger import log_token_usage
 
