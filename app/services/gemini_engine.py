@@ -136,9 +136,21 @@ async def convert_text_to_slides_json(text: str, count: int = 10, tone: str = "n
     # Use HTML content if valid, otherwise fallback to text
     content_to_process = html_content if html_content and len(html_content) > 50 else text
 
+    style_instructions = {
+        "professional": "Use formal, corporate language. Focus on actionable insights, ROI, and strategic value. Avoid slang. Use strong verbs.",
+        "fun": "Use a casual, high-energy tone. Include emojis in titles. Use metaphors, humor, and punchy, short sentences. Make it feel like a viral social media post.",
+        "academic": "Use scholarly, precise language. Focus on definitions, theoretical frameworks, and evidence. Ensure deep accuracy.",
+        "neutral": "Use clear, balanced, and direct language. Avoid emotional coloring or excessive jargon."
+    }
+    
+    specific_instruction = style_instructions.get(tone.lower(), style_instructions["neutral"])
+
     prompt = f"""
     Convert the following content into a JSON structure for a PowerPoint presentation.
-    Create exactly {count} slides. Use a {tone} tone/style for the content.
+    Create exactly {count} slides.
+    
+    STYLE INSTRUCTION: {specific_instruction}
+    Tone: {tone}
     
     IMPORTANT: The content may contain HTML <img> tags. If you find an image that is relevant to a specific slide's topic, extract its 'src' attribute and include it in the "image_url" field for that slide.
     
