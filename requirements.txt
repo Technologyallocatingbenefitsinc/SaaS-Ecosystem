@@ -22,3 +22,4 @@ passlib
 bcrypt
 requests
 supabase
+gTTS
