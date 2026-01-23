@@ -11,6 +11,9 @@ class Settings(BaseSettings):
     N8N_PURGE_WEBHOOK: str = "https://your-n8n-instance.com/webhook/purge-user"
     N8N_TOKEN_LOGGER_URL: str = "https://your-n8n-instance.com/webhook/token-logger"
     STRIPE_SECRET_KEY: str = "mock_key"
+    SUPABASE_URL: str = ""
+    SUPABASE_KEY: str = ""
+    SUPABASE_BUCKET: str = "user_uploads"
     
     model_config = ConfigDict(env_file=".env")
 

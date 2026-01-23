@@ -21,3 +21,4 @@ slowapi
 passlib
 bcrypt
 requests
+supabase
