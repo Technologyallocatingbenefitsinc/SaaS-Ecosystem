@@ -8,7 +8,7 @@ genai.configure(api_key=settings.GEMINI_API_KEY)
 def extract_video_id(video_url: str) -> str:
     import re
     patterns = [
-        r'(?:v=|/v/|youtu\.be/)([a-zA-Z0-9_-]{11})',
+        r'(?:v=|/v/|youtu\.be/|shorts/)([a-zA-Z0-9_-]{11})',
         r'(?:embed/)([a-zA-Z0-9_-]{11})',
         r'^([a-zA-Z0-9_-]{11})$'
     ]
@@ -18,6 +18,8 @@ def extract_video_id(video_url: str) -> str:
              return match.group(1)
     raise ValueError(f"Invalid YouTube URL: {video_url}")
 
+import httpx
+import re
 import subprocess
 import json
 import os
@@ -25,20 +27,45 @@ import os
 def get_video_metadata(video_url: str):
     """Uses yt-dlp to fetch video metadata as a fallback for transcripts"""
     try:
-        # Get only the essential info in JSON format
-        cmd = ["yt-dlp", "-j", "--skip-download", video_url]
+        # Use python -m yt_dlp to ensure it's found in the current environment
+        cmd = [
+            "python3", "-m", "yt_dlp", 
+            "-j", 
+            "--skip-download", 
+            "--no-check-certificates",
+            "--no-warnings",
+            "--geo-bypass",
+            "--flat-playlist",
+            video_url
+        ]
         result = subprocess.run(cmd, capture_output=True, text=True, timeout=15)
         if result.returncode == 0:
             data = json.loads(result.stdout)
             title = data.get("title", "")
             description = data.get("description", "")
-            channel = data.get("uploader", "")
-            tags = ", ".join(data.get("tags", [])) if data.get("tags") else ""
+            channel = data.get("uploader", "Unknown Channel")
+            tags = ", ".join(data.get("tags", [])) if data.get("tags") else "None"
             
             combined_text = f"TITLE: {title}\nCHANNEL: {channel}\nTAGS: {tags}\n\nDESCRIPTION:\n{description}"
             return combined_text
         else:
-            print(f"yt-dlp failed: {result.stderr}")
+            print(f"yt-dlp failed (trying scrape fallback): {result.stderr}")
+            # FALLBACK: Basic HTML Scrape if yt-dlp is blocked
+            try:
+                # Synchronous request for metadata
+                with httpx.Client(follow_redirects=True, timeout=10) as client:
+                    resp = client.get(video_url)
+                    if resp.status_code == 200:
+                        html = resp.text
+                        t_match = re.search(r'<title>(.*?)</title>', html)
+                        title_text = t_match.group(1).replace(" - YouTube", "") if t_match else "Unknown Video"
+                        
+                        d_match = re.search(r'"shortDescription":"(.*?)"', html)
+                        desc_text = d_match.group(1).encode().decode('unicode_escape') if d_match else "Description unavailable."
+                        
+                        return f"TITLE: {title_text}\n\nDESCRIPTION:\n{desc_text}\n\n[Note: Limited data available for this video]"
+            except Exception as e:
+                print(f"Scrape fallback failed: {e}")
             return None
     except Exception as e:
         print(f"Metadata Fallback Error: {e}")
