@@ -142,7 +142,8 @@
                         const imageModule = await import('https://esm.sh/@tiptap/extension-image');
 
                         // Safe access - esm.sh sometimes exports default, sometimes named depending on version/caching
-                        const Editor = coreModule.Editor || coreModule.default.Editor;
+                        // Use && to prevent crash if .default is undefined
+                        const Editor = coreModule.Editor || (coreModule.default && coreModule.default.Editor);
                         const StarterKit = starterKitModule.default || starterKitModule;
                         const Image = imageModule.default || imageModule;
 
