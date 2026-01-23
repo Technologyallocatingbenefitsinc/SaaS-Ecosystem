@@ -15,7 +15,16 @@
     <!-- OpenDyslexic Font -->
     <link href="https://cdn.jsdelivr.net/npm/opendyslexic@2.1.0-beta1/css/opendyslexic.min.css" rel="stylesheet">
     <!-- Tiptap Dependencies (ESM for Browser) -->
-    <!-- Tiptap Dependencies: Loaded dynamically in React -->
+    <!-- Tiptap: Loaded globally to avoid Babel/ESM conflict -->
+    <script type="module">
+        import { Editor } from 'https://esm.sh/@tiptap/core';
+        import StarterKit from 'https://esm.sh/@tiptap/starter-kit';
+        import Image from 'https://esm.sh/@tiptap/extension-image';
+
+        window.TiptapEditor = Editor;
+        window.TiptapStarterKit = StarterKit;
+        window.TiptapImage = Image;
+    </script>
     <style>
         .ProseMirror {
             outline: none;
@@ -166,18 +175,10 @@
             useEffect(() => {
                 const initEditor = async () => {
                     try {
-                        // Dynamic Import for better error handling
-                        // Load modules individually to debug specific failures
-                        // Switching to Skypack CDN for better ESM compatibility
-                        const coreModule = await import('https://cdn.skypack.dev/@tiptap/core@2.1.13');
-                        const starterKitModule = await import('https://cdn.skypack.dev/@tiptap/starter-kit@2.1.13');
-                        const imageModule = await import('https://cdn.skypack.dev/@tiptap/extension-image@2.1.13');
-
-                        // Safe access - esm.sh sometimes exports default, sometimes named depending on version/caching
-                        // Use && to prevent crash if .default is undefined
-                        const Editor = coreModule.Editor || (coreModule.default && coreModule.default.Editor);
-                        const StarterKit = starterKitModule.default || starterKitModule;
-                        const Image = imageModule.default || imageModule;
+                        // Load modules globally to avoid Babel conflict
+                        const Editor = window.TiptapEditor;
+                        const StarterKit = window.TiptapStarterKit;
+                        const Image = window.TiptapImage;
 
                         if (!Editor || !StarterKit) {
                             throw new Error("Modules loaded but exports were missing.");
