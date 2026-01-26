@@ -9,11 +9,11 @@ async def test_ai_polish_endpoint(monkeypatch):
     mock_response = MagicMock()
     mock_response.text = "Rewritten text content."
     
-    mock_model = MagicMock()
-    mock_model.generate_content.return_value = mock_response
+    mock_client = MagicMock()
+    mock_client.models.generate_content.return_value = mock_response
     
-    # Mock the GenerativeModel constructor to return our mock model
-    monkeypatch.setattr("google.generativeai.GenerativeModel", MagicMock(return_value=mock_model))
+    # Mock the client instance in the router
+    monkeypatch.setattr("app.routers.editor.client", mock_client)
 
     async with AsyncClient(transport=ASGITransport(app=app), base_url="http://localhost") as ac:
         response = await ac.post("/editor/rewrite", json={

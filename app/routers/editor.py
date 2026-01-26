@@ -3,7 +3,7 @@ from pydantic import BaseModel
 from fpdf import FPDF
 import io
 import os
-import google.generativeai as genai
+from google import genai
 from app.config import settings
 from app.services.pptx_engine import generate_pptx, THEMES
 from app.services.gemini_engine import (
@@ -23,7 +23,7 @@ import uuid
 
 router = APIRouter()
 
-genai.configure(api_key=settings.GEMINI_API_KEY)
+client = genai.Client(api_key=settings.GEMINI_API_KEY)
 
 class RewriteRequest(BaseModel):
     text: str
@@ -207,9 +207,11 @@ async def generate_user_pptx(request: PPTXRequest, user = Depends(get_replit_use
 @router.post("/rewrite")
 async def rewrite_text(request: RewriteRequest):
     try:
-        model = genai.GenerativeModel("gemini-1.5-flash")
         prompt = f"Rewrite the following text to be {request.tone}. Text: {request.text}"
-        response = model.generate_content(prompt)
+        response = client.models.generate_content(
+            model="gemini-1.5-flash",
+            contents=prompt
+        )
         return {"rewritten_text": response.text}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
