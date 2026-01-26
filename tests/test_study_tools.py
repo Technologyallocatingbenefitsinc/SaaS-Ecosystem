@@ -19,7 +19,10 @@ async def test_generate_quiz():
         ]
         '''
         
-        with patch("google.generativeai.GenerativeModel.generate_content", return_value=mock_response):
+        mock_client = MagicMock()
+        mock_client.models.generate_content.return_value = mock_response
+
+        with patch("app.services.gemini_engine.client", mock_client):
             res = await ac.post("/editor/generate-quiz", json={"text": "Python is a programming language."})
             assert res.status_code == 200
             data = res.json()
@@ -42,7 +45,10 @@ async def test_generate_flashcards():
         ]
         '''
         
-        with patch("google.generativeai.GenerativeModel.generate_content", return_value=mock_response):
+        mock_client = MagicMock()
+        mock_client.models.generate_content.return_value = mock_response
+
+        with patch("app.services.gemini_engine.client", mock_client):
             res = await ac.post("/editor/generate-flashcards", json={"text": "Python is a programming language."})
             assert res.status_code == 200
             data = res.json()

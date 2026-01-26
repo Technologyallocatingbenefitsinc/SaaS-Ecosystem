@@ -23,14 +23,14 @@ async def test_cost_calculation():
 
 @pytest.mark.asyncio
 async def test_gemini_engine_logging_integration():
-    with patch("google.generativeai.GenerativeModel") as mock_model:
+    with patch("app.services.gemini_engine.client") as mock_client:
         mock_response = AsyncMock()
         mock_response.text = "Mocked AI Response"
         mock_response.usage_metadata.prompt_token_count = 100
         mock_response.usage_metadata.candidates_token_count = 50
         
-        # GenerativeModel.generate_content is not async usually but the wrapper might be
-        mock_model.return_value.generate_content.return_value = mock_response
+        # client.models.generate_content is the new call
+        mock_client.models.generate_content.return_value = mock_response
         
         with patch("app.services.gemini_engine.log_token_usage", new_callable=AsyncMock) as mock_logger:
             with patch("app.services.gemini_engine.get_transcript", return_value="Mocked Transcript"):

@@ -12,11 +12,11 @@ from unittest.mock import patch
 
 @pytest.fixture
 def mock_gemini_chat():
-    with patch("app.services.gemini_engine.genai.GenerativeModel") as mock_model_class:
-        mock_instance = MagicMock()
-        mock_instance.generate_content.return_value.text = "This is a mock answer based on the video."
-        mock_model_class.return_value = mock_instance
-        yield mock_model_class
+    with patch("app.services.gemini_engine.client") as mock_client:
+        mock_response = MagicMock()
+        mock_response.text = "This is a mock answer based on the video."
+        mock_client.models.generate_content.return_value = mock_response
+        yield mock_client
 
 @pytest.mark.asyncio
 async def test_chat_with_video(mock_gemini_chat):

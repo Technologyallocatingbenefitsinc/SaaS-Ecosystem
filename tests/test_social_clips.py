@@ -28,8 +28,12 @@ async def test_generate_viral_clips():
         ]
         '''
         
+        # Mock Client
+        mock_client = MagicMock()
+        mock_client.models.generate_content.return_value = mock_gemini
+
         with patch("app.services.gemini_engine.get_transcript", return_value=mock_transcript):
-             with patch("google.generativeai.GenerativeModel.generate_content", return_value=mock_gemini):
+             with patch("app.services.gemini_engine.client", mock_client):
                 res = await ac.post("/editor/generate-clips", json={"video_url": "https://youtube.com/watch?v=123"})
                 assert res.status_code == 200
                 data = res.json()
