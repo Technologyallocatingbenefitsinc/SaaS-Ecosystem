@@ -88,6 +88,86 @@
         const { useState, useEffect, useRef } = React;
         const USER_TIER = "{{ tier }}";
 
+        const Whiteboard = () => {
+            const canvasRef = useRef(null);
+            const [isDrawing, setIsDrawing] = useState(false);
+            const [tool, setTool] = useState('brush'); // 'brush', 'eraser'
+            const [color, setColor] = useState('#3b82f6');
+
+            useEffect(() => {
+                const canvas = canvasRef.current;
+                if (!canvas) return;
+                const ctx = canvas.getContext('2d');
+                ctx.lineCap = 'round';
+                ctx.lineWidth = 3;
+            }, []);
+
+            const startDrawing = (e) => {
+                const canvas = canvasRef.current;
+                const rect = canvas.getBoundingClientRect();
+                const ctx = canvas.getContext('2d');
+                ctx.beginPath();
+                ctx.moveTo(e.clientX - rect.left, e.clientY - rect.top);
+                setIsDrawing(true);
+            };
+
+            const draw = (e) => {
+                if (!isDrawing) return;
+                const canvas = canvasRef.current;
+                const rect = canvas.getBoundingClientRect();
+                const ctx = canvas.getContext('2d');
+                ctx.strokeStyle = tool === 'eraser' ? '#ffffff' : color;
+                ctx.lineTo(e.clientX - rect.left, e.clientY - rect.top);
+                ctx.stroke();
+            };
+
+            const stopDrawing = () => setIsDrawing(false);
+
+            const clearCanvas = () => {
+                const canvas = canvasRef.current;
+                const ctx = canvas.getContext('2d');
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+            };
+
+            return (
+                <div className="flex flex-col h-full bg-white rounded-b-xl overflow-hidden min-h-[900px]">
+                    <div className="p-3 border-b flex gap-6 items-center bg-gray-50">
+                        <div className="flex bg-white rounded-lg p-1 border border-gray-200">
+                            <button
+                                onClick={() => setTool('brush')}
+                                className={`px-4 py-1.5 text-xs font-bold rounded-md transition ${tool === 'brush' ? 'bg-blue-600 text-white shadow-md' : 'text-slate-600 hover:bg-gray-100'}`}
+                            >
+                                <i className="fas fa-paint-brush mr-2"></i>Brush
+                            </button>
+                            <button
+                                onClick={() => setTool('eraser')}
+                                className={`px-4 py-1.5 text-xs font-bold rounded-md transition ${tool === 'eraser' ? 'bg-blue-600 text-white shadow-md' : 'text-slate-600 hover:bg-gray-100'}`}
+                            >
+                                <i className="fas fa-eraser mr-2"></i>Eraser
+                            </button>
+                        </div>
+                        <div className="flex items-center gap-3">
+                            <label className="text-[10px] font-black uppercase text-slate-400">Color</label>
+                            <input type="color" value={color} onChange={(e) => setColor(e.target.value)} className="w-8 h-8 rounded-full cursor-pointer border-2 border-white shadow-sm overflow-hidden p-0" />
+                        </div>
+                        <button onClick={clearCanvas} className="ml-auto text-xs font-black uppercase text-red-500 hover:text-red-700 tracking-wider">
+                            <i className="fas fa-trash-alt mr-2"></i>Clear Board
+                        </button>
+                    </div>
+                    <canvas
+                        ref={canvasRef}
+                        width={1400}
+                        height={1000}
+                        onMouseDown={startDrawing}
+                        onMouseMove={draw}
+                        onMouseUp={stopDrawing}
+                        onMouseOut={stopDrawing}
+                        className="flex-1 cursor-crosshair touch-none bg-white"
+                    />
+                </div>
+            );
+        };
+
         const DocumentEditor = () => {
             const [editor, setEditor] = useState(null);
             const [isThinking, setIsThinking] = useState(false); // AI Rewrite
@@ -118,6 +198,7 @@
             const [isAudioLoading, setIsAudioLoading] = useState(false);
             const [isCarouselModalOpen, setIsCarouselModalOpen] = useState(false);
             const [carouselData, setCarouselData] = useState("");
+            const [activeTab, setActiveTab] = useState('editor'); // 'editor', 'whiteboard'
 
             // Chat Assistant State
             const [isChatOpen, setIsChatOpen] = useState(false);
@@ -721,13 +802,45 @@
                                 </div>
                             )}
 
-                            <div className="w-full max-w-6xl bg-white shadow-xl rounded-xl min-h-[800px] h-fit border border-gray-100 mb-20">
-                                <div className="border-b p-2 flex gap-2 text-gray-500 text-sm">
-                                    <button className="hover:text-black">Bold</button>
-                                    <button className="hover:text-black">Italic</button>
-                                    <button className="hover:text-black">H1</button>
-                                </div>
-                                <div ref={editorRef} />
+                            <div className="w-full max-w-7xl mb-6 flex gap-4">
+                                <button
+                                    onClick={() => setActiveTab('editor')}
+                                    className={`px-6 py-2 rounded-xl font-bold transition flex items-center gap-2 ${activeTab === 'editor' ? 'bg-indigo-600 text-white shadow-lg' : 'bg-white text-slate-600 hover:bg-slate-50'}`}
+                                >
+                                    <i className="fas fa-file-alt"></i> Notes & Summary
+                                </button>
+                                <button
+                                    onClick={() => setActiveTab('whiteboard')}
+                                    className={`px-6 py-2 rounded-xl font-bold transition flex items-center gap-2 ${activeTab === 'whiteboard' ? 'bg-indigo-600 text-white shadow-lg' : 'bg-white text-slate-600 hover:bg-slate-50'}`}
+                                >
+                                    <i className="fas fa-chalkboard"></i> Visual Whiteboard
+                                </button>
+                            </div>
+
+                            <div className="w-full max-w-7xl bg-white shadow-xl rounded-xl min-h-[900px] h-fit border border-gray-100 mb-20 overflow-hidden">
+                                {activeTab === 'editor' ? (
+                                    <>
+                                        <div className="border-b p-2 flex gap-4 items-center bg-slate-50 text-gray-500 text-sm overflow-x-auto">
+                                            <div className="flex bg-white rounded-lg border p-1 gap-1">
+                                                <button onClick={() => editor.chain().focus().toggleBold().run()} className={`p-1.5 px-3 rounded hover:bg-gray-100 ${editor?.isActive('bold') ? 'bg-indigo-50 text-indigo-600 font-bold' : ''}`}>B</button>
+                                                <button onClick={() => editor.chain().focus().toggleItalic().run()} className={`p-1.5 px-3 rounded hover:bg-gray-100 ${editor?.isActive('italic') ? 'bg-indigo-50 text-indigo-600 font-bold' : ''}`}>I</button>
+                                                <button onClick={() => editor.chain().focus().toggleStrike().run()} className={`p-1.5 px-3 rounded hover:bg-gray-100 ${editor?.isActive('strike') ? 'bg-indigo-50 text-indigo-600 font-bold' : ''}`}>S</button>
+                                            </div>
+                                            <div className="flex bg-white rounded-lg border p-1 gap-1">
+                                                <button onClick={() => editor.chain().focus().toggleHeading({ level: 1 }).run()} className={`p-1.5 px-3 rounded hover:bg-gray-100 ${editor?.isActive('heading', { level: 1 }) ? 'bg-indigo-50 text-indigo-600 font-bold' : ''}`}>H1</button>
+                                                <button onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()} className={`p-1.5 px-3 rounded hover:bg-gray-100 ${editor?.isActive('heading', { level: 2 }) ? 'bg-indigo-50 text-indigo-600 font-bold' : ''}`}>H2</button>
+                                            </div>
+                                            <div className="flex bg-white rounded-lg border p-1 gap-1">
+                                                <button onClick={() => editor.chain().focus().toggleBulletList().run()} className={`p-1.5 px-3 rounded hover:bg-gray-100 ${editor?.isActive('bulletList') ? 'bg-indigo-50 text-indigo-600 font-bold' : ''}`}><i className="fas fa-list-ul"></i></button>
+                                                <button onClick={() => editor.chain().focus().toggleOrderedList().run()} className={`p-1.5 px-3 rounded hover:bg-gray-100 ${editor?.isActive('orderedList') ? 'bg-indigo-50 text-indigo-600 font-bold' : ''}`}><i className="fas fa-list-ol"></i></button>
+                                            </div>
+                                            <button onClick={() => editor.chain().focus().toggleBlockquote().run()} className={`p-1.5 px-3 bg-white border rounded hover:bg-gray-100 ${editor?.isActive('blockquote') ? 'bg-indigo-50 text-indigo-600 font-bold' : ''}`}><i className="fas fa-quote-right"></i></button>
+                                        </div>
+                                        <div ref={editorRef} />
+                                    </>
+                                ) : (
+                                    <Whiteboard />
+                                )}
                             </div>
                         </div>
 
