@@ -14,6 +14,7 @@ from app.services.gemini_engine import process_video_content
 from app.routers import auth, editor, legal, upload, analytics
 from app.models import SlideDeck, User
 import httpx
+import os
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -105,7 +106,8 @@ async def dashboard_view(request: Request, tier: str = None, user = Depends(auth
     return templates.TemplateResponse(request, "dashboard.html", {
         "user": user,
         "tier": user_tier,
-        "credits": mock_stats["credits"]
+        "credits": mock_stats["credits"],
+        "google_client_id": os.getenv("GOOGLE_CLIENT_ID")
     })
 
 @app.get("/profile", response_class=HTMLResponse)
