@@ -53,10 +53,25 @@
             backdrop-filter: blur(12px);
             border: 1px solid rgba(255, 255, 255, 0.2);
         }
+
+        /* Accessibility: Focus Styles */
+        :focus {
+            outline: 2px solid #3b82f6;
+            outline-offset: 2px;
+        }
+
+        :focus:not(:focus-visible) {
+            outline: none;
+        }
     </style>
 </head>
 
 <body class="bg-gray-50 text-slate-900 font-sans min-h-screen flex transition-colors duration-300">
+    <!-- Skip to Main Content Link -->
+    <a href="#mainContent"
+        class="sr-only focus:not-sr-only focus:fixed focus:top-4 focus:left-4 focus:z-[100] focus:bg-blue-600 focus:text-white focus:px-4 focus:py-2 focus:rounded-lg focus:font-bold">
+        Skip to main content
+    </a>
 
     <!-- Sidebar -->
     <aside
@@ -69,22 +84,22 @@
         <nav class="space-y-2 flex-1">
             <button onclick="switchTab('main')" id="navMain"
                 class="w-full flex items-center gap-3 px-4 py-3 bg-blue-50 text-blue-700 rounded-xl font-medium transition group text-left">
-                <i class="fas fa-grid-2 group-hover:scale-110 transition"></i> Dashboard
+                <i aria-hidden="true" class="fas fa-grid-2 group-hover:scale-110 transition"></i> Dashboard
             </button>
             <a href="/workspace"
                 class="flex items-center gap-3 px-4 py-3 text-slate-500 hover:bg-slate-50 hover:text-slate-900 rounded-xl font-medium transition group">
-                <i class="fas fa-pen-nib group-hover:scale-110 transition"></i> Workspace
+                <i aria-hidden="true" class="fas fa-pen-nib group-hover:scale-110 transition"></i> Workspace
             </a>
             {% if tier == 'professor' %}
             <button onclick="switchTab('analytics')" id="navAnalytics"
                 class="w-full flex items-center gap-3 px-4 py-3 text-slate-500 hover:bg-slate-50 hover:text-slate-900 rounded-xl font-medium transition text-left">
-                <i class="fas fa-users-class"></i> My Class
+                <i aria-hidden="true" class="fas fa-users-class"></i> My Class
             </button>
             {% endif %}
             {% if tier == 'podcaster' %}
             <button onclick="switchTab('analytics')" id="navAnalytics"
                 class="w-full flex items-center gap-3 px-4 py-3 text-slate-500 hover:bg-slate-50 hover:text-slate-900 rounded-xl font-medium transition text-left">
-                <i class="fas fa-chart-line"></i> Analytics
+                <i aria-hidden="true" class="fas fa-chart-line"></i> Analytics
             </button>
             {% endif %}
         </nav>
@@ -115,7 +130,7 @@
             <!-- A11y Toggles -->
             <button onclick="document.body.classList.toggle('font-dyslexic')"
                 class="flex items-center gap-2 text-xs text-slate-400 hover:text-slate-700 mb-4 font-semibold uppercase tracking-wider">
-                <i class="fas fa-universal-access"></i> Toggle Dyslexic Font
+                <i aria-hidden="true" class="fas fa-universal-access"></i> Toggle Dyslexic Font
             </button>
 
             <div class="flex items-center gap-3">
@@ -131,7 +146,7 @@
                 {% else %}
                 <button onclick="openLoginModal()"
                     class="w-full flex items-center justify-center gap-2 py-2 px-4 bg-white border border-gray-200 rounded-xl hover:bg-gray-50 transition text-sm font-bold">
-                    <i class="fas fa-sign-in-alt text-blue-600"></i> Sign in
+                    <i aria-hidden="true" class="fas fa-sign-in-alt text-blue-600"></i> Sign in
                 </button>
                 {% endif %}
             </div>
@@ -176,29 +191,29 @@
                 {% if tier == 'professor' %}
                 <div
                     class="flex items-center gap-2 px-3 py-1 bg-green-50 text-green-700 rounded-full text-sm font-bold border border-green-100">
-                    <i class="fas fa-check-circle"></i> A11y Score: 98%
+                    <i aria-hidden="true" class="fas fa-check-circle"></i> A11y Score: 98%
                 </div>
                 {% elif tier == 'podcaster' %}
                 <div
                     class="flex items-center gap-2 px-3 py-1 bg-purple-50 text-purple-700 rounded-full text-sm font-bold border border-purple-100">
-                    <i class="fas fa-microphone"></i> Audio: High Fidelity
+                    <i aria-hidden="true" class="fas fa-microphone"></i> Audio: High Fidelity
                 </div>
                 {% elif tier == 'pro' %}
                 <div
                     class="flex items-center gap-2 px-3 py-1 bg-orange-50 text-orange-700 rounded-full text-sm font-bold border border-orange-100">
-                    <i class="fas fa-crown"></i> Pro Priority
+                    <i aria-hidden="true" class="fas fa-crown"></i> Pro Priority
                 </div>
                 {% else %}
                 <div
                     class="flex items-center gap-2 px-3 py-1 bg-blue-50 text-blue-700 rounded-full text-sm font-bold border border-blue-100">
-                    <i class="fas fa-battery-full"></i> Focus: 85%
+                    <i aria-hidden="true" class="fas fa-battery-full"></i> Focus: 85%
                 </div>
                 {% endif %}
             </div>
         </header>
 
         <!-- Dynamic Dashboard Body -->
-        <div class="flex-1 p-8 overflow-y-auto">
+        <div class="flex-1 p-8 overflow-y-auto" id="mainContent">
             <div class="max-w-7xl mx-auto space-y-12">
 
                 <!-- Hero Section -->
@@ -248,6 +263,7 @@
                             <div class="flex flex-col gap-2 mb-4">
                                 <div class="flex gap-2">
                                     <input type="text" id="urlInput" placeholder="Paste YouTube URL..."
+                                        autocomplete="url"
                                         class="flex-1 pl-4 pr-4 py-4 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:outline-none">
                                     <select id="slideCount"
                                         class="bg-white border border-gray-200 rounded-xl px-4 py-4 text-sm font-bold text-slate-600 focus:ring-2 focus:ring-blue-500 focus:outline-none">
@@ -270,7 +286,7 @@
                                     class="w-full py-3 bg-blue-600 text-white rounded-xl font-bold hover:bg-blue-700 transition flex items-center justify-center gap-2"
                                     id="processUrlBtn">
                                     <span>Transform Content</span>
-                                    <i class="fas fa-arrow-right"></i>
+                                    <i aria-hidden="true" class="fas fa-arrow-right"></i>
                                 </button>
 
                                 {% if tier == 'student' %}
@@ -296,7 +312,7 @@
                                     class="block w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100">
                                 <button onclick="triggerFileUpload()"
                                     class="w-full py-3 bg-slate-900 text-white rounded-xl font-bold hover:bg-slate-800 transition flex items-center justify-center gap-2">
-                                    <i class="fas fa-bolt"></i> Process File
+                                    <i aria-hidden="true" class="fas fa-bolt"></i> Process File
                                 </button>
                             </div>
 
@@ -304,7 +320,7 @@
                             <div id="uploadProgress" class="hidden text-left mb-4 p-4 bg-blue-50 rounded-xl relative">
                                 <button onclick="document.getElementById('uploadProgress').classList.add('hidden')"
                                     class="absolute top-2 right-2 text-slate-400 hover:text-slate-600">
-                                    <i class="fas fa-times"></i>
+                                    <i aria-hidden="true" class="fas fa-times"></i>
                                 </button>
                                 <div class="flex justify-between mb-1">
                                     <span class="text-sm font-medium text-blue-700">Processing...</span>
@@ -361,7 +377,7 @@
                             <div class="flex items-center gap-4 mb-2">
                                 <div
                                     class="w-10 h-10 bg-blue-100 text-blue-600 rounded-lg flex items-center justify-center text-xl">
-                                    <i class="fas fa-eye"></i>
+                                    <i aria-hidden="true" class="fas fa-eye"></i>
                                 </div>
                                 <span class="text-slate-500 font-bold text-sm uppercase tracking-wider">Total
                                     Views</span>
@@ -372,7 +388,7 @@
                             <div class="flex items-center gap-4 mb-2">
                                 <div
                                     class="w-10 h-10 bg-green-100 text-green-600 rounded-lg flex items-center justify-center text-xl">
-                                    <i class="fas fa-users"></i>
+                                    <i aria-hidden="true" class="fas fa-users"></i>
                                 </div>
                                 <span class="text-slate-500 font-bold text-sm uppercase tracking-wider">Active
                                     Students</span>
@@ -383,7 +399,7 @@
                             <div class="flex items-center gap-4 mb-2">
                                 <div
                                     class="w-10 h-10 bg-purple-100 text-purple-600 rounded-lg flex items-center justify-center text-xl">
-                                    <i class="fas fa-download"></i>
+                                    <i aria-hidden="true" class="fas fa-download"></i>
                                 </div>
                                 <span class="text-slate-500 font-bold text-sm uppercase tracking-wider">Downloads</span>
                             </div>
@@ -432,10 +448,10 @@
             class="bg-white w-full max-w-xl rounded-xl shadow-2xl overflow-hidden animate-fade-in-down border border-gray-200 relative">
             <button onclick="document.getElementById('cmdKModal').classList.add('hidden')"
                 class="absolute top-4 right-4 text-slate-400 hover:text-slate-600 z-10 p-2">
-                <i class="fas fa-times text-xl"></i>
+                <i aria-hidden="true" class="fas fa-times text-xl"></i>
             </button>
             <div class="border-b px-4 flex items-center gap-3">
-                <i class="fas fa-search text-slate-400"></i>
+                <i aria-hidden="true" class="fas fa-search text-slate-400"></i>
                 <input type="text" placeholder="Type a command or search..."
                     class="w-full py-4 text-lg focus:outline-none" autofocus>
                 <div class="text-xs bg-gray-100 px-2 py-1 rounded text-slate-500">ESC</div>
@@ -464,9 +480,10 @@
     <div id="loginModal"
         class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
         <div class="bg-white max-w-md w-full rounded-2xl shadow-2xl overflow-hidden animate-fade-in-up p-8 relative">
-            <button onclick="document.getElementById('loginModal').classList.add('hidden')"
-                class="absolute top-4 right-4 text-slate-400 hover:text-slate-600 p-2">
-                <i class="fas fa-times text-xl"></i>
+            <button
+                onclick="document.getElementById('loginModal').classList.add('hidden'); removeFocusTrap('loginModal');"
+                aria-label="Close" class="absolute top-4 right-4 text-slate-400 hover:text-slate-600 p-2">
+                <i aria-hidden="true" class="fas fa-times text-xl"></i>
             </button>
             <h2 class="text-2xl font-bold text-center mb-6" id="authTitle">Welcome Back</h2>
 
@@ -482,7 +499,7 @@
             <form id="authForm" class="space-y-4">
                 <input type="email" id="authEmail" placeholder="Email" required
                     class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:outline-none">
-                <input type="password" id="authPassword" placeholder="Password" required
+                <input type="password" id="authPassword" placeholder="Password" required autocomplete="current-password"
                     class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:outline-none">
 
                 <div id="forgotPassLink" class="text-right">
@@ -528,7 +545,8 @@
                 </button>
             </div>
 
-            <button onclick="document.getElementById('loginModal').classList.add('hidden')"
+            <button
+                onclick="document.getElementById('loginModal').classList.add('hidden'); removeFocusTrap('loginModal');"
                 class="w-full mt-4 text-xs text-slate-400 hover:text-slate-600">Cancel</button>
         </div>
     </div>
@@ -540,11 +558,11 @@
             class="bg-white max-w-md w-full rounded-2xl shadow-2xl overflow-hidden animate-fade-in-up p-8 text-center relative">
             <button onclick="document.getElementById('recoveryModal').classList.add('hidden')"
                 class="absolute top-4 right-4 text-slate-400 hover:text-slate-600 p-2">
-                <i class="fas fa-times text-xl"></i>
+                <i aria-hidden="true" class="fas fa-times text-xl"></i>
             </button>
             <div
                 class="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4 text-blue-600 text-2xl">
-                <i class="fas fa-key"></i>
+                <i aria-hidden="true" class="fas fa-key"></i>
             </div>
             <h2 class="text-2xl font-bold mb-2">Reset Password</h2>
             <p class="text-sm text-slate-500 mb-6">Enter your email and we'll send you a recovery link.</p>
@@ -566,7 +584,7 @@
     <div id="cookieBanner"
         class="fixed bottom-4 left-4 right-4 md:left-auto md:right-4 md:w-96 bg-white rounded-2xl shadow-2xl border border-gray-200 p-6 z-50 transform transition-all duration-500 translate-y-full opacity-0">
         <div class="flex items-start gap-4 mb-4">
-            <div class="text-2xl text-blue-600"><i class="fas fa-cookie-bite"></i></div>
+            <div class="text-2xl text-blue-600"><i aria-hidden="true" class="fas fa-cookie-bite"></i></div>
             <div>
                 <h3 class="font-bold text-slate-800">Your Privacy Matters</h3>
                 <p class="text-sm text-slate-500 mt-1">We honor GPC signals. We use minimal cookies for security and AI
@@ -588,7 +606,7 @@
         class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
         <div class="bg-white max-w-lg w-full rounded-2xl shadow-2xl overflow-hidden animate-fade-in-up relative">
             <button onclick="closeOnboarding()" class="absolute top-4 right-4 text-white/60 hover:text-white p-2 z-20">
-                <i class="fas fa-times text-xl"></i>
+                <i aria-hidden="true" class="fas fa-times text-xl"></i>
             </button>
             <div class="bg-gradient-to-r from-blue-600 to-indigo-600 p-6 text-white text-center">
                 <div class="w-16 h-16 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-4 text-3xl">
@@ -733,7 +751,7 @@
                     progressDiv.classList.add('hidden');
                     if (processBtn) {
                         processBtn.disabled = false;
-                        processBtn.innerHTML = '<i class="fas fa-play"></i> Process Video';
+                        processBtn.innerHTML = '<i aria-hidden="true" class="fas fa-play"></i> Process Video';
                     }
                     input.value = '';
                     urlInput.classList.remove('opacity-50');
@@ -744,7 +762,7 @@
                 alert("Upload Failed.");
                 if (processBtn) {
                     processBtn.disabled = false;
-                    processBtn.innerHTML = '<i class="fas fa-play"></i> Process Video';
+                    processBtn.innerHTML = '<i aria-hidden="true" class="fas fa-play"></i> Process Video';
                 }
                 progressDiv.classList.add('hidden');
                 urlInput.classList.remove('opacity-50');
@@ -808,7 +826,7 @@
 
             function resetUI() {
                 processBtn.disabled = false;
-                processBtn.innerHTML = '<i class="fas fa-play"></i> Process Video';
+                processBtn.innerHTML = '<i aria-hidden="true" class="fas fa-play"></i> Process Video';
                 document.getElementById('uploadProgress').classList.add('hidden');
                 document.getElementById('progressBar').classList.remove('animate-pulse');
                 document.getElementById('progressBar').style.width = '0%';
@@ -897,7 +915,7 @@
                                 </div>
                             </td>
                             <td class="px-6 py-4 text-green-600 text-xs font-bold">
-                                <i class="fas fa-arrow-up"></i> 12%
+                                <i aria-hidden="true" class="fas fa-arrow-up"></i> 12%
                             </td>
                         </tr>
                     `).join('');
@@ -929,11 +947,14 @@
 
         function openLoginModal() {
             document.getElementById('loginModal').classList.remove('hidden');
+            setupFocusTrap('loginModal');
         }
 
         function openRecoveryModal() {
             document.getElementById('loginModal').classList.add('hidden');
+            removeFocusTrap('loginModal');
             document.getElementById('recoveryModal').classList.remove('hidden');
+            setupFocusTrap('recoveryModal');
         }
 
         function switchAuthMode(mode) {
@@ -1033,6 +1054,40 @@
             btn.disabled = false;
             btn.innerText = "Send Link";
         });
+        // --- Accessibility: Focus Trap ---
+        function setupFocusTrap(modalId) {
+            const modal = document.getElementById(modalId);
+            const focusableElements = modal.querySelectorAll('button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])');
+            const firstElement = focusableElements[0];
+            const lastElement = focusableElements[focusableElements.length - 1];
+
+            const trapHandler = (e) => {
+                if (e.key === 'Tab') {
+                    if (e.shiftKey) {
+                        if (document.activeElement === firstElement) {
+                            e.preventDefault();
+                            lastElement.focus();
+                        }
+                    } else {
+                        if (document.activeElement === lastElement) {
+                            e.preventDefault();
+                            firstElement.focus();
+                        }
+                    }
+                }
+            };
+
+            modal._trapHandler = trapHandler;
+            document.addEventListener('keydown', trapHandler);
+        }
+
+        function removeFocusTrap(modalId) {
+            const modal = document.getElementById(modalId);
+            if (modal._trapHandler) {
+                document.removeEventListener('keydown', modal._trapHandler);
+                modal._trapHandler = null;
+            }
+        }
 
 
 
@@ -1080,9 +1135,13 @@
                 e.preventDefault();
                 document.getElementById('cmdKModal').classList.remove('hidden');
                 document.querySelector('#cmdKModal input').focus();
+                setupFocusTrap('cmdKModal');
             }
             if (e.key === 'Escape') {
                 document.getElementById('cmdKModal').classList.add('hidden');
+                document.getElementById('loginModal').classList.add('hidden');
+                removeFocusTrap('cmdKModal');
+                removeFocusTrap('loginModal');
             }
         });
 
@@ -1090,6 +1149,7 @@
         document.getElementById('cmdKModal').addEventListener('click', (e) => {
             if (e.target === document.getElementById('cmdKModal')) {
                 document.getElementById('cmdKModal').classList.add('hidden');
+                removeFocusTrap('cmdKModal');
             }
         });
 
@@ -1166,14 +1226,14 @@
                                 <div class="absolute top-0 left-0 w-1 h-full bg-blue-500 transform -translate-x-full group-hover:translate-x-0 transition duration-300"></div>
                                 <div class="flex justify-between items-start mb-4">
                                     <div class="w-10 h-10 bg-blue-50 text-blue-600 rounded-lg flex items-center justify-center text-xl">
-                                        <i class="fas fa-file-powerpoint"></i>
+                                        <i aria-hidden="true" class="fas fa-file-powerpoint"></i>
                                     </div>
                                     <span class="text-xs font-bold text-gray-400 uppercase">${item.date}</span>
                                 </div>
                                 <h3 class="text-lg font-bold text-slate-800 mb-2 line-clamp-1">${item.title}</h3>
                                 <p class="text-sm text-slate-500 mb-4 line-clamp-2">${item.preview || "No preview available."}</p>
                                 <button onclick="loadDeck(${item.id}, '${escapeHtml(item.preview)}')" class="text-sm font-bold text-blue-600 hover:text-blue-800 flex items-center gap-1">
-                                    Open Workspace <i class="fas fa-arrow-right text-xs"></i>
+                                    Open Workspace <i aria-hidden="true" class="fas fa-arrow-right text-xs"></i>
                                 </button>
                             </div>
                         `).join('');

@@ -19,10 +19,24 @@
         .hero-bg {
             background: radial-gradient(circle at 50% 50%, rgba(59, 130, 246, 0.1) 0%, rgba(255, 255, 255, 1) 70%);
         }
+
+        /* Accessibility: Focus Styles */
+        :focus {
+            outline: 2px solid #3b82f6;
+            outline-offset: 2px;
+        }
+
+        :focus:not(:focus-visible) {
+            outline: none;
+        }
     </style>
 </head>
 
 <body class="bg-white text-slate-900 font-sans">
+    <a href="#mainContent"
+        class="sr-only focus:not-sr-only focus:fixed focus:top-4 focus:left-4 focus:z-[100] focus:bg-blue-600 focus:text-white focus:px-4 focus:py-2 focus:rounded-lg focus:font-bold">
+        Skip to main content
+    </a>
     <nav class="flex justify-between items-center px-8 py-6 max-w-7xl mx-auto">
         <div class="flex items-center gap-2">
             <img src="/static/images/modyfire_logo.jpg" alt="Logo" class="h-8 w-auto rounded">
@@ -38,7 +52,7 @@
             Launch App
         </a>
     </nav>
-    <section class="hero-bg py-24 text-center px-6">
+    <section class="hero-bg py-24 text-center px-6" id="mainContent">
         <div class="max-w-4xl mx-auto space-y-8">
             <h1 class="text-5xl md:text-7xl font-black tracking-tight leading-tight">
                 Turn Lectures into <span class="gradient-text">Study Assets</span> in Seconds.
@@ -50,11 +64,11 @@
             <div class="flex flex-col md:flex-row gap-4 justify-center">
                 <a href="/dashboard?tier=student"
                     class="bg-slate-900 text-white px-8 py-4 rounded-2xl font-bold flex items-center gap-3 hover:bg-slate-800 transition">
-                    <i class="fas fa-graduation-cap"></i> For Students
+                    <i aria-hidden="true" class="fas fa-graduation-cap"></i> For Students
                 </a>
                 <a href="/dashboard?tier=professor"
                     class="bg-white border-2 border-slate-200 text-slate-900 px-8 py-4 rounded-2xl font-bold flex items-center gap-3 hover:border-blue-600 transition">
-                    <i class="fas fa-chalkboard-teacher text-blue-600"></i> For Professors
+                    <i aria-hidden="true" class="fas fa-chalkboard-teacher text-blue-600"></i> For Professors
                 </a>
             </div>
         </div>
@@ -102,16 +116,16 @@
                     </div>
                     <ul class="space-y-4 mb-10 flex-1">
                         <li class="flex items-center gap-3 text-sm text-slate-600">
-                            <i class="fas fa-check text-blue-500"></i> YouTube Summaries
+                            <i aria-hidden="true" class="fas fa-check text-blue-500" aria-hidden="true"></i> YouTube Summaries
                         </li>
                         <li class="flex items-center gap-3 text-sm text-slate-600">
-                            <i class="fas fa-check text-blue-500"></i> Smart Flashcards
+                            <i aria-hidden="true" class="fas fa-check text-blue-500"></i> Smart Flashcards
                         </li>
                         <li class="flex items-center gap-3 text-sm text-slate-600">
-                            <i class="fas fa-check text-blue-500"></i> Practice Quizzes
+                            <i aria-hidden="true" class="fas fa-check text-blue-500"></i> Practice Quizzes
                         </li>
                         <li class="flex items-center gap-3 text-sm text-slate-600">
-                            <i class="fas fa-check text-blue-500"></i> 50 AI Credits / mo
+                            <i aria-hidden="true" class="fas fa-check text-blue-500"></i> 50 AI Credits / mo
                         </li>
                     </ul>
                     <a href="/login?tier=student"
@@ -122,7 +136,7 @@
                 <!-- Educator Tier -->
                 <div
                     class="bg-blue-600 p-8 rounded-[32px] text-white flex flex-col shadow-2xl shadow-blue-200 transform hover:scale-[1.02] transition">
-                    <div
+                    <div role="status" aria-label="Best Value Feature"
                         class="absolute -top-4 right-8 bg-black text-white px-4 py-1 rounded-full text-[10px] font-black uppercase tracking-widest">
                         Popular</div>
                     <div class="mb-8">
@@ -135,16 +149,16 @@
                     </div>
                     <ul class="space-y-4 mb-10 flex-1">
                         <li class="flex items-center gap-3 text-sm text-blue-50">
-                            <i class="fas fa-check text-white"></i> Everything in Student
+                            <i aria-hidden="true" class="fas fa-check text-white"></i> Everything in Student
                         </li>
                         <li class="flex items-center gap-3 text-sm text-blue-50">
-                            <i class="fas fa-check text-white"></i> PowerPoint Generation
+                            <i aria-hidden="true" class="fas fa-check text-white"></i> PowerPoint Generation
                         </li>
                         <li class="flex items-center gap-3 text-sm text-blue-50">
-                            <i class="fas fa-check text-white"></i> Class Invites & Groups
+                            <i aria-hidden="true" class="fas fa-check text-white"></i> Class Invites & Groups
                         </li>
                         <li class="flex items-center gap-3 text-sm text-blue-50">
-                            <i class="fas fa-check text-white"></i> 200 AI Credits / mo
+                            <i aria-hidden="true" class="fas fa-check text-white"></i> 200 AI Credits / mo
                         </li>
                     </ul>
                     <a href="/login?tier=professor"
@@ -165,16 +179,16 @@
                     </div>
                     <ul class="space-y-4 mb-10 flex-1">
                         <li class="flex items-center gap-3 text-sm text-slate-600">
-                            <i class="fas fa-check text-purple-500"></i> Everything in Educator
+                            <i aria-hidden="true" class="fas fa-check text-purple-500"></i> Everything in Educator
                         </li>
                         <li class="flex items-center gap-3 text-sm text-slate-600">
-                            <i class="fas fa-check text-purple-500"></i> Audio Script Generation
+                            <i aria-hidden="true" class="fas fa-check text-purple-500"></i> Audio Script Generation
                         </li>
                         <li class="flex items-center gap-3 text-sm text-slate-600">
-                            <i class="fas fa-check text-purple-500"></i> AI Podcast Synthesis
+                            <i aria-hidden="true" class="fas fa-check text-purple-500"></i> AI Podcast Synthesis
                         </li>
                         <li class="flex items-center gap-3 text-sm text-slate-600">
-                            <i class="fas fa-check text-purple-500"></i> 400 AI Credits / mo
+                            <i aria-hidden="true" class="fas fa-check text-purple-500"></i> 400 AI Credits / mo
                         </li>
                     </ul>
                     <a href="/login?tier=podcaster"
@@ -195,16 +209,16 @@
                     </div>
                     <ul class="space-y-4 mb-10 flex-1">
                         <li class="flex items-center gap-3 text-sm text-slate-400">
-                            <i class="fas fa-check text-blue-400"></i> Everything in Podcaster
+                            <i aria-hidden="true" class="fas fa-check text-blue-400"></i> Everything in Podcaster
                         </li>
                         <li class="flex items-center gap-3 text-sm text-slate-400">
-                            <i class="fas fa-check text-blue-400"></i> Viral Clip Intelligence
+                            <i aria-hidden="true" class="fas fa-check text-blue-400"></i> Viral Clip Intelligence
                         </li>
                         <li class="flex items-center gap-3 text-sm text-slate-400">
-                            <i class="fas fa-check text-blue-400"></i> White-label Exports
+                            <i aria-hidden="true" class="fas fa-check text-blue-400"></i> White-label Exports
                         </li>
                         <li class="flex items-center gap-3 text-sm text-slate-400">
-                            <i class="fas fa-check text-blue-400"></i> 1000 AI Credits / mo
+                            <i aria-hidden="true" class="fas fa-check text-blue-400"></i> 1000 AI Credits / mo
                         </li>
                     </ul>
                     <a href="/login?tier=pro"

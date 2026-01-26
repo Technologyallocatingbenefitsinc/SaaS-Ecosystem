@@ -78,6 +78,16 @@
         .rotate-y-180 {
             transform: rotateY(180deg);
         }
+
+        /* Accessibility: Focus Styles */
+        :focus {
+            outline: 2px solid #3b82f6;
+            outline-offset: 2px;
+        }
+
+        :focus:not(:focus-visible) {
+            outline: none;
+        }
     </style>
 </head>
 
@@ -87,6 +97,38 @@
     <script type="text/babel">
         const { useState, useEffect, useRef } = React;
         const USER_TIER = "{{ tier }}";
+
+        const useFocusTrap = (isOpen, modalRef) => {
+            useEffect(() => {
+                if (!isOpen || !modalRef.current) return;
+
+                const focusableElements = modalRef.current.querySelectorAll(
+                    'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+                );
+                const firstElement = focusableElements[0];
+                const lastElement = focusableElements[focusableElements.length - 1];
+
+                const handleTab = (e) => {
+                    if (e.key !== 'Tab') return;
+
+                    if (e.shiftKey) {
+                        if (document.activeElement === firstElement) {
+                            e.preventDefault();
+                            lastElement.focus();
+                        }
+                    } else {
+                        if (document.activeElement === lastElement) {
+                            e.preventDefault();
+                            firstElement.focus();
+                        }
+                    }
+                };
+
+                firstElement?.focus();
+                document.addEventListener('keydown', handleTab);
+                return () => document.removeEventListener('keydown', handleTab);
+            }, [isOpen]);
+        };
 
         const Whiteboard = () => {
             const canvasRef = useRef(null);
@@ -245,6 +287,19 @@
 
             const editorRef = useRef(null);
             const saveTimeoutRef = useRef(null);
+            const exportModalRef = useRef(null);
+            const quizModalRef = useRef(null);
+            const clipsModalRef = useRef(null);
+            const audioModalRef = useRef(null);
+            const carouselModalRef = useRef(null);
+            const flashcardModalRef = useRef(null);
+
+            useFocusTrap(isExportModalOpen, exportModalRef);
+            useFocusTrap(isQuizModalOpen, quizModalRef);
+            useFocusTrap(isClipsModalOpen, clipsModalRef);
+            useFocusTrap(isAudioModalOpen, audioModalRef);
+            useFocusTrap(isCarouselModalOpen, carouselModalRef);
+            useFocusTrap(isFlashcardModalOpen, flashcardModalRef);
 
             // Debounced Save
             const triggerSave = (content) => {
@@ -636,13 +691,18 @@
 
             return (
                 <div className="flex h-screen">
+                    {/* Skip to Main Content Link */}
+                    <a href="#mainContent" className="sr-only focus:not-sr-only focus:fixed focus:top-4 focus:left-4 focus:z-[100] focus:bg-blue-600 focus:text-white focus:px-4 focus:py-2 focus:rounded-lg focus:font-bold">
+                        Skip to main content
+                    </a>
+
                     {/* Sidebar */}
                     <div className="w-16 bg-slate-900 flex flex-col items-center py-4 gap-4 hidden md:flex">
                         <img src="/static/images/modyfire_logo.jpg" alt="Logo" className="w-10 h-10 rounded-lg object-cover" />
                         <div className="w-6 h-6 bg-slate-700 rounded-full mt-auto"></div>
                     </div>
 
-                    <main className="flex-1 flex flex-col relative h-full">
+                    <main id="mainContent" className="flex-1 flex flex-col relative h-full">
                         <header className="h-16 border-b bg-white flex items-center justify-between px-6">
                             <div className="flex items-center gap-4">
                                 <a href="/dashboard" className="p-2 mr-2 text-slate-500 hover:text-slate-700 hover:bg-slate-100 rounded-full transition" title="Back to Dashboard">
@@ -822,19 +882,19 @@
                                     <>
                                         <div className="border-b p-2 flex gap-4 items-center bg-slate-50 text-gray-500 text-sm overflow-x-auto">
                                             <div className="flex bg-white rounded-lg border p-1 gap-1">
-                                                <button onClick={() => editor.chain().focus().toggleBold().run()} className={`p-1.5 px-3 rounded hover:bg-gray-100 ${editor?.isActive('bold') ? 'bg-indigo-50 text-indigo-600 font-bold' : ''}`}>B</button>
-                                                <button onClick={() => editor.chain().focus().toggleItalic().run()} className={`p-1.5 px-3 rounded hover:bg-gray-100 ${editor?.isActive('italic') ? 'bg-indigo-50 text-indigo-600 font-bold' : ''}`}>I</button>
-                                                <button onClick={() => editor.chain().focus().toggleStrike().run()} className={`p-1.5 px-3 rounded hover:bg-gray-100 ${editor?.isActive('strike') ? 'bg-indigo-50 text-indigo-600 font-bold' : ''}`}>S</button>
+                                                <button onClick={() => editor.chain().focus().toggleBold().run()} aria-label="Bold" className={`p-1.5 px-3 rounded hover:bg-gray-100 ${editor?.isActive('bold') ? 'bg-indigo-50 text-indigo-600 font-bold' : ''}`}>B</button>
+                                                <button onClick={() => editor.chain().focus().toggleItalic().run()} aria-label="Italic" className={`p-1.5 px-3 rounded hover:bg-gray-100 ${editor?.isActive('italic') ? 'bg-indigo-50 text-indigo-600 font-bold' : ''}`}>I</button>
+                                                <button onClick={() => editor.chain().focus().toggleStrike().run()} aria-label="Strikethrough" className={`p-1.5 px-3 rounded hover:bg-gray-100 ${editor?.isActive('strike') ? 'bg-indigo-50 text-indigo-600 font-bold' : ''}`}>S</button>
                                             </div>
                                             <div className="flex bg-white rounded-lg border p-1 gap-1">
-                                                <button onClick={() => editor.chain().focus().toggleHeading({ level: 1 }).run()} className={`p-1.5 px-3 rounded hover:bg-gray-100 ${editor?.isActive('heading', { level: 1 }) ? 'bg-indigo-50 text-indigo-600 font-bold' : ''}`}>H1</button>
-                                                <button onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()} className={`p-1.5 px-3 rounded hover:bg-gray-100 ${editor?.isActive('heading', { level: 2 }) ? 'bg-indigo-50 text-indigo-600 font-bold' : ''}`}>H2</button>
+                                                <button onClick={() => editor.chain().focus().toggleHeading({ level: 1 }).run()} aria-label="Heading 1" className={`p-1.5 px-3 rounded hover:bg-gray-100 ${editor?.isActive('heading', { level: 1 }) ? 'bg-indigo-50 text-indigo-600 font-bold' : ''}`}>H1</button>
+                                                <button onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()} aria-label="Heading 2" className={`p-1.5 px-3 rounded hover:bg-gray-100 ${editor?.isActive('heading', { level: 2 }) ? 'bg-indigo-50 text-indigo-600 font-bold' : ''}`}>H2</button>
                                             </div>
                                             <div className="flex bg-white rounded-lg border p-1 gap-1">
-                                                <button onClick={() => editor.chain().focus().toggleBulletList().run()} className={`p-1.5 px-3 rounded hover:bg-gray-100 ${editor?.isActive('bulletList') ? 'bg-indigo-50 text-indigo-600 font-bold' : ''}`}><i className="fas fa-list-ul"></i></button>
-                                                <button onClick={() => editor.chain().focus().toggleOrderedList().run()} className={`p-1.5 px-3 rounded hover:bg-gray-100 ${editor?.isActive('orderedList') ? 'bg-indigo-50 text-indigo-600 font-bold' : ''}`}><i className="fas fa-list-ol"></i></button>
+                                                <button onClick={() => editor.chain().focus().toggleBulletList().run()} aria-label="Bullet List" className={`p-1.5 px-3 rounded hover:bg-gray-100 ${editor?.isActive('bulletList') ? 'bg-indigo-50 text-indigo-600 font-bold' : ''}`}><i className="fas fa-list-ul"></i></button>
+                                                <button onClick={() => editor.chain().focus().toggleOrderedList().run()} aria-label="Ordered List" className={`p-1.5 px-3 rounded hover:bg-gray-100 ${editor?.isActive('orderedList') ? 'bg-indigo-50 text-indigo-600 font-bold' : ''}`}><i className="fas fa-list-ol"></i></button>
                                             </div>
-                                            <button onClick={() => editor.chain().focus().toggleBlockquote().run()} className={`p-1.5 px-3 bg-white border rounded hover:bg-gray-100 ${editor?.isActive('blockquote') ? 'bg-indigo-50 text-indigo-600 font-bold' : ''}`}><i className="fas fa-quote-right"></i></button>
+                                            <button onClick={() => editor.chain().focus().toggleBlockquote().run()} aria-label="Blockquote" className={`p-1.5 px-3 bg-white border rounded hover:bg-gray-100 ${editor?.isActive('blockquote') ? 'bg-indigo-50 text-indigo-600 font-bold' : ''}`}><i className="fas fa-quote-right"></i></button>
                                         </div>
                                         <div ref={editorRef} />
                                     </>
@@ -846,13 +906,13 @@
 
                         {isExportModalOpen && (
                             <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-                                <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md max-h-[85vh] overflow-y-auto animate-fade-in-up flex flex-col">
+                                <div ref={exportModalRef} className="bg-white rounded-2xl shadow-2xl w-full max-w-md max-h-[85vh] overflow-y-auto animate-fade-in-up flex flex-col">
                                     <div className="p-6 border-b border-gray-100 flex-shrink-0 bg-white sticky top-0 z-10 flex justify-between items-center">
                                         <div>
                                             <h3 className="text-xl font-bold text-slate-900">Export Presentation</h3>
                                             <p className="text-sm text-slate-500 mt-1">Select format and style.</p>
                                         </div>
-                                        <button onClick={() => setIsExportModalOpen(false)} className="text-slate-400 hover:text-slate-600 p-2">
+                                        <button onClick={() => setIsExportModalOpen(false)} aria-label="Close" className="text-slate-400 hover:text-slate-600 p-2">
                                             <i className="fas fa-times text-xl"></i>
                                         </button>
                                     </div>
@@ -998,10 +1058,10 @@
                         {
                             isQuizModalOpen && (
                                 <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-                                    <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[85vh] overflow-y-auto animate-fade-in-up flex flex-col">
+                                    <div ref={quizModalRef} className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[85vh] overflow-y-auto animate-fade-in-up flex flex-col">
                                         <div className="p-6 border-b border-gray-100 flex justify-between items-center bg-white sticky top-0 z-10">
                                             <h3 className="text-xl font-bold text-slate-900">📝 Practice Quiz</h3>
-                                            <button onClick={() => setIsQuizModalOpen(false)} className="text-slate-400 hover:text-slate-600"><i className="fas fa-times"></i></button>
+                                            <button onClick={() => setIsQuizModalOpen(false)} aria-label="Close" className="text-slate-400 hover:text-slate-600"><i className="fas fa-times"></i></button>
                                         </div>
                                         <div className="p-8 space-y-8">
                                             {quizScore === null ? (
@@ -1049,7 +1109,7 @@
                         {
                             isFlashcardModalOpen && flashcardData.length > 0 && (
                                 <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-                                    <div className="w-full max-w-xl relative">
+                                    <div ref={flashcardModalRef} className="w-full max-w-xl relative">
                                         <div className="flex justify-between items-center mb-4 text-white">
                                             <h3 className="text-xl font-bold">Flashcards ({currentCardIndex + 1}/{flashcardData.length})</h3>
                                             <div className="flex gap-4">
@@ -1132,10 +1192,10 @@
                         {/* Social Clips Modal */}
                         {isClipsModalOpen && (
                             <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-                                <div className="bg-white rounded-2xl shadow-2xl w-full max-w-3xl max-h-[85vh] overflow-y-auto animate-fade-in-up flex flex-col">
+                                <div ref={clipsModalRef} className="bg-white rounded-2xl shadow-2xl w-full max-w-3xl max-h-[85vh] overflow-y-auto animate-fade-in-up flex flex-col">
                                     <div className="p-6 border-b border-gray-100 flex justify-between items-center bg-white sticky top-0 z-10">
                                         <h3 className="text-xl font-bold text-slate-900 flex items-center gap-2">🎬 Social Clips Intelligence <span className="bg-pink-100 text-pink-600 text-xs px-2 py-1 rounded-full">Pro</span></h3>
-                                        <button onClick={() => setIsClipsModalOpen(false)} className="text-slate-400 hover:text-slate-600"><i className="fas fa-times"></i></button>
+                                        <button onClick={() => setIsClipsModalOpen(false)} aria-label="Close" className="text-slate-400 hover:text-slate-600"><i className="fas fa-times"></i></button>
                                     </div>
 
                                     <div className="p-8">
@@ -1215,7 +1275,7 @@
                         {/* Carousel Modal */}
                         {isCarouselModalOpen && (
                             <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-                                <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] flex flex-col overflow-hidden animate-fade-in-up">
+                                <div ref={carouselModalRef} className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] flex flex-col overflow-hidden animate-fade-in-up">
                                     <div className="p-6 border-b flex justify-between items-center bg-slate-50">
                                         <h2 className="text-xl font-bold text-slate-800 flex items-center gap-2">🎡 Social Carousel Script</h2>
                                         <button onClick={() => setIsCarouselModalOpen(false)} className="text-slate-400 hover:text-slate-600">
