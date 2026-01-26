@@ -163,8 +163,10 @@
         <header
             class="h-20 flex items-center justify-between px-8 bg-white/80 backdrop-blur-sm sticky top-0 z-10 border-b border-gray-100">
             <h1 class="text-xl font-bold text-slate-800">
-                {% if tier == 'professor' %}Lecture Hub
-                {% elif tier == 'student' %}Study Center
+                {% if tier == 'professor' %}Educator Hub
+                {% elif tier == 'student' %}Student Center
+                {% elif tier == 'podcaster' %}Studio Hub
+                {% elif tier == 'pro' %}Pro Command Center
                 {% else %}Growth Engine
                 {% endif %}
             </h1>
@@ -179,7 +181,12 @@
                 {% elif tier == 'podcaster' %}
                 <div
                     class="flex items-center gap-2 px-3 py-1 bg-purple-50 text-purple-700 rounded-full text-sm font-bold border border-purple-100">
-                    <i class="fas fa-rocket"></i> Viral Check: High
+                    <i class="fas fa-microphone"></i> Audio: High Fidelity
+                </div>
+                {% elif tier == 'pro' %}
+                <div
+                    class="flex items-center gap-2 px-3 py-1 bg-orange-50 text-orange-700 rounded-full text-sm font-bold border border-orange-100">
+                    <i class="fas fa-crown"></i> Pro Priority
                 </div>
                 {% else %}
                 <div
@@ -197,9 +204,10 @@
                 <!-- Hero Section -->
                 <section class="text-center space-y-4 pt-8">
                     <h1 class="text-4xl md:text-6xl font-extrabold text-slate-900 tracking-tight leading-tight">
-                        {% if tier == 'professor' %}Make Learning<br><span class="text-blue-600">Accessible.</span>
-                        {% elif tier == 'student' %}Conquer Your<br><span class="text-blue-600">Week.</span>
-                        {% else %}Go Viral<br><span class="text-blue-600">Faster.</span>
+                        {% if tier == 'professor' %}Empower Your<br><span class="text-blue-600">Classroom.</span>
+                        {% elif tier == 'student' %}Master Your<br><span class="text-blue-600">Subjects.</span>
+                        {% elif tier == 'podcaster' %}Create Viral<br><span class="text-blue-600">Audio.</span>
+                        {% else %}Scale Your<br><span class="text-blue-600">Curriculum.</span>
                         {% endif %}
                     </h1>
                 </section>
@@ -209,14 +217,25 @@
                     class="bg-gradient-to-br from-blue-500 to-indigo-600 rounded-3xl p-1 shadow-2xl transform hover:scale-[1.01] transition duration-300">
                     <div
                         class="bg-white rounded-[20px] p-12 text-center h-full flex flex-col items-center justify-center">
-                        <h3 class="text-2xl font-bold mb-2">Create & Manage</h3>
-                        <p class="text-slate-500 mb-6 max-w-md">Send automated welcome emails to all your students or
-                            transform a lecture into slides.</p>
+                        <h3 class="text-2xl font-bold mb-2">
+                            {% if tier == 'professor' %}Manage Your Class{% elif tier == 'student' %}Summarize Lecture{%
+                            else %}Create Content{% endif %}
+                        </h3>
+                        <p class="text-slate-500 mb-6 max-w-md">
+                            {% if tier == 'professor' %}Send automated welcome emails to all your students or transform
+                            a lecture into slides.
+                            {% elif tier == 'student' %}Paste a YouTube link to get instant notes, flashcards, and study
+                            guides.
+                            {% else %}Transform your content into powerful viral sequences and audio overviews.
+                            {% endif %}
+                        </p>
                         <div class="flex gap-4 w-full max-w-md justify-center mb-8">
+                            {% if tier == 'professor' %}
                             <button onclick="inviteStudents()"
                                 class="bg-black text-white px-8 py-3 rounded-xl font-bold hover:opacity-80 transition flex-1">
                                 Send Invites
                             </button>
+                            {% endif %}
                         </div>
 
                         <div class="w-full bg-slate-100 h-px mb-8"></div>

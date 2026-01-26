@@ -171,8 +171,9 @@ async def join_class(
     return {"status": "success", "message": f"Successfully joined {professor.username}'s class!"}
 
 @app.get("/workspace", response_class=HTMLResponse)
-async def workspace(request: Request):
-    return templates.TemplateResponse(request, "workspace.html")
+async def workspace(request: Request, user = Depends(auth.get_replit_user)):
+    user_tier = user.tier if user else "student"
+    return templates.TemplateResponse(request, "workspace.html", {"user": user, "tier": user_tier})
 
 @app.post("/upload-video")
 async def upload_video_form(

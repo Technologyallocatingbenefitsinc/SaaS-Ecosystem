@@ -12,7 +12,9 @@ from app.services.gemini_engine import (
     generate_flashcards_from_text, 
     identify_viral_clips,
     generate_audio_script,
-    chat_with_video
+    chat_with_video,
+    generate_blog_from_text,
+    generate_carousel_from_text
 )
 from app.services.audio_engine import synthesize_podcast_audio
 from app.routers.auth import get_replit_user
@@ -260,5 +262,21 @@ async def ask_video_question(request: ChatRequest):
     try:
         answer = await chat_with_video(request.text, request.history, request.question)
         return {"answer": answer}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.post("/generate-blog")
+async def create_blog(request: StudyRequest):
+    try:
+        blog_text = await generate_blog_from_text(request.text, language=request.language)
+        return {"blog": blog_text}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.post("/generate-carousel")
+async def create_carousel(request: StudyRequest):
+    try:
+        carousel_text = await generate_carousel_from_text(request.text, language=request.language)
+        return {"carousel": carousel_text}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))

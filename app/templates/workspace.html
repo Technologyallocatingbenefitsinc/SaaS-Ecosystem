@@ -86,6 +86,7 @@
 
     <script type="text/babel">
         const { useState, useEffect, useRef } = React;
+        const USER_TIER = "{{ tier }}";
 
         const DocumentEditor = () => {
             const [editor, setEditor] = useState(null);
@@ -115,6 +116,8 @@
             const [audioScript, setAudioScript] = useState([]);
             const [audioUrl, setAudioUrl] = useState(null);
             const [isAudioLoading, setIsAudioLoading] = useState(false);
+            const [isCarouselModalOpen, setIsCarouselModalOpen] = useState(false);
+            const [carouselData, setCarouselData] = useState("");
 
             // Chat Assistant State
             const [isChatOpen, setIsChatOpen] = useState(false);
@@ -313,7 +316,11 @@
                 setIsStudyLoading(true);
 
                 try {
-                    const endpoint = type === 'quiz' ? '/editor/generate-quiz' : '/editor/generate-flashcards';
+                    let endpoint = '/editor/generate-flashcards';
+                    if (type === 'quiz') endpoint = '/editor/generate-quiz';
+                    else if (type === 'blog') endpoint = '/editor/generate-blog';
+                    else if (type === 'carousel') endpoint = '/editor/generate-carousel';
+
                     const response = await fetch(endpoint, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
@@ -331,7 +338,7 @@
                         } else {
                             alert("Failed to generate quiz.");
                         }
-                    } else {
+                    } else if (type === 'flashcards') {
                         if (data.flashcards) {
                             setFlashcardData(data.flashcards);
                             setCurrentCardIndex(0);
@@ -339,6 +346,21 @@
                             setIsFlashcardModalOpen(true);
                         } else {
                             alert("Failed to generate flashcards.");
+                        }
+                    } else if (type === 'blog') {
+                        if (data.blog) {
+                            // Prepend blog to editor or replace? User usually wants it as a draft.
+                            editor.commands.setContent(`<h1>Blog Post</h1>` + data.blog);
+                        } else {
+                            alert("Failed to generate blog post.");
+                        }
+                    } else if (type === 'carousel') {
+                        if (data.carousel) {
+                            // Open carousel modal
+                            setCarouselData(data.carousel);
+                            setIsCarouselModalOpen(true);
+                        } else {
+                            alert("Failed to generate carousel script.");
                         }
                     }
 
@@ -590,37 +612,58 @@
                                     📷 Add Media
                                 </button>
 
-                                {/* Study Tools Dropdown Trigger */}
+                                {/* Tools Dropdown */}
                                 <div className="relative group">
                                     <button className="px-4 py-2 bg-purple-100 text-purple-700 rounded-lg font-medium hover:bg-purple-200 transition flex items-center gap-2">
-                                        🧠 Study Tools
+                                        {USER_TIER === 'podcaster' ? '🚀 Growth Tools' : '🧠 Study Tools'}
                                     </button>
-                                    <div className="absolute right-0 mt-2 w-48 bg-white rounded-xl shadow-xl border border-gray-100 hidden group-hover:block z-50">
-                                        <button
-                                            onClick={() => generateStudyTool('quiz')}
-                                            className="w-full text-left px-4 py-3 hover:bg-gray-50 rounded-t-xl text-sm font-bold text-slate-700 block"
-                                        >
-                                            📝 Generate Quiz
-                                        </button>
-                                        <button
-                                            onClick={() => generateStudyTool('flashcards')}
-                                            className="w-full text-left px-4 py-3 hover:bg-gray-50 rounded-b-xl text-sm font-bold text-slate-700 block"
-                                        >
-                                            📇 Generate Flashcards
-                                        </button>
-                                        <div className="border-t border-gray-100"></div>
-                                        <button
-                                            onClick={() => setIsClipsModalOpen(true)}
-                                            className="w-full text-left px-4 py-3 hover:bg-pink-50 rounded-b-xl text-sm font-bold text-pink-600 block flex items-center gap-2"
-                                        >
-                                            🎬 Social Clips
-                                        </button>
-                                        <button
-                                            onClick={() => setIsAudioModalOpen(true)}
-                                            className="w-full text-left px-4 py-3 hover:bg-purple-50 rounded-b-xl text-sm font-bold text-purple-600 block flex items-center gap-2"
-                                        >
-                                            🎧 Audio Overview
-                                        </button>
+                                    <div className="absolute right-0 mt-2 w-56 bg-white rounded-xl shadow-xl border border-gray-100 hidden group-hover:block z-50">
+                                        {(USER_TIER === 'student' || USER_TIER === 'professor' || USER_TIER === 'pro') && (
+                                            <>
+                                                <button
+                                                    onClick={() => generateStudyTool('quiz')}
+                                                    className="w-full text-left px-4 py-3 hover:bg-gray-50 rounded-t-xl text-sm font-bold text-slate-700 block"
+                                                >
+                                                    📝 Generate Quiz
+                                                </button>
+                                                <button
+                                                    onClick={() => generateStudyTool('flashcards')}
+                                                    className="w-full text-left px-4 py-3 hover:bg-gray-50 text-sm font-bold text-slate-700 block"
+                                                >
+                                                    📇 Generate Flashcards
+                                                </button>
+                                            </>
+                                        )}
+
+                                        {(USER_TIER === 'pro' || USER_TIER === 'podcaster') && (
+                                            <>
+                                                <div className="border-t border-gray-100"></div>
+                                                <button
+                                                    onClick={() => setIsClipsModalOpen(true)}
+                                                    className="w-full text-left px-4 py-3 hover:bg-pink-50 text-sm font-bold text-pink-600 block flex items-center gap-2"
+                                                >
+                                                    🎬 Instagram/LinkedIn Clips
+                                                </button>
+                                                <button
+                                                    onClick={() => generateStudyTool('carousel')}
+                                                    className="w-full text-left px-4 py-3 hover:bg-blue-50 text-sm font-bold text-blue-600 block flex items-center gap-2"
+                                                >
+                                                    🎡 LinkedIn Carousel Script
+                                                </button>
+                                                <button
+                                                    onClick={() => generateStudyTool('blog')}
+                                                    className="w-full text-left px-4 py-3 hover:bg-orange-50 text-sm font-bold text-orange-600 block flex items-center gap-2"
+                                                >
+                                                    ✍️ Video to Blog Post
+                                                </button>
+                                                <button
+                                                    onClick={() => setIsAudioModalOpen(true)}
+                                                    className="w-full text-left px-4 py-3 hover:bg-purple-50 rounded-b-xl text-sm font-bold text-purple-600 block flex items-center gap-2"
+                                                >
+                                                    🎧 Podcast Synthesis
+                                                </button>
+                                            </>
+                                        )}
                                     </div>
                                 </div>
 
@@ -641,12 +684,14 @@
                                 >
                                     📄 Report PDF
                                 </button>
-                                <button
-                                    onClick={openExportModal}
-                                    className="px-4 py-2 bg-orange-600 text-white rounded-lg font-medium hover:bg-orange-700 transition shadow-lg flex items-center gap-2"
-                                >
-                                    <span>📊</span> Export PPT
-                                </button>
+                                {(USER_TIER === 'professor' || USER_TIER === 'pro') && (
+                                    <button
+                                        onClick={openExportModal}
+                                        className="px-4 py-2 bg-orange-600 text-white rounded-lg font-medium hover:bg-orange-700 transition shadow-lg flex items-center gap-2"
+                                    >
+                                        <span>📊</span> Export PPT
+                                    </button>
+                                )}
                             </div>
                         </header>
 
@@ -1050,6 +1095,41 @@
                                                 ))}
                                             </div>
                                         )}
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+                        {/* Carousel Modal */}
+                        {isCarouselModalOpen && (
+                            <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+                                <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] flex flex-col overflow-hidden animate-fade-in-up">
+                                    <div className="p-6 border-b flex justify-between items-center bg-slate-50">
+                                        <h2 className="text-xl font-bold text-slate-800 flex items-center gap-2">🎡 Social Carousel Script</h2>
+                                        <button onClick={() => setIsCarouselModalOpen(false)} className="text-slate-400 hover:text-slate-600">
+                                            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+                                        </button>
+                                    </div>
+                                    <div className="flex-1 overflow-y-auto p-8 prose prose-slate">
+                                        <div className="whitespace-pre-wrap font-sans text-slate-700 leading-relaxed">
+                                            {carouselData}
+                                        </div>
+                                    </div>
+                                    <div className="p-6 border-t bg-white flex justify-end gap-3">
+                                        <button
+                                            onClick={() => {
+                                                navigator.clipboard.writeText(carouselData);
+                                                alert("Copied to clipboard!");
+                                            }}
+                                            className="px-6 py-2 bg-blue-600 text-white rounded-lg font-bold hover:bg-blue-700 transition"
+                                        >
+                                            Copy Script
+                                        </button>
+                                        <button
+                                            onClick={() => setIsCarouselModalOpen(false)}
+                                            className="px-6 py-2 bg-slate-100 text-slate-600 rounded-lg font-bold hover:bg-slate-200 transition"
+                                        >
+                                            Close
+                                        </button>
                                     </div>
                                 </div>
                             </div>

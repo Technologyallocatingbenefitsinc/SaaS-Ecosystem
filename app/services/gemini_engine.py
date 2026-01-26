@@ -382,3 +382,45 @@ async def chat_with_video(transcript_text: str, history: list, question: str):
     
     response = model.generate_content(prompt)
     return response.text
+
+async def generate_blog_from_text(text: str, language: str = "English"):
+    """Generates a structured, SEO-optimized blog post from video/transcript text."""
+    model = genai.GenerativeModel("gemini-2.0-flash") # Use flash for speed
+    prompt = f"""
+    Transform the following transcript/content into a professional, engaging, and SEO-optimized blog post.
+    Include:
+    - A catchy headline (H1)
+    - An introduction that hooks the reader
+    - Several subheadings (H2, H3)
+    - Bullet points for readability
+    - A 'Key Takeaways' section
+    - A conclusion with a call to action
+    
+    OUTPUT LANGUAGE: {language}
+    Tone: Engaging and Informative.
+    
+    Content:
+    {text}
+    """
+    response = model.generate_content(prompt)
+    return response.text
+
+async def generate_carousel_from_text(text: str, language: str = "English"):
+    """Generates a slide-by-slide guide for highly engaging social media carousels (LinkedIn/Insta)."""
+    model = genai.GenerativeModel("gemini-2.0-flash") 
+    prompt = f"""
+    Create a 7-10 slide social media carousel script (for LinkedIn or Instagram) based on the following text.
+    For each slide, provide:
+    - Slide Number
+    - 'Hook' or Headline
+    - Main body text (concise, punchy)
+    - Visual description/idea for the designer
+    
+    OUTPUT LANGUAGE: {language}
+    Format the output as a clear reading guide (not JSON).
+    
+    Content:
+    {text}
+    """
+    response = model.generate_content(prompt)
+    return response.text
