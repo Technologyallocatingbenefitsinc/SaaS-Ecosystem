@@ -208,10 +208,9 @@
                 <!-- Role Specific Stats -->
                 {% if tier == 'professor' %}
                 <div
-                    class="flex items-center gap-2 px-3 py-1 bg-green-50 text-green-700 rounded-full text-sm font-bold border border-green-100">
+                    class="flex items-center gap-3 px-3 py-1 bg-green-50 text-green-700 rounded-full text-sm font-bold border border-green-100">
                     <i aria-hidden="true" class="fas fa-check-circle"></i> A11y Score: {{ 96 + ((user.id|default(3)) %
-                    4) }}%
-                </div>
+                    4) }}%</div>
                 {% elif tier == 'podcaster' %}
                 <div
                     class="flex items-center gap-2 px-3 py-1 bg-purple-50 text-purple-700 rounded-full text-sm font-bold border border-purple-100">
