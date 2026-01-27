@@ -207,27 +207,27 @@
             <div class="flex items-center gap-4">
                 <!-- Role Specific Stats -->
                 {% if tier == 'professor' %}
-                class="flex items-center gap-2 px-3 py-1 bg-green-50 text-green-700 rounded-full text-sm font-bold
-                border border-green-100">
-                <i aria-hidden="true" class="fas fa-check-circle"></i> A11y Score: {{ 95 + ((user.id|default(3)) % 5)
-                }}%
-            </div>
-            {% elif tier == 'podcaster' %}
-            <div
-                class="flex items-center gap-2 px-3 py-1 bg-purple-50 text-purple-700 rounded-full text-sm font-bold border border-purple-100">
-                <i aria-hidden="true" class="fas fa-microphone"></i> Audio: High Fidelity
-            </div>
-            {% elif tier == 'pro' %}
-            <div
-                class="flex items-center gap-2 px-3 py-1 bg-orange-50 text-orange-700 rounded-full text-sm font-bold border border-orange-100">
-                <i aria-hidden="true" class="fas fa-crown"></i> Pro Priority
-            </div>
-            {% else %}
-            <div
-                class="flex items-center gap-2 px-3 py-1 bg-blue-50 text-blue-700 rounded-full text-sm font-bold border border-blue-100">
-                <i aria-hidden="true" class="fas fa-battery-full"></i> Focus: 85%
-            </div>
-            {% endif %}
+                <div
+                    class="flex items-center gap-2 px-3 py-1 bg-green-50 text-green-700 rounded-full text-sm font-bold border border-green-100">
+                    <i aria-hidden="true" class="fas fa-check-circle"></i> A11y Score: {{ 95 + ((user.id|default(3)) %
+                    5) }}%
+                </div>
+                {% elif tier == 'podcaster' %}
+                <div
+                    class="flex items-center gap-2 px-3 py-1 bg-purple-50 text-purple-700 rounded-full text-sm font-bold border border-purple-100">
+                    <i aria-hidden="true" class="fas fa-microphone"></i> Audio: High Fidelity
+                </div>
+                {% elif tier == 'pro' %}
+                <div
+                    class="flex items-center gap-2 px-3 py-1 bg-orange-50 text-orange-700 rounded-full text-sm font-bold border border-orange-100">
+                    <i aria-hidden="true" class="fas fa-crown"></i> Pro Priority
+                </div>
+                {% else %}
+                <div
+                    class="flex items-center gap-2 px-3 py-1 bg-blue-50 text-blue-700 rounded-full text-sm font-bold border border-blue-100">
+                    <i aria-hidden="true" class="fas fa-battery-full"></i> Focus: 85%
+                </div>
+                {% endif %}
             </div>
         </header>
 
