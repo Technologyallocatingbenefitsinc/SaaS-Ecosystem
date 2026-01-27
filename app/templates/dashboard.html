@@ -210,7 +210,8 @@
                 <div
                     class="flex items-center gap-3 px-3 py-1 bg-green-50 text-green-700 rounded-full text-sm font-bold border border-green-100">
                     <i aria-hidden="true" class="fas fa-check-circle"></i> A11y Score: {{ 96 + ((user.id|default(3)) %
-                    4) }}%</div>
+                    4) }}%
+                </div>
                 {% elif tier == 'podcaster' %}
                 <div
                     class="flex items-center gap-2 px-3 py-1 bg-purple-50 text-purple-700 rounded-full text-sm font-bold border border-purple-100">
@@ -548,9 +549,11 @@
                     data-text="sign_in_with" data-shape="rectangular" data-logo_alignment="left">
                 </div>
                 {% else %}
-                <div class="p-3 bg-yellow-50 text-yellow-800 text-xs rounded border border-yellow-200">
-                    <strong>Dev Note:</strong> Set <code>GOOGLE_CLIENT_ID</code> env var to enable Google Sign-In.
-                </div>
+                <button onclick="handleGoogleCredentialResponse({credential: 'mock_google_' + Date.now()})"
+                    class="w-full py-2.5 bg-white border border-gray-200 text-slate-700 rounded-lg font-medium hover:bg-gray-50 transition flex items-center justify-center gap-2 shadow-sm border-dashed border-slate-300">
+                    <img src="https://www.svgrepo.com/show/475656/google-color.svg" class="w-5 h-5" alt="Google">
+                    <span>Sign in with Google (Dev Mock)</span>
+                </button>
                 {% endif %}
 
                 <!-- Apple Button Mock -->
