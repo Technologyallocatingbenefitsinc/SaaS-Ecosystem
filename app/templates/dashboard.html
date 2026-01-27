@@ -511,7 +511,7 @@
             </div>
 
             <form id="authForm" class="space-y-4">
-                <input type="email" id="authEmail" placeholder="Email" required
+                <input type="email" id="authEmail" placeholder="Email" required autocomplete="email"
                     class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:outline-none">
                 <input type="password" id="authPassword" placeholder="Password" required autocomplete="current-password"
                     class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:outline-none">
@@ -1122,6 +1122,8 @@
                 alert("Google Login Failed: " + (error.response?.data?.detail || "Unknown Error"));
             }
         }
+        // Expose to window for GSI callback
+        window.handleGoogleCredentialResponse = handleGoogleCredentialResponse;
 
         async function handleAppleLogin() {
             // Placeholder for Apple Login Flow
