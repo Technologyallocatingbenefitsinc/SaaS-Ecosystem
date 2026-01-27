@@ -19,6 +19,8 @@ class User(Base):
     google_id = Column(String, nullable=True, index=True)
     apple_id = Column(String, nullable=True, index=True)
     avatar_url = Column(String, nullable=True)
+    is_verified = Column(Boolean, default=False)
+    verification_token = Column(String, nullable=True)
     my_class_code = Column(String, nullable=True, unique=True, index=True) # For Professors
     joined_class_code = Column(String, nullable=True, index=True) # For Students
     created_at = Column(DateTime(timezone=True), server_default=func.now())

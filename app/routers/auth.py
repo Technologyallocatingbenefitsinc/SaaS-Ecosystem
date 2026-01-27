@@ -1,4 +1,5 @@
 from fastapi import APIRouter, Depends, HTTPException, status, Request, Header
+from fastapi.responses import RedirectResponse
 from sqlalchemy.future import select
 from app.database import get_db
 from app.models import User
@@ -82,12 +83,26 @@ async def signup(request: Request, user: UserSignup, db = Depends(get_db)):
         referral_code=f"REF-{user.email.split('@')[0]}",
         tier="student", 
         credits=user_credits,
-        device_fingerprint=user.device_fingerprint
+        device_fingerprint=user.device_fingerprint,
+        verification_token=secrets.token_urlsafe(32),
+        is_verified=False
     )
     db.add(new_user)
     await db.commit()
     await db.refresh(new_user)
     
+    # Trigger Verification Email (Best Effort)
+    async with httpx.AsyncClient() as client:
+        try:
+             webhook_url = getattr(settings, "N8N_WEBHOOK_URL", "https://your-n8n-instance.com/webhook/generic")
+             await client.post(webhook_url, json={
+                 "event": "user_signup",
+                 "email": new_user.email,
+                 "verification_link": f"https://{getattr(settings, 'HostName', 'localhost:8080')}/auth/verify-email?token={new_user.verification_token}"
+             })
+        except Exception as e:
+            print(f"Failed to trigger verification email: {e}")
+
     return {"id": new_user.id, "email": new_user.email, "credits": new_user.credits}
 
 @router.post("/login")
@@ -110,6 +125,24 @@ async def login(request: Request, user_data: UserLogin, db = Depends(get_db)):
         "role": user.tier,
         "credits": user.credits
     }
+
+@router.get("/verify-email")
+async def verify_email(token: str, db = Depends(get_db)):
+    result = await db.execute(select(User).where(User.verification_token == token))
+    user = result.scalars().first()
+    
+    if not user:
+        raise HTTPException(status_code=400, detail="Invalid verification token")
+        
+    if user.is_verified:
+        return RedirectResponse(url="/dashboard?verified=already")
+
+    user.is_verified = True
+    user.verification_token = None
+    db.add(user)
+    await db.commit()
+    
+    return RedirectResponse(url="/dashboard?verified=true")
 
 @router.post("/forgot-password")
 async def forgot_password(data: ForgotPassword, db = Depends(get_db)):
