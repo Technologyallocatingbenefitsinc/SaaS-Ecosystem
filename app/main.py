@@ -77,7 +77,9 @@ async def handle_error(request: Request, x_n8n_auth: str = Header(None)):
     return {"status": "Agent alerted for repair"}
 
 @app.post("/process-video")
+@limiter.limit("5/minute")
 async def process_video_endpoint(
+    request: Request,
     video_url: str, 
     user_id: int = 1, # Default to 1 for system tests
     user_tier: str = "student",
@@ -178,7 +180,9 @@ async def workspace(request: Request, user = Depends(auth.get_replit_user)):
     return templates.TemplateResponse(request, "workspace.html", {"user": user, "tier": user_tier})
 
 @app.post("/upload-video")
+@limiter.limit("5/minute")
 async def upload_video_form(
+    request: Request,
     video_url: str = Form(...), 
     slide_count: str = Form("6-10"), 
     language: str = Form("English"), # New Parameter
