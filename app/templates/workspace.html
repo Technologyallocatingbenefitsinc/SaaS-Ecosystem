@@ -405,6 +405,28 @@
                 };
             }, []);
 
+            // Keyboard Shortcuts
+            useEffect(() => {
+                const handleKeyDown = (e) => {
+                    // Cmd + S or Ctrl + S => Force Save
+                    if ((e.metaKey || e.ctrlKey) && e.key === 's') {
+                        e.preventDefault();
+                        if (editor) {
+                            // Immediate save logic or reuse triggerSave (which is debounced)
+                            // Let's force immediately if user explicitly presses save? 
+                            // Or just trigger the existing debounce is fine.
+                            triggerSave(editor.getHTML());
+
+                            // Visual toggle to show acknowledgment
+                            setSaveStatus('saving');
+                        }
+                    }
+                };
+
+                window.addEventListener('keydown', handleKeyDown);
+                return () => window.removeEventListener('keydown', handleKeyDown);
+            }, [editor, currentDeckId]); // Re-bind if editor or ID changes
+
             const handleImageUpload = (event) => {
                 const file = event.target.files[0];
                 if (!file) return;
