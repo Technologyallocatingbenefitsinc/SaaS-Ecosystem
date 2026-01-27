@@ -771,6 +771,25 @@
                 }
             };
 
+            // History State
+            const [isLibraryOpen, setIsLibraryOpen] = useState(false);
+            const [deckHistory, setDeckHistory] = useState([]);
+
+            useEffect(() => {
+                const fetchHistory = async () => {
+                    try {
+                        const res = await fetch('/api/decks');
+                        if (res.ok) {
+                            const data = await res.json();
+                            setDeckHistory(data);
+                        }
+                    } catch (e) {
+                        console.error("Failed to fetch history", e);
+                    }
+                };
+                if (isLibraryOpen) fetchHistory();
+            }, [isLibraryOpen]);
+
             return (
                 <div className="flex h-screen">
                     {/* Skip to Main Content Link */}
@@ -779,11 +798,33 @@
                     </a>
 
                     {/* Sidebar */}
-                    <div className="w-16 bg-slate-900 flex flex-col items-center py-4 gap-4 hidden md:flex">
+                    <div className="w-16 bg-slate-900 flex flex-col items-center py-4 gap-4 hidden md:flex z-50 relative">
                         <img src="/static/images/modyfire_logo.jpg" alt="Logo" className="w-10 h-10 rounded-lg object-cover" />
+
+                        <button onClick={() => setIsLibraryOpen(!isLibraryOpen)} className={`p-2 transition ${isLibraryOpen ? 'text-white' : 'text-slate-400 hover:text-white'}`} title="My Library">
+                            <i className="fas fa-folder-open"></i>
+                        </button>
+
                         <button onClick={toggleDarkMode} className="p-2 text-slate-400 hover:text-white transition mt-auto" title="Toggle Dark Mode">
                             <i className="fas fa-moon"></i>
                         </button>
+                    </div>
+
+                    {/* Library Drawer */}
+                    <div className={`fixed inset-y-0 left-16 w-64 bg-white dark:bg-slate-800 shadow-2xl transform transition-transform duration-300 z-40 border-r border-gray-200 dark:border-slate-700 ${isLibraryOpen ? 'translate-x-0' : '-translate-x-full'}`}>
+                        <div className="p-4 border-b border-gray-100 dark:border-slate-700 flex justify-between items-center bg-slate-50 dark:bg-slate-900">
+                            <h3 className="font-bold text-slate-800 dark:text-white">My Library</h3>
+                            <button onClick={() => setIsLibraryOpen(false)} className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"><i className="fas fa-times"></i></button>
+                        </div>
+                        <div className="overflow-y-auto h-full p-2 space-y-1">
+                            {deckHistory.map(deck => (
+                                <a key={deck.id} href={`/workspace?id=${deck.id}`} className="block p-3 rounded-lg hover:bg-blue-50 dark:hover:bg-slate-700 group border border-transparent hover:border-blue-100 dark:hover:border-slate-600 transition">
+                                    <div className="text-sm font-bold text-slate-700 dark:text-slate-200 truncate">{deck.title || "Untitled Deck"}</div>
+                                    <div className="text-xs text-slate-400">{deck.date}</div>
+                                </a>
+                            ))}
+                            {deckHistory.length === 0 && <div className="p-4 text-center text-sm text-slate-400">No history yet.</div>}
+                        </div>
                     </div>
 
                     <main id="mainContent" className="flex-1 flex flex-col relative h-full">

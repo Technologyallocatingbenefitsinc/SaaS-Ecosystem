@@ -69,3 +69,22 @@ async def save_deck_content(deck_id: int, update: DeckUpdate, user = Depends(aut
     await db.commit()
     
     return {"status": "saved"}
+
+@router.get("/api/decks")
+async def get_all_decks(user = Depends(auth.get_replit_user), db: AsyncSession = Depends(get_db)):
+    if not user:
+        return []
+
+    result = await db.execute(
+        select(SlideDeck).where(SlideDeck.user_id == user.id).order_by(SlideDeck.created_at.desc()).limit(20)
+    )
+    decks = result.scalars().all()
+    
+    return [
+        {
+            "id": deck.id,
+            "title": "Video Summary",  # Placeholder title
+            "date": deck.created_at.strftime("%b %d") if deck.created_at else "Recently"
+        }
+        for deck in decks
+    ]
