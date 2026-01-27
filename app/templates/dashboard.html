@@ -1207,6 +1207,7 @@
             const code = prompt("Enter your Professor's Class Code (e.g., CLASS-X9Y2):");
             if (!code) return;
 
+            document.body.style.cursor = 'wait';
             try {
                 const res = await fetch('/join-class', {
                     method: 'POST',
@@ -1216,13 +1217,15 @@
                 const data = await res.json();
 
                 if (res.ok) {
-                    alert(data.message);
-                    window.location.reload(); // Refresh to update UI if needed
+                    showToast(data.message, 'success');
+                    setTimeout(() => window.location.reload(), 1500);
                 } else {
-                    alert("Join failed: " + (data.detail || "Unknown error"));
+                    showToast("Join failed: " + (data.detail || "Unknown error"), 'error');
                 }
             } catch (e) {
-                alert("Network error: " + e);
+                showToast("Network error: " + e, 'error');
+            } finally {
+                document.body.style.cursor = 'default';
             }
         }
 
@@ -1260,11 +1263,25 @@
             }
         }
 
-        function loadDeck(id, content) {
-            // In a real app, we'd fetch the full content by ID.
-            // For now, we load what we have into localStorage and go.
-            localStorage.setItem('pendingSummary', content);
-            localStorage.setItem('pendingTitle', "Recovered Session"); // or fetch title
+        async function loadDeck(id, previewContent) {
+            // Try to fetch full content from backend
+            try {
+                const response = await fetch(`/api/deck/${id}`);
+                if (response.ok) {
+                    const data = await response.json();
+                    localStorage.setItem('pendingSummary', data.content);
+                    localStorage.setItem('pendingTitle', data.title);
+                } else {
+                    // Fallback to preview if fetch fails
+                    console.warn("Could not fetch full deck, using preview.");
+                    localStorage.setItem('pendingSummary', previewContent);
+                    localStorage.setItem('pendingTitle', "Recovered Session");
+                }
+            } catch (e) {
+                console.warn("Network error fetching deck, using preview.", e);
+                localStorage.setItem('pendingSummary', previewContent);
+                localStorage.setItem('pendingTitle', "Recovered Session");
+            }
             window.location.href = '/workspace';
         }
 
@@ -1280,6 +1297,47 @@
 
         // Load on startup
         fetchRecentActivity();
+
+        // --- Global Toast Notification System ---
+        function showToast(message, type = 'info') {
+            let container = document.getElementById('toast-container');
+            if (!container) {
+                container = document.createElement('div');
+                container.id = 'toast-container';
+                container.className = 'fixed bottom-4 right-4 z-50 flex flex-col gap-3 pointer-events-none';
+                document.body.appendChild(container); // Ensure it's in the DOM
+            }
+
+            const toast = document.createElement('div');
+            // pointer-events-auto so users can click/interact if needed (though we just show text)
+            toast.className = `max-w-md w-auto px-6 py-4 rounded-xl shadow-2xl skew-y-1 transform transition-all duration-500 translate-y-10 opacity-0 flex items-center gap-3 pointer-events-auto border animate-fade-in-up ${type === 'success' ? 'bg-green-600 text-white border-green-700' :
+                    type === 'error' ? 'bg-red-600 text-white border-red-700' :
+                        'bg-slate-800 text-white border-slate-900'
+                }`;
+
+            const icon = type === 'success' ? '<i class="fas fa-check-circle text-xl"></i>' :
+                type === 'error' ? '<i class="fas fa-exclamation-triangle text-xl"></i>' :
+                    '<i class="fas fa-info-circle text-xl"></i>';
+
+            toast.innerHTML = `
+                <div>${icon}</div>
+                <div class="font-bold text-sm leading-snug">${escapeHtml(message)}</div>
+            `;
+
+            container.appendChild(toast);
+
+            // Animate In
+            requestAnimationFrame(() => {
+                toast.classList.remove('translate-y-10', 'opacity-0');
+                toast.classList.remove('skew-y-1');
+            });
+
+            // Animate Out
+            setTimeout(() => {
+                toast.classList.add('translate-y-10', 'opacity-0');
+                setTimeout(() => toast.remove(), 500);
+            }, 4000);
+        }
     </script>
 </body>
 

@@ -27,3 +27,23 @@ async def get_recent_activity(user = Depends(auth.get_replit_user), db: AsyncSes
         }
         for deck in recent_decks
     ]
+
+@router.get("/api/deck/{deck_id}")
+async def get_deck_content(deck_id: int, user = Depends(auth.get_replit_user), db: AsyncSession = Depends(get_db)):
+    if not user:
+         return {"error": "Unauthorized"}, 401
+         
+    result = await db.execute(
+        select(SlideDeck).where(SlideDeck.id == deck_id, SlideDeck.user_id == user.id)
+    )
+    deck = result.scalars().first()
+    
+    if not deck:
+        return {"error": "Deck not found"}, 404
+        
+    return {
+        "id": deck.id,
+        "title": "Video Summary", # In real app, store title in DB
+        "content": deck.summary_content,
+        "video_url": deck.video_url
+    }
