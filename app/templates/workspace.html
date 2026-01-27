@@ -729,6 +729,26 @@
                 { id: 'luxury', name: 'Luxury', color: 'bg-slate-900 border-yellow-500 text-yellow-500' }
             ];
 
+            // Dark Mode Effect
+            useEffect(() => {
+                if (localStorage.getItem('theme') === 'dark' ||
+                    (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+                    document.documentElement.classList.add('dark');
+                } else {
+                    document.documentElement.classList.remove('dark');
+                }
+            }, []);
+
+            const toggleDarkMode = () => {
+                if (document.documentElement.classList.contains('dark')) {
+                    document.documentElement.classList.remove('dark');
+                    localStorage.setItem('theme', 'light');
+                } else {
+                    document.documentElement.classList.add('dark');
+                    localStorage.setItem('theme', 'dark');
+                }
+            };
+
             return (
                 <div className="flex h-screen">
                     {/* Skip to Main Content Link */}
@@ -739,7 +759,9 @@
                     {/* Sidebar */}
                     <div className="w-16 bg-slate-900 flex flex-col items-center py-4 gap-4 hidden md:flex">
                         <img src="/static/images/modyfire_logo.jpg" alt="Logo" className="w-10 h-10 rounded-lg object-cover" />
-                        <div className="w-6 h-6 bg-slate-700 rounded-full mt-auto"></div>
+                        <button onClick={toggleDarkMode} className="p-2 text-slate-400 hover:text-white transition mt-auto" title="Toggle Dark Mode">
+                            <i className="fas fa-moon"></i>
+                        </button>
                     </div>
 
                     <main id="mainContent" className="flex-1 flex flex-col relative h-full">

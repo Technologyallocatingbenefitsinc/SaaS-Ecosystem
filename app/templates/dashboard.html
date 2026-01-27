@@ -137,6 +137,10 @@
                 class="flex items-center gap-2 text-xs text-slate-400 hover:text-slate-700 mb-4 font-semibold uppercase tracking-wider">
                 <i aria-hidden="true" class="fas fa-universal-access"></i> Toggle Dyslexic Font
             </button>
+            <button onclick="toggleDarkMode()"
+                class="flex items-center gap-2 text-xs text-slate-400 hover:text-slate-700 mb-4 font-semibold uppercase tracking-wider">
+                <i aria-hidden="true" class="fas fa-moon"></i> Toggle Dark Mode
+            </button>
 
             <div class="flex items-center gap-3">
                 {% if user %}
@@ -1311,8 +1315,8 @@
             const toast = document.createElement('div');
             // pointer-events-auto so users can click/interact if needed (though we just show text)
             toast.className = `max-w-md w-auto px-6 py-4 rounded-xl shadow-2xl skew-y-1 transform transition-all duration-500 translate-y-10 opacity-0 flex items-center gap-3 pointer-events-auto border animate-fade-in-up ${type === 'success' ? 'bg-green-600 text-white border-green-700' :
-                    type === 'error' ? 'bg-red-600 text-white border-red-700' :
-                        'bg-slate-800 text-white border-slate-900'
+                type === 'error' ? 'bg-red-600 text-white border-red-700' :
+                    'bg-slate-800 text-white border-slate-900'
                 }`;
 
             const icon = type === 'success' ? '<i class="fas fa-check-circle text-xl"></i>' :
@@ -1337,6 +1341,25 @@
                 toast.classList.add('translate-y-10', 'opacity-0');
                 setTimeout(() => toast.remove(), 500);
             }, 4000);
+        }
+
+        // --- Dark Mode Logic ---
+        function toggleDarkMode() {
+            if (document.documentElement.classList.contains('dark')) {
+                document.documentElement.classList.remove('dark');
+                localStorage.setItem('theme', 'light');
+            } else {
+                document.documentElement.classList.add('dark');
+                localStorage.setItem('theme', 'dark');
+            }
+        }
+
+        // Init Theme
+        if (localStorage.getItem('theme') === 'dark' ||
+            (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+            document.documentElement.classList.add('dark');
+        } else {
+            document.documentElement.classList.remove('dark');
         }
     </script>
 </body>
