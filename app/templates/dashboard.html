@@ -870,10 +870,11 @@
             // I'll wrap the default content below in a logic block or just hide specific sections.
 
             // Correction: The HTML above has "Hero Section" etc. I should wrap them or toggle them.
-            // Easier: Toggle "analyticsSection" vs everything else in ".max-w-5xl".
-            // Let's create a wrapper in JS or just toggle visibility of children.
+            // Easier: Toggle "analyticsSection" vs everything else in the container.
 
-            const contentContainer = document.querySelector('.max-w-5xl');
+            const contentContainer = document.querySelector('#mainContent > div'); // Selects the max-w-7xl div
+            if (!contentContainer) return console.error("Container not found");
+
             const children = Array.from(contentContainer.children);
 
             // Identify Analytics Section
