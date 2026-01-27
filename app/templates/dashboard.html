@@ -1267,26 +1267,9 @@
             }
         }
 
-        async function loadDeck(id, previewContent) {
-            // Try to fetch full content from backend
-            try {
-                const response = await fetch(`/api/deck/${id}`);
-                if (response.ok) {
-                    const data = await response.json();
-                    localStorage.setItem('pendingSummary', data.content);
-                    localStorage.setItem('pendingTitle', data.title);
-                } else {
-                    // Fallback to preview if fetch fails
-                    console.warn("Could not fetch full deck, using preview.");
-                    localStorage.setItem('pendingSummary', previewContent);
-                    localStorage.setItem('pendingTitle', "Recovered Session");
-                }
-            } catch (e) {
-                console.warn("Network error fetching deck, using preview.", e);
-                localStorage.setItem('pendingSummary', previewContent);
-                localStorage.setItem('pendingTitle', "Recovered Session");
-            }
-            window.location.href = '/workspace';
+        function loadDeck(id) {
+            // Redirect to workspace with ID to enable cloud sync/persistence
+            window.location.href = `/workspace?id=${id}`;
         }
 
         function escapeHtml(text) {

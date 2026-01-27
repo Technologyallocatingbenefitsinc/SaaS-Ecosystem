@@ -1251,7 +1251,27 @@
                                                     className="text-white/70 hover:text-white flex items-center gap-1"
                                                     title="Download as Text"
                                                 >
-                                                    <i className="fas fa-download"></i> Download
+                                                    <i className="fas fa-file-alt"></i> Text
+                                                </button>
+                                                <button
+                                                    onClick={() => {
+                                                        const csvContent = flashcardData.map(c => {
+                                                            const f = c.front.replace(/"/g, '""');
+                                                            const b = c.back.replace(/"/g, '""');
+                                                            return `"${f}","${b}"`;
+                                                        }).join('\n');
+
+                                                        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+                                                        const url = URL.createObjectURL(blob);
+                                                        const a = document.createElement('a');
+                                                        a.href = url;
+                                                        a.download = 'anki_import.csv';
+                                                        a.click();
+                                                    }}
+                                                    className="text-blue-200 hover:text-white flex items-center gap-1 font-bold"
+                                                    title="Export for Anki"
+                                                >
+                                                    <i className="fas fa-download"></i> Anki (CSV)
                                                 </button>
                                                 <button onClick={() => setIsFlashcardModalOpen(false)} className="text-white/70 hover:text-white">
                                                     <i className="fas fa-times text-2xl"></i>
