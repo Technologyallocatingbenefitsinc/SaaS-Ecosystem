@@ -301,13 +301,34 @@
             useFocusTrap(isCarouselModalOpen, carouselModalRef);
             useFocusTrap(isFlashcardModalOpen, flashcardModalRef);
 
+            const [currentDeckId, setCurrentDeckId] = useState(null);
+
             // Debounced Save
             const triggerSave = (content) => {
                 setSaveStatus('saving');
                 if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current);
 
-                saveTimeoutRef.current = setTimeout(() => {
+                saveTimeoutRef.current = setTimeout(async () => {
+                    // 1. Local Auto-Save (always backup)
                     localStorage.setItem('workspace_autosave', content);
+
+                    // 2. Cloud Save (if we have an ID)
+                    if (currentDeckId) {
+                        try {
+                            const res = await fetch(`/api/deck/${currentDeckId}`, {
+                                method: 'PUT',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({ content: content })
+                            });
+                            if (!res.ok) throw new Error("Cloud save failed");
+                        } catch (e) {
+                            console.error("Cloud Save Error:", e);
+                            // Maybe set status to 'unsaved' or 'error'?
+                            setSaveStatus('error');
+                            return;
+                        }
+                    }
+
                     setSaveStatus('saved');
                 }, 1000);
             };
@@ -315,6 +336,25 @@
             useEffect(() => {
                 const initEditor = async () => {
                     try {
+                        // Check URL for Deck ID
+                        const urlParams = new URLSearchParams(window.location.search);
+                        const deckId = urlParams.get('id');
+                        let remoteContent = null;
+
+                        if (deckId) {
+                            setCurrentDeckId(deckId);
+                            // Fetch fresh content
+                            try {
+                                const res = await fetch(`/api/deck/${deckId}`);
+                                if (res.ok) {
+                                    const data = await res.json();
+                                    remoteContent = data.content;
+                                }
+                            } catch (e) {
+                                console.error("Failed to fetch deck:", e);
+                            }
+                        }
+
                         // Load modules globally to avoid Babel conflict
                         const Editor = window.TiptapEditor;
                         const StarterKit = window.TiptapStarterKit;
@@ -324,12 +364,12 @@
                             throw new Error("Modules loaded but exports were missing.");
                         }
 
-                        // Load Content: Pending (New) -> Autosave (Old) -> Default
+                        // Load Content Priority: Remote (Fresh) -> Pending (New) -> Autosave (Old) -> Default
                         const saved = localStorage.getItem('workspace_autosave');
                         const pending = localStorage.getItem('pendingSummary');
 
-                        // Fix: Pending should override autosave because the user just explicitly asked for a new summary
-                        const content = pending || saved || '<p>Start writing or paste your lecture summary here...</p>';
+                        // If we pulled remote content, use it. Otherwise fall back.
+                        const content = remoteContent || pending || saved || '<p>Start writing or paste your lecture summary here...</p>';
 
                         const tipTapEditor = new Editor({
                             element: editorRef.current,
@@ -343,7 +383,7 @@
 
                         if (pending) {
                             localStorage.removeItem('pendingSummary');
-                            localStorage.removeItem('workspace_autosave');
+                            // We don't remove autosave yet, nice to have backup
                         }
 
                         setEditor(tipTapEditor);

@@ -47,3 +47,25 @@ async def get_deck_content(deck_id: int, user = Depends(auth.get_replit_user), d
         "content": deck.summary_content,
         "video_url": deck.video_url
     }
+
+from pydantic import BaseModel
+
+class DeckUpdate(BaseModel):
+    content: str
+
+@router.put("/api/deck/{deck_id}")
+async def save_deck_content(deck_id: int, update: DeckUpdate, user = Depends(auth.get_replit_user), db: AsyncSession = Depends(get_db)):
+    if not user:
+        return {"error": "Unauthorized"}, 401
+    
+    result = await db.execute(select(SlideDeck).where(SlideDeck.id == deck_id, SlideDeck.user_id == user.id))
+    deck = result.scalars().first()
+    
+    if not deck:
+        return {"error": "Deck not found"}, 404
+        
+    deck.summary_content = update.content
+    db.add(deck)
+    await db.commit()
+    
+    return {"status": "saved"}
