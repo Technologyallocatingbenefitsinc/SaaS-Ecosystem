@@ -63,12 +63,16 @@
             </p>
             <div class="flex flex-col md:flex-row gap-4 justify-center">
                 <a href="/dashboard?tier=student"
-                    class="bg-slate-900 text-white px-8 py-4 rounded-2xl font-bold flex items-center gap-3 hover:bg-slate-800 transition">
+                    class="bg-slate-900 text-white px-8 py-4 rounded-2xl font-bold flex items-center gap-3 hover:bg-slate-800 transition shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 focus:ring-4 focus:ring-slate-200">
                     <i aria-hidden="true" class="fas fa-graduation-cap"></i> For Students
                 </a>
                 <a href="/dashboard?tier=professor"
-                    class="bg-white border-2 border-slate-200 text-slate-900 px-8 py-4 rounded-2xl font-bold flex items-center gap-3 hover:border-blue-600 transition">
+                    class="bg-white border-2 border-slate-200 text-slate-900 px-8 py-4 rounded-2xl font-bold flex items-center gap-3 hover:border-blue-600 transition shadow-sm hover:shadow-md transform hover:-translate-y-0.5 focus:ring-4 focus:ring-blue-100">
                     <i aria-hidden="true" class="fas fa-chalkboard-teacher text-blue-600"></i> For Professors
+                </a>
+                <a href="/dashboard?tier=podcaster"
+                    class="bg-white border-2 border-slate-200 text-slate-900 px-8 py-4 rounded-2xl font-bold flex items-center gap-3 hover:border-purple-600 transition shadow-sm hover:shadow-md transform hover:-translate-y-0.5 focus:ring-4 focus:ring-purple-100">
+                    <i aria-hidden="true" class="fas fa-microphone text-purple-600"></i> For Podcasters
                 </a>
             </div>
         </div>
@@ -116,7 +120,8 @@
                     </div>
                     <ul class="space-y-4 mb-10 flex-1">
                         <li class="flex items-center gap-3 text-sm text-slate-600">
-                            <i aria-hidden="true" class="fas fa-check text-blue-500" aria-hidden="true"></i> YouTube Summaries
+                            <i aria-hidden="true" class="fas fa-check text-blue-500" aria-hidden="true"></i> YouTube
+                            Summaries
                         </li>
                         <li class="flex items-center gap-3 text-sm text-slate-600">
                             <i aria-hidden="true" class="fas fa-check text-blue-500"></i> Smart Flashcards
