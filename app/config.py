@@ -14,6 +14,7 @@ class Settings(BaseSettings):
     SUPABASE_URL: str = ""
     SUPABASE_KEY: str = ""
     SUPABASE_BUCKET: str = "user_uploads"
+    GOOGLE_CLIENT_ID: str | None = None
     
     model_config = ConfigDict(env_file=".env")
 
