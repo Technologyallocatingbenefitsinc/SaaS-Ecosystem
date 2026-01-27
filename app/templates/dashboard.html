@@ -539,15 +539,18 @@
 
             <div class="space-y-3">
                 <!-- Google Button Wrapper -->
+                <!-- Social Sign In -->
                 {% if google_client_id %}
-                <div id="g_id_onload" data-client_id="{{ google_client_id }}" data-context="signin" data-ux_mode="popup"
+                <div id="g_id_onload" data-client_id="{{ google_client_id }}"
                     data-callback="handleGoogleCredentialResponse" data-auto_prompt="false">
                 </div>
-                <div class="g_id_signin" data-type="standard" data-shape="rectangular" data-theme="outline"
-                    data-text="continue_with" data-size="large" data-logo_alignment="left" data-width="350">
+                <div class="g_id_signin" data-type="standard" data-size="large" data-theme="outline"
+                    data-text="sign_in_with" data-shape="rectangular" data-logo_alignment="left">
                 </div>
                 {% else %}
-                <!-- Google Auth Not Configured -->
+                <div class="p-3 bg-yellow-50 text-yellow-800 text-xs rounded border border-yellow-200">
+                    <strong>Dev Note:</strong> Set <code>GOOGLE_CLIENT_ID</code> env var to enable Google Sign-In.
+                </div>
                 {% endif %}
 
                 <!-- Apple Button Mock -->
@@ -816,7 +819,7 @@
                     const response = await axios.post('/upload-video', formData);
 
                     if (response.data.content) {
-                        // Success! Save to LocalStorage for Workspace to pick up
+                        // Success!
                         localStorage.setItem('pendingSummary', response.data.content);
                         localStorage.setItem('pendingTitle', "Video Summary");
 
@@ -824,7 +827,13 @@
                         progressBar.classList.add('bg-green-500');
 
                         setTimeout(() => {
-                            window.location.href = '/workspace';
+                            if (response.data.deck_id) {
+                                // Redirect to persistent session
+                                window.location.href = `/workspace?id=${response.data.deck_id}`;
+                            } else {
+                                // Guest / Fallback
+                                window.location.href = '/workspace';
+                            }
                         }, 500);
                     } else if (response.data.status === "Error") {
                         alert("Error: " + response.data.message);

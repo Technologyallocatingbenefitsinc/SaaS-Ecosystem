@@ -198,6 +198,7 @@ async def upload_video_form(
             db.add(new_deck)
             await db.commit()
             await db.refresh(new_deck)
+            result["deck_id"] = new_deck.id # Return ID for frontend redirect
         return result
     except Exception as e:
         print(f"Error processing video: {e}")
