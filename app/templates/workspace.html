@@ -961,16 +961,14 @@
                                     onClick={handleExportPDF}
                                     className="px-4 py-2 bg-slate-900 text-white rounded-lg font-medium hover:bg-slate-800 transition shadow-lg text-sm"
                                 >
-                                    📄 Report PDF
+                                    📄 Export PDF
                                 </button>
-                                {(USER_TIER === 'professor' || USER_TIER === 'pro') && (
-                                    <button
-                                        onClick={openExportModal}
-                                        className="px-4 py-2 bg-orange-600 text-white rounded-lg font-medium hover:bg-orange-700 transition shadow-lg flex items-center gap-2"
-                                    >
-                                        <span>📊</span> Export PPT
-                                    </button>
-                                )}
+                                <button
+                                    onClick={openExportModal}
+                                    className="px-4 py-2 bg-orange-600 text-white rounded-lg font-medium hover:bg-orange-700 transition shadow-lg flex items-center gap-2"
+                                >
+                                    <span>📊</span> Design Slides (PPT)
+                                </button>
                             </div>
                         </header>
 
