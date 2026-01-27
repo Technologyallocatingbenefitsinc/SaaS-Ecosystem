@@ -145,12 +145,20 @@
                 ctx.lineWidth = 3;
             }, []);
 
+            const getCoordinates = (e) => {
+                if (e.touches && e.touches.length > 0) {
+                    return { x: e.touches[0].clientX, y: e.touches[0].clientY };
+                }
+                return { x: e.clientX, y: e.clientY };
+            };
+
             const startDrawing = (e) => {
                 const canvas = canvasRef.current;
                 const rect = canvas.getBoundingClientRect();
+                const coords = getCoordinates(e);
                 const ctx = canvas.getContext('2d');
                 ctx.beginPath();
-                ctx.moveTo(e.clientX - rect.left, e.clientY - rect.top);
+                ctx.moveTo(coords.x - rect.left, coords.y - rect.top);
                 setIsDrawing(true);
             };
 
@@ -158,9 +166,10 @@
                 if (!isDrawing) return;
                 const canvas = canvasRef.current;
                 const rect = canvas.getBoundingClientRect();
+                const coords = getCoordinates(e);
                 const ctx = canvas.getContext('2d');
                 ctx.strokeStyle = tool === 'eraser' ? '#ffffff' : color;
-                ctx.lineTo(e.clientX - rect.left, e.clientY - rect.top);
+                ctx.lineTo(coords.x - rect.left, coords.y - rect.top);
                 ctx.stroke();
             };
 
@@ -174,8 +183,8 @@
 
             return (
                 <div className="flex flex-col h-full bg-white w-full">
-                    <div className="p-3 border-b flex gap-6 items-center bg-gray-50">
-                        <div className="flex bg-white rounded-lg p-1 border border-gray-200">
+                    <div className="p-3 border-b flex gap-6 items-center bg-gray-50 bg-white/50 backdrop-blur sticky top-0 z-10 overflow-x-auto">
+                        <div className="flex bg-white rounded-lg p-1 border border-gray-200 shrink-0">
                             <button
                                 onClick={() => setTool('brush')}
                                 className={`px-4 py-1.5 text-xs font-bold rounded-md transition ${tool === 'brush' ? 'bg-blue-600 text-white shadow-md' : 'text-slate-600 hover:bg-gray-100'}`}
@@ -189,11 +198,11 @@
                                 <i className="fas fa-eraser mr-2"></i>Eraser
                             </button>
                         </div>
-                        <div className="flex items-center gap-3">
+                        <div className="flex items-center gap-3 shrink-0">
                             <label className="text-[10px] font-black uppercase text-slate-400">Color</label>
                             <input type="color" value={color} onChange={(e) => setColor(e.target.value)} className="w-8 h-8 rounded-full cursor-pointer border-2 border-white shadow-sm overflow-hidden p-0" />
                         </div>
-                        <button onClick={clearCanvas} className="ml-auto text-xs font-black uppercase text-red-500 hover:text-red-700 tracking-wider">
+                        <button onClick={clearCanvas} className="ml-auto text-xs font-black uppercase text-red-500 hover:text-red-700 tracking-wider shrink-0">
                             <i className="fas fa-trash-alt mr-2"></i>Clear Board
                         </button>
                     </div>
@@ -205,7 +214,10 @@
                         onMouseMove={draw}
                         onMouseUp={stopDrawing}
                         onMouseOut={stopDrawing}
-                        className="flex-1 cursor-crosshair touch-none bg-white"
+                        onTouchStart={startDrawing}
+                        onTouchMove={draw}
+                        onTouchEnd={stopDrawing}
+                        className="flex-1 cursor-crosshair touch-none bg-white w-full"
                     />
                 </div>
             );
