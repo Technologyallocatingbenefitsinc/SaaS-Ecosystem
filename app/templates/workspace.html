@@ -1311,10 +1311,11 @@
                                             <div className="flex items-center gap-3">
                                                 <button
                                                     onClick={() => setIsFlashcardModalOpen(false)}
-                                                    className="p-1 rounded-full hover:bg-white/10 transition"
+                                                    className="flex items-center gap-2 px-3 py-2 bg-white/20 hover:bg-white/30 rounded-lg transition text-white font-bold"
                                                     aria-label="Back"
                                                 >
-                                                    <i className="fas fa-chevron-left text-xl"></i>
+                                                    <i className="fas fa-chevron-left"></i>
+                                                    <span>Back</span>
                                                 </button>
                                                 <h3 className="text-lg sm:text-xl font-bold">Flashcards ({currentCardIndex + 1}/{flashcardData.length})</h3>
                                             </div>
