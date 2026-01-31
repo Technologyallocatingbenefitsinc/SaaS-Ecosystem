@@ -1590,9 +1590,9 @@
                                                     className="w-full py-3 bg-green-600 text-white rounded-lg font-bold hover:bg-green-700 transition disabled:opacity-50 flex items-center justify-center gap-2"
                                                 >
                                                     {isAudioLoading ? (
-                                                        <><svg className="animate-spin h-5 w-5 text-white" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none"></circle></svg> Synthesizing Audio...</>
+                                                        <span className="animate-pulse">Synthesizing Audio...</span>
                                                     ) : (
-                                                        '▶️ Play Audio Overview'
+                                                        <>🔊 Synthesize Audio (TTS)</>
                                                     )}
                                                 </button>
                                             )
@@ -1601,64 +1601,49 @@
                                 </div>
                             </div>
                         )}
-                        {/* Chat Assistant Sidebar (Floating or Fixed) */}
-                        <div className={`fixed right-0 top-16 bottom-0 w-80 bg-white shadow-2xl border-l transform transition-transform duration-300 z-40 flex flex-col ${isChatOpen ? 'translate-x-0' : 'translate-x-full'}`}>
-                            <div className="p-4 border-b bg-indigo-50 flex justify-between items-center">
-                                <h3 className="font-bold text-indigo-900 flex items-center gap-2">🤖 Video Assistant</h3>
-                                <button onClick={() => setIsChatOpen(false)} className="text-indigo-400 hover:text-indigo-700">
-                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" /></svg>
-                                </button>
-                            </div>
-
-                            <div className="flex-1 overflow-y-auto p-4 space-y-3 bg-slate-50">
-                                {chatHistory.map((msg, idx) => (
-                                    <div key={idx} className={`p-3 rounded-lg text-sm ${msg.role === 'user' ? 'bg-indigo-600 text-white ml-8 rounded-tr-none' : 'bg-white border mr-8 rounded-tl-none text-slate-700'}`}>
-                                        {msg.text}
-                                    </div>
-                                ))}
-                                {isChatLoading && (
-                                    <div className="flex gap-2 p-2">
-                                        <div className="w-2 h-2 bg-indigo-400 rounded-full animate-bounce"></div>
-                                        <div className="w-2 h-2 bg-indigo-400 rounded-full animate-bounce delay-100"></div>
-                                        <div className="w-2 h-2 bg-indigo-400 rounded-full animate-bounce delay-200"></div>
-                                    </div>
-                                )}
-                            </div>
-
-                            <form onSubmit={handleChatSubmit} className="p-3 border-t bg-white">
-                                <div className="flex gap-2">
-                                    <input
-                                        type="text"
-                                        value={chatInput}
-                                        onChange={(e) => setChatInput(e.target.value)}
-                                        placeholder="Ask about the video..."
-                                        className="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-indigo-500"
-                                        disabled={isChatLoading}
-                                    />
-                                    <button
-                                        type="submit"
-                                        disabled={isChatLoading || !chatInput.trim()}
-                                        className="bg-indigo-600 text-white p-2 rounded-lg hover:bg-indigo-700 transition disabled:opacity-50"
-                                    >
-                                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path d="M10.894 2.553a1 1 0 00-1.788 0l-7 14a1 1 0 001.169 1.409l5-1.429A1 1 0 009 15.571V11a1 1 0 112 0v4.571a1 1 0 00.725.962l5 1.428a1 1 0 001.17-1.408l-7-14z" /></svg>
+                        {/* Chat Assistant Button */}
+                        <button
+                            onClick={() => setIsChatOpen(!isChatOpen)}
+                            className="fixed bottom-6 right-6 w-14 h-14 bg-gradient-to-br from-indigo-600 to-purple-600 text-white rounded-full shadow-xl hover:scale-110 transition z-40 flex items-center justify-center"
+                            aria-label="Toggle Chat Assistant"
+                        >
+                            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                            </svg>
+                        </button>
+                        {/* Chat Sidebar */}
+                        {isChatOpen && (
+                            <div className="fixed bottom-24 right-6 w-80 h-96 bg-white rounded-2xl shadow-2xl z-50 flex flex-col overflow-hidden border border-gray-200">
+                                <div className="p-4 bg-gradient-to-r from-indigo-600 to-purple-600 text-white flex justify-between items-center">
+                                    <span className="font-bold">Video Assistant</span>
+                                    <button onClick={() => setIsChatOpen(false)} className="hover:bg-white/20 p-1 rounded">
+                                        <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                                            <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
+                                        </svg>
                                     </button>
                                 </div>
-                            </form>
-                        </div>
-
-                        {/* Floating Chat Toggle Button */}
-                        {!isChatOpen && (
-                            <button
-                                onClick={() => setIsChatOpen(true)}
-                                className="fixed bottom-24 right-4 sm:bottom-6 sm:right-6 p-3 sm:p-4 bg-indigo-600 text-white rounded-full shadow-2xl hover:bg-indigo-700 transition z-40 animate-bounce-slow flex items-center justify-center transform hover:scale-110 active:scale-90"
-                            >
-                                <span className="text-xl sm:text-2xl">🤖</span>
-                            </button>
+                                <div className="flex-1 overflow-y-auto p-4 space-y-3 bg-gray-50">
+                                    {chatHistory.map((msg, idx) => (
+                                        <div key={idx} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+                                            <div className={`max-w-[80%] p-3 rounded-xl text-sm ${msg.role === 'user' ? 'bg-indigo-600 text-white rounded-br-none' : 'bg-white text-slate-700 shadow rounded-bl-none'}`}>
+                                                {msg.text}
+                                            </div>
+                                        </div>
+                                    ))}
+                                    {isChatLoading && <div className="text-center text-slate-400 text-sm animate-pulse">Thinking...</div>}
+                                </div>
+                                <form onSubmit={handleChatSubmit} className="p-3 border-t bg-white flex gap-2">
+                                    <button type="submit" className="px-4 py-2 bg-indigo-600 text-white rounded-lg font-bold hover:bg-indigo-700 transition text-sm">
+                                        Send
+                                    </button>
+                                </form>
+                            </div>
                         )}
-                    </main >
-                </div >
-            );
-        };
+                </div>
+                </main >
+            </div >
+        );
+    };
 
         const root = ReactDOM.createRoot(document.getElementById('root'));
         root.render(<DocumentEditor />);
