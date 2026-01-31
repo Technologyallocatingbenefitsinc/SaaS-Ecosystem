@@ -1,5 +1,5 @@
 {
-    "name": "MODYFIRE - Group 4: Security & Support (Fortified)",
+    "name": "MODYFIRE - Group 4: Security & Support (AI Agent)",
     "nodes": [
         {
             "parameters": {
@@ -76,7 +76,7 @@
                 "phoneNumberId": "YOUR_META_PHONE_ID",
                 "recipientPhoneNumber": "YOUR_WHATSAPP_NUMBER",
                 "messageType": "text",
-                "text": "=🚨 CRITICAL ERROR: Flow '{{ $json[\"body\"][\"workflow_name\"] }}' failed at node '{{ $json[\"body\"][\"node\"] }}'. MODYFIRE needs repair!"
+                "text": "=🚨 CRITICAL ERROR: Flow '{{ $json[\"body\"][\"workflow_name\"] }}' failed. Automated healing attempted."
             },
             "name": "WhatsApp Alert",
             "type": "n8n-nodes-base.whatsApp",
@@ -88,143 +88,11 @@
         },
         {
             "parameters": {
-                "httpMethod": "POST",
-                "path": "purge-user",
-                "options": {}
-            },
-            "name": "GDPR Purge Hook",
-            "type": "n8n-nodes-base.webhook",
-            "typeVersion": 1,
-            "position": [
-                100,
-                350
-            ]
-        },
-        {
-            "parameters": {
-                "conditions": {
-                    "string": [
-                        {
-                            "value1": "={{ $json[\"body\"][\"auth_token\"] || $json[\"headers\"][\"x-n8n-auth\"] }}",
-                            "value2": "={{ $env[\"AUTH_SECRET_TOKEN\"] }}"
-                        }
-                    ]
-                }
-            },
-            "name": "Bouncer 2: Purge",
-            "type": "n8n-nodes-base.if",
-            "typeVersion": 1,
-            "position": [
-                300,
-                350
-            ]
-        },
-        {
-            "parameters": {
-                "operation": "update",
-                "sheetId": "your-sheet-id",
-                "columnToMatch": "Email",
-                "valueToMatch": "={{ $json[\"body\"][\"email\"] }}",
-                "valuesSend": "fields",
-                "fields": [
-                    {
-                        "name": "Status",
-                        "value": "DELETED"
-                    }
-                ]
-            },
-            "name": "Mark User Deleted",
-            "type": "n8n-nodes-base.googleSheets",
-            "typeVersion": 1,
-            "position": [
-                500,
-                350
-            ]
-        },
-        {
-            "parameters": {
-                "httpMethod": "POST",
-                "path": "sar-request",
-                "options": {}
-            },
-            "name": "GDPR SAR Hook",
-            "type": "n8n-nodes-base.webhook",
-            "typeVersion": 1,
-            "position": [
-                100,
-                550
-            ]
-        },
-        {
-            "parameters": {
-                "conditions": {
-                    "string": [
-                        {
-                            "value1": "={{ $json[\"body\"][\"auth_token\"] || $json[\"headers\"][\"x-n8n-auth\"] }}",
-                            "value2": "={{ $env[\"AUTH_SECRET_TOKEN\"] }}"
-                        }
-                    ]
-                }
-            },
-            "name": "Bouncer 3: SAR",
-            "type": "n8n-nodes-base.if",
-            "typeVersion": 1,
-            "position": [
-                300,
-                550
-            ]
-        },
-        {
-            "parameters": {
-                "operation": "listFiles",
-                "path": "=/user_uploads/{{ $json[\"body\"][\"user_id\"] }}"
-            },
-            "name": "Gather User Data",
-            "type": "n8n-nodes-base.readBinaryFile",
-            "typeVersion": 1,
-            "position": [
-                500,
-                550
-            ]
-        },
-        {
-            "parameters": {
-                "operation": "create",
-                "archiveFormat": "zip",
-                "binaryPropertyName": "data"
-            },
-            "name": "Create Data Zip",
-            "type": "n8n-nodes-base.compression",
-            "typeVersion": 1,
-            "position": [
-                700,
-                550
-            ]
-        },
-        {
-            "parameters": {
-                "resource": "message",
-                "operation": "send",
-                "to": "={{ $node[\"Bouncer 3: SAR\"].json[\"body\"][\"email\"] }}",
-                "subject": "Your MODYFIRE Data Export (SAR)",
-                "text": "Hello, attached is your complete data export as requested.",
-                "attachments": "data"
-            },
-            "name": "Email Export Zip",
-            "type": "n8n-nodes-base.gmail",
-            "typeVersion": 2,
-            "position": [
-                900,
-                550
-            ]
-        },
-        {
-            "parameters": {
                 "filters": {
                     "labelIds": [
                         "INBOX"
                     ],
-                    "q": "is:unread (Refund OR Helping OR Support)"
+                    "q": "is:unread (Refund OR Help OR Support)"
                 }
             },
             "name": "Watch Help Inbox",
@@ -232,7 +100,37 @@
             "typeVersion": 2,
             "position": [
                 100,
-                750
+                350
+            ]
+        },
+        {
+            "parameters": {
+                "model": "gemini-1.5-flash",
+                "prompt": "=You are Kai, a helpful support architect for Modyfire. Draft a polite, helpful reply to this customer email. Resolve their issue if simple, or promise a human will check it. Keep it under 50 words. Email body: {{ $json[\"snippet\"] }}"
+            },
+            "name": "Kai AI Support Agent",
+            "type": "n8n-nodes-base.googleGemini",
+            "typeVersion": 1,
+            "position": [
+                300,
+                350
+            ]
+        },
+        {
+            "parameters": {
+                "operation": "reply",
+                "messageId": "={{ $json[\"messageId\"] }}",
+                "text": "={{ $json[\"output\"] }}",
+                "options": {
+                    "appendSignature": true
+                }
+            },
+            "name": "Send AI Reply",
+            "type": "n8n-nodes-base.gmail",
+            "typeVersion": 2,
+            "position": [
+                500,
+                350
             ]
         },
         {
@@ -243,14 +141,14 @@
                 "phoneNumberId": "YOUR_META_PHONE_ID",
                 "recipientPhoneNumber": "YOUR_WHATSAPP_NUMBER",
                 "messageType": "text",
-                "text": "=💬 SUPPORT REQUEST: Incoming email from {{ $json[\"from\"][\"email\"] }} with subject '{{ $json[\"subject\"] }}'"
+                "text": "=💬 SUPPORT: AI Agent 'Kai' replied to {{ $json[\"to\"] }}: '{{ $json[\"output\"] }}'"
             },
-            "name": "WhatsApp VA Alert",
+            "name": "WhatsApp Log",
             "type": "n8n-nodes-base.whatsApp",
             "typeVersion": 1,
             "position": [
-                300,
-                750
+                700,
+                350
             ]
         }
     ],
@@ -288,77 +186,33 @@
                 ]
             ]
         },
-        "GDPR Purge Hook": {
-            "main": [
-                [
-                    {
-                        "node": "Bouncer 2: Purge",
-                        "type": "main",
-                        "index": 0
-                    }
-                ]
-            ]
-        },
-        "Bouncer 2: Purge": {
-            "main": [
-                [
-                    {
-                        "node": "Mark User Deleted",
-                        "type": "main",
-                        "index": 0
-                    }
-                ]
-            ]
-        },
-        "GDPR SAR Hook": {
-            "main": [
-                [
-                    {
-                        "node": "Bouncer 3: SAR",
-                        "type": "main",
-                        "index": 0
-                    }
-                ]
-            ]
-        },
-        "Bouncer 3: SAR": {
-            "main": [
-                [
-                    {
-                        "node": "Gather User Data",
-                        "type": "main",
-                        "index": 0
-                    }
-                ]
-            ]
-        },
-        "Gather User Data": {
-            "main": [
-                [
-                    {
-                        "node": "Create Data Zip",
-                        "type": "main",
-                        "index": 0
-                    }
-                ]
-            ]
-        },
-        "Create Data Zip": {
-            "main": [
-                [
-                    {
-                        "node": "Email Export Zip",
-                        "type": "main",
-                        "index": 0
-                    }
-                ]
-            ]
-        },
         "Watch Help Inbox": {
             "main": [
                 [
                     {
-                        "node": "WhatsApp VA Alert",
+                        "node": "Kai AI Support Agent",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Kai AI Support Agent": {
+            "main": [
+                [
+                    {
+                        "node": "Send AI Reply",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Send AI Reply": {
+            "main": [
+                [
+                    {
+                        "node": "WhatsApp Log",
                         "type": "main",
                         "index": 0
                     }

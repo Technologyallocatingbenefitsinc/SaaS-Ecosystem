@@ -224,7 +224,9 @@
                                         key={c}
                                         onClick={() => setColor(c)}
                                         className={`w-6 h-6 rounded-full border-2 transition ${color === c ? 'border-indigo-500 scale-110' : 'border-transparent hover:scale-105'}`}
+                                        {% raw %}
                                         style={{ backgroundColor: c }}
+                                        {% endraw %}
                                     />
                                 ))}
                                 <input

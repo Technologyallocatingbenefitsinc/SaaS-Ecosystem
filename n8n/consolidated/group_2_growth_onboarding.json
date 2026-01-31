@@ -1,5 +1,5 @@
 {
-    "name": "MODYFIRE - Group 2: Growth & Onboarding (Fortified)",
+    "name": "MODYFIRE - Group 2: Growth & Onboarding (Marketing Enhanced)",
     "nodes": [
         {
             "parameters": {
@@ -64,12 +64,28 @@
         },
         {
             "parameters": {
-                "subject": "Tip: How to create your first Summary",
-                "message": "Hi there,\n\nDid you know you can turn a 2-hour lecture into a study guide in 60 seconds?\n\n[Link to Dashboard]",
-                "toEmail": "={{ $json[\"email\"] }}"
+                "dataType": "string",
+                "value1": "={{ $json[\"body\"][\"tier\"] }}",
+                "rules": {
+                    "rules": [
+                        {
+                            "value2": "student",
+                            "output": 0
+                        },
+                        {
+                            "value2": "professor",
+                            "output": 1
+                        },
+                        {
+                            "value2": "educator",
+                            "output": 1
+                        }
+                    ]
+                },
+                "fallbackOutput": 2
             },
-            "name": "Send Welcome Tip",
-            "type": "n8n-nodes-base.gmail",
+            "name": "Tier Switch",
+            "type": "n8n-nodes-base.switch",
             "typeVersion": 1,
             "position": [
                 900,
@@ -78,49 +94,44 @@
         },
         {
             "parameters": {
-                "httpMethod": "POST",
-                "path": "professor-invite",
-                "options": {}
+                "subject": "🔥 Improve your grades in 60 seconds (Video)",
+                "message": "Hey,\n\nI made a quick video showing how to hack your finals studying.\n\nWatch Kai explain it on TikTok: [Link]\n\nCheers,\nTeam Modyfire",
+                "toEmail": "={{ $json[\"email\"] }}"
             },
-            "name": "Prof Invite Webhook",
-            "type": "n8n-nodes-base.webhook",
-            "typeVersion": 1,
-            "position": [
-                100,
-                350
-            ]
-        },
-        {
-            "parameters": {
-                "conditions": {
-                    "string": [
-                        {
-                            "value1": "={{ $json[\"body\"][\"auth_token\"] || $json[\"headers\"][\"x-n8n-auth\"] }}",
-                            "value2": "={{ $env[\"AUTH_SECRET_TOKEN\"] }}"
-                        }
-                    ]
-                }
-            },
-            "name": "Bouncer 2: Invite",
-            "type": "n8n-nodes-base.if",
-            "typeVersion": 1,
-            "position": [
-                300,
-                350
-            ]
-        },
-        {
-            "parameters": {
-                "subject": "Important: Your Study Materials for [Course Name] are now on MODYFIRE!",
-                "message": "Dear Students,\n\nI'm excited to introduce a new tool... MODYFIRE.\n\nGetting Started:\n1. Click this link: {{ $json[\"body\"][\"invite_link\"] }}\n2. Create your free account.\n\nBest,\nProfessor {{ $json[\"body\"][\"professor_name\"] }}",
-                "toEmail": "student@example.edu"
-            },
-            "name": "Send Prof Invite",
+            "name": "Email: Student Kai Video",
             "type": "n8n-nodes-base.gmail",
             "typeVersion": 1,
             "position": [
-                500,
-                350
+                1100,
+                50
+            ]
+        },
+        {
+            "parameters": {
+                "subject": "Case Study: Reducing Grading Time by 40%",
+                "message": "Professor,\n\nWe have prepared a case study on how University of X used Modyfire to automate lecture summaries.\n\nDownload PDF: [Link]\n\nBest,\nKai from Modyfire",
+                "toEmail": "={{ $json[\"email\"] }}"
+            },
+            "name": "Email: Educator Case Study",
+            "type": "n8n-nodes-base.gmail",
+            "typeVersion": 1,
+            "position": [
+                1100,
+                250
+            ]
+        },
+        {
+            "parameters": {
+                "subject": "Welcome to Modyfire!",
+                "message": "Hi there,\n\nWelcome to the platform. Here are your getting started docs.\n\n[Link]",
+                "toEmail": "={{ $json[\"email\"] }}"
+            },
+            "name": "Email: General Welcome",
+            "type": "n8n-nodes-base.gmail",
+            "typeVersion": 1,
+            "position": [
+                1100,
+                450
             ]
         },
         {
@@ -139,7 +150,7 @@
             "typeVersion": 1,
             "position": [
                 100,
-                550
+                650
             ]
         },
         {
@@ -152,33 +163,61 @@
             "typeVersion": 1,
             "position": [
                 300,
-                550
+                650
             ]
         },
         {
             "parameters": {
                 "model": "gemini-1.5-flash",
-                "prompt": "=Write a personalized cold email pitch to {{ $json[\"name\"] }} from MODYFIRE. Mention their recent video/post about {{ $json[\"topic\"] }}. Keep it under 100 words. Focus on how our AI summary tools save professors and podcasters 10 hours a week."
+                "prompt": "=Write a personalized cold email pitch to {{ $json[\"name\"] }} from MODYFIRE. Mention their recent video/post about {{ $json[\"topic\"] }}. Keep it under 100 words. Persona: Kai, The Architect."
             },
-            "name": "Gemini AI Pitch",
+            "name": "Gemini AI Pitch (Kai)",
             "type": "n8n-nodes-base.googleGemini",
             "typeVersion": 1,
             "position": [
                 500,
-                550
+                650
             ]
         },
         {
             "parameters": {
-                "url": "=https://api.hunter.io/v2/email-finder?domain={{ $json[\"domain\"] }}&first_name={{ $json[\"first_name\"] }}&last_name={{ $json[\"last_name\"] }}&api_key=YOUR_HUNTER_API_KEY",
-                "options": {}
+                "url": "https://api.instantly.ai/api/v1/lead/add",
+                "method": "POST",
+                "headerParametersUi": {
+                    "parameter": [
+                        {
+                            "name": "Authorization",
+                            "value": "Bearer YOUR_INSTANTLY_API_KEY"
+                        }
+                    ]
+                },
+                "bodyParametersUi": {
+                    "parameter": [
+                        {
+                            "name": "email",
+                            "value": "={{ $json[\"email\"] }}"
+                        },
+                        {
+                            "name": "first_name",
+                            "value": "={{ $json[\"first_name\"] }}"
+                        },
+                        {
+                            "name": "custom_variables",
+                            "value": "={ \"pitch\": \"{{ $json[\"output\"] }}\" }"
+                        },
+                        {
+                            "name": "campaign_id",
+                            "value": "YOUR_CAMPAIGN_ID"
+                        }
+                    ]
+                }
             },
-            "name": "Hunter Email Finder",
+            "name": "Add to Instantly.ai",
             "type": "n8n-nodes-base.httpRequest",
             "typeVersion": 1,
             "position": [
                 700,
-                550
+                650
             ]
         }
     ],
@@ -220,29 +259,32 @@
             "main": [
                 [
                     {
-                        "node": "Send Welcome Tip",
+                        "node": "Tier Switch",
                         "type": "main",
                         "index": 0
                     }
                 ]
             ]
         },
-        "Prof Invite Webhook": {
+        "Tier Switch": {
             "main": [
                 [
                     {
-                        "node": "Bouncer 2: Invite",
+                        "node": "Email: Student Kai Video",
                         "type": "main",
                         "index": 0
                     }
-                ]
-            ]
-        },
-        "Bouncer 2: Invite": {
-            "main": [
+                ],
                 [
                     {
-                        "node": "Send Prof Invite",
+                        "node": "Email: Educator Case Study",
+                        "type": "main",
+                        "index": 0
+                    }
+                ],
+                [
+                    {
+                        "node": "Email: General Welcome",
                         "type": "main",
                         "index": 0
                     }
@@ -264,18 +306,18 @@
             "main": [
                 [
                     {
-                        "node": "Gemini AI Pitch",
+                        "node": "Gemini AI Pitch (Kai)",
                         "type": "main",
                         "index": 0
                     }
                 ]
             ]
         },
-        "Gemini AI Pitch": {
+        "Gemini AI Pitch (Kai)": {
             "main": [
                 [
                     {
-                        "node": "Hunter Email Finder",
+                        "node": "Add to Instantly.ai",
                         "type": "main",
                         "index": 0
                     }

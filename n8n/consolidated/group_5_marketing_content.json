@@ -1,0 +1,159 @@
+{
+    "name": "MODYFIRE - Group 5: Marketing & Outreach (Kai Engine)",
+    "nodes": [
+        {
+            "parameters": {
+                "rule": {
+                    "interval": [
+                        {
+                            "field": "cronExpression",
+                            "expression": "0 10 * * MON"
+                        }
+                    ]
+                }
+            },
+            "name": "Weekly Content Trigger",
+            "type": "n8n-nodes-base.cron",
+            "typeVersion": 1,
+            "position": [
+                100,
+                150
+            ]
+        },
+        {
+            "parameters": {
+                "model": "gemini-1.5-flash",
+                "prompt": "Generate a 30-second script for a viral TikTok video. Persona: Kai, The Architect. Topic: 'How to study 10x faster using AI'. Tone: Witty, fast-paced. Output format: JSON with 'visual' and 'voiceover' fields."
+            },
+            "name": "Generate Script (Kai)",
+            "type": "n8n-nodes-base.googleGemini",
+            "typeVersion": 1,
+            "position": [
+                300,
+                150
+            ]
+        },
+        {
+            "parameters": {
+                "url": "https://api.elevenlabs.io/v1/text-to-speech/YOUR_VOICE_ID",
+                "method": "POST",
+                "headerParametersUi": {
+                    "parameter": [
+                        {
+                            "name": "xi-api-key",
+                            "value": "YOUR_ELEVENLABS_KEY"
+                        }
+                    ]
+                },
+                "bodyParametersUi": {
+                    "parameter": [
+                        {
+                            "name": "text",
+                            "value": "={{ $json[\"output\"][\"voiceover\"] }}"
+                        },
+                        {
+                            "name": "model_id",
+                            "value": "eleven_monolingual_v1"
+                        }
+                    ]
+                }
+            },
+            "name": "ElevenLabs Voiceover",
+            "type": "n8n-nodes-base.httpRequest",
+            "typeVersion": 1,
+            "position": [
+                500,
+                150
+            ]
+        },
+        {
+            "parameters": {
+                "url": "https://api.kling.ai/v1/video/generate",
+                "method": "POST",
+                "headerParametersUi": {
+                    "parameter": [
+                        {
+                            "name": "Authorization",
+                            "value": "Bearer YOUR_KLING_KEY"
+                        }
+                    ]
+                },
+                "bodyParametersUi": {
+                    "parameter": [
+                        {
+                            "name": "prompt",
+                            "value": "={{ $json[\"output\"][\"visual\"] }} --ar 9:16 --style cinematic "
+                        }
+                    ]
+                }
+            },
+            "name": "Kling Video Gen",
+            "type": "n8n-nodes-base.httpRequest",
+            "typeVersion": 1,
+            "position": [
+                700,
+                150
+            ]
+        },
+        {
+            "parameters": {
+                "subject": "🚀 New Marketing Asset Ready",
+                "message": "Kai has generated a new video concept.\n\nScript: {{ $json[\"script\"] }}\nVideo URL: {{ $json[\"video_url\"] }}\nAudio URL: {{ $json[\"audio_url\"] }}\n\nPlease review and post.",
+                "toEmail": "admin@modyfire.com"
+            },
+            "name": "Notify Admin",
+            "type": "n8n-nodes-base.gmail",
+            "typeVersion": 1,
+            "position": [
+                900,
+                150
+            ]
+        }
+    ],
+    "connections": {
+        "Weekly Content Trigger": {
+            "main": [
+                [
+                    {
+                        "node": "Generate Script (Kai)",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Generate Script (Kai)": {
+            "main": [
+                [
+                    {
+                        "node": "ElevenLabs Voiceover",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "ElevenLabs Voiceover": {
+            "main": [
+                [
+                    {
+                        "node": "Kling Video Gen",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Kling Video Gen": {
+            "main": [
+                [
+                    {
+                        "node": "Notify Admin",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        }
+    }
+}
