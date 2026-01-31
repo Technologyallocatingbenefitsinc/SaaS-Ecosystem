@@ -1633,6 +1633,13 @@
                                     {isChatLoading && <div className="text-center text-slate-400 text-sm animate-pulse">Thinking...</div>}
                                 </div>
                                 <form onSubmit={handleChatSubmit} className="p-3 border-t bg-white flex gap-2">
+                                    <input
+                                        type="text"
+                                        value={chatInput}
+                                        onChange={(e) => setChatInput(e.target.value)}
+                                        placeholder="Ask about the video..."
+                                        className="flex-1 p-2 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 outline-none"
+                                    />
                                     <button type="submit" className="px-4 py-2 bg-indigo-600 text-white rounded-lg font-bold hover:bg-indigo-700 transition text-sm">
                                         Send
                                     </button>
@@ -1640,10 +1647,11 @@
                             </div>
                         )}
                 </div>
-                </main >
-            </div >
-        );
-    };
+                </div >
+            </main >
+        </div >
+    );
+};
 
         const root = ReactDOM.createRoot(document.getElementById('root'));
         root.render(<DocumentEditor />);
