@@ -145,31 +145,44 @@
                 ctx.lineWidth = 3;
             }, []);
 
-            const getCoordinates = (e) => {
+            const getCoordinates = (e, canvas) => {
+                const rect = canvas.getBoundingClientRect();
+                const scaleX = canvas.width / rect.width;
+                const scaleY = canvas.height / rect.height;
+
+                let clientX, clientY;
+
                 if (e.touches && e.touches.length > 0) {
-                    return { x: e.touches[0].clientX, y: e.touches[0].clientY };
+                    clientX = e.touches[0].clientX;
+                    clientY = e.touches[0].clientY;
+                } else {
+                    clientX = e.clientX;
+                    clientY = e.clientY;
                 }
-                return { x: e.clientX, y: e.clientY };
+
+                return {
+                    x: (clientX - rect.left) * scaleX,
+                    y: (clientY - rect.top) * scaleY
+                };
             };
 
             const startDrawing = (e) => {
                 const canvas = canvasRef.current;
-                const rect = canvas.getBoundingClientRect();
-                const coords = getCoordinates(e);
+                const coords = getCoordinates(e, canvas);
                 const ctx = canvas.getContext('2d');
                 ctx.beginPath();
-                ctx.moveTo(coords.x - rect.left, coords.y - rect.top);
+                ctx.moveTo(coords.x, coords.y);
                 setIsDrawing(true);
             };
 
             const draw = (e) => {
                 if (!isDrawing) return;
                 const canvas = canvasRef.current;
-                const rect = canvas.getBoundingClientRect();
-                const coords = getCoordinates(e);
+                const coords = getCoordinates(e, canvas);
                 const ctx = canvas.getContext('2d');
                 ctx.strokeStyle = tool === 'eraser' ? '#ffffff' : color;
-                ctx.lineTo(coords.x - rect.left, coords.y - rect.top);
+                ctx.lineWidth = tool === 'eraser' ? 20 : 3;
+                ctx.lineTo(coords.x, coords.y);
                 ctx.stroke();
             };
 
@@ -183,27 +196,58 @@
 
             return (
                 <div className="flex flex-col h-full bg-white w-full">
-                    <div className="p-3 border-b flex gap-6 items-center bg-gray-50 bg-white/50 backdrop-blur sticky top-0 z-10 overflow-x-auto">
-                        <div className="flex bg-white rounded-lg p-1 border border-gray-200 shrink-0">
+                    <div className="p-2 sm:p-3 border-b flex gap-2 sm:gap-6 items-center bg-white/95 backdrop-blur sticky top-0 z-10 overflow-x-auto no-scrollbar">
+                        <div className="flex bg-slate-100 rounded-lg p-1 border border-gray-200 shrink-0">
                             <button
                                 onClick={() => setTool('brush')}
-                                className={`px-4 py-1.5 text-xs font-bold rounded-md transition ${tool === 'brush' ? 'bg-blue-600 text-white shadow-md' : 'text-slate-600 hover:bg-gray-100'}`}
+                                className={`px-3 sm:px-4 py-1.5 text-xs font-bold rounded-md transition flex items-center gap-2 ${tool === 'brush' ? 'bg-white text-blue-600 shadow-sm ring-1 ring-black/5' : 'text-slate-500 hover:text-slate-700'}`}
                             >
-                                <i className="fas fa-paint-brush mr-2"></i>Brush
+                                <i className="fas fa-paint-brush"></i>
+                                <span className="hidden sm:inline">Brush</span>
                             </button>
                             <button
                                 onClick={() => setTool('eraser')}
-                                className={`px-4 py-1.5 text-xs font-bold rounded-md transition ${tool === 'eraser' ? 'bg-blue-600 text-white shadow-md' : 'text-slate-600 hover:bg-gray-100'}`}
+                                className={`px-3 sm:px-4 py-1.5 text-xs font-bold rounded-md transition flex items-center gap-2 ${tool === 'eraser' ? 'bg-white text-blue-600 shadow-sm ring-1 ring-black/5' : 'text-slate-500 hover:text-slate-700'}`}
                             >
-                                <i className="fas fa-eraser mr-2"></i>Eraser
+                                <i className="fas fa-eraser"></i>
+                                <span className="hidden sm:inline">Eraser</span>
                             </button>
                         </div>
-                        <div className="flex items-center gap-3 shrink-0">
-                            <label className="text-[10px] font-black uppercase text-slate-400">Color</label>
-                            <input type="color" value={color} onChange={(e) => setColor(e.target.value)} className="w-8 h-8 rounded-full cursor-pointer border-2 border-white shadow-sm overflow-hidden p-0" />
+
+                        <div className="h-6 w-px bg-gray-200 shrink-0 mx-1"></div>
+
+                        <div className="flex items-center gap-2 shrink-0">
+                            <label className="text-[10px] font-black uppercase text-slate-400 hidden sm:block">Color</label>
+                            <div className="flex gap-1">
+                                {['#000000', '#3b82f6', '#ef4444', '#10b981'].map(c => (
+                                    <button
+                                        key={c}
+                                        onClick={() => setColor(c)}
+                                        className={`w-6 h-6 rounded-full border-2 transition ${color === c ? 'border-indigo-500 scale-110' : 'border-transparent hover:scale-105'}`}
+                                        style={{ backgroundColor: c }}
+                                    />
+                                ))}
+                                <input
+                                    type="color"
+                                    value={color}
+                                    onChange={(e) => setColor(e.target.value)}
+                                    className="w-6 h-6 rounded-full opacity-0 absolute w-6 h-6" // Hidden but clickable via wrapper if needed or keep existing
+                                />
+                                {/* Custom color picker trigger */}
+                                <div className="relative w-6 h-6 rounded-full bg-gradient-to-tr from-yellow-400 via-red-500 to-purple-600 cursor-pointer border-2 border-transparent hover:scale-105">
+                                    <input
+                                        type="color"
+                                        value={color}
+                                        onChange={(e) => setColor(e.target.value)}
+                                        className="opacity-0 absolute inset-0 w-full h-full cursor-pointer"
+                                    />
+                                </div>
+                            </div>
                         </div>
-                        <button onClick={clearCanvas} className="ml-auto text-xs font-black uppercase text-red-500 hover:text-red-700 tracking-wider shrink-0">
-                            <i className="fas fa-trash-alt mr-2"></i>Clear Board
+
+                        <button onClick={clearCanvas} className="ml-auto px-3 py-1.5 rounded-lg bg-red-50 text-red-600 hover:bg-red-100 text-xs font-bold transition shrink-0 whitespace-nowrap">
+                            <i className="fas fa-trash-alt sm:mr-2"></i>
+                            <span className="hidden sm:inline">Clear</span>
                         </button>
                     </div>
                     <canvas
