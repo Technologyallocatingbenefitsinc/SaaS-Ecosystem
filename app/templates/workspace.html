@@ -850,7 +850,7 @@
             }, [isLibraryOpen]);
 
             return (
-                <div className="flex h-screen">
+                <div className="flex h-screen w-full overflow-hidden">
                     {/* Skip to Main Content Link */}
                     <a href="#mainContent" className="sr-only focus:not-sr-only focus:fixed focus:top-4 focus:left-4 focus:z-[100] focus:bg-blue-600 focus:text-white focus:px-4 focus:py-2 focus:rounded-lg focus:font-bold">
                         Skip to main content
@@ -870,7 +870,7 @@
                     </div>
 
                     {/* Library Drawer */}
-                    <div className={`fixed inset-y-0 left-16 w-64 bg-white dark:bg-slate-800 shadow-2xl transform transition-transform duration-300 z-40 border-r border-gray-200 dark:border-slate-700 ${isLibraryOpen ? 'translate-x-0' : '-translate-x-full'}`}>
+                    <div className={`fixed inset-y-0 left-0 md:left-16 w-64 bg-white dark:bg-slate-800 shadow-2xl transform transition-transform duration-300 z-[60] border-r border-gray-200 dark:border-slate-700 ${isLibraryOpen ? 'translate-x-0' : '-translate-x-full'}`}>
                         <div className="p-4 border-b border-gray-100 dark:border-slate-700 flex justify-between items-center bg-slate-50 dark:bg-slate-900">
                             <h3 className="font-bold text-slate-800 dark:text-white">My Library</h3>
                             <button onClick={() => setIsLibraryOpen(false)} className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"><i className="fas fa-times"></i></button>
@@ -888,13 +888,19 @@
 
                     <main id="mainContent" className="flex-1 flex flex-col relative h-full">
                         <header className="h-16 border-b bg-white flex items-center justify-between px-6">
-                            <div className="flex items-center gap-4">
-                                <a href="/dashboard" className="p-2 mr-2 text-slate-500 hover:text-slate-700 hover:bg-slate-100 rounded-full transition" title="Back to Dashboard">
+                            <div className="flex items-center gap-3 sm:gap-4">
+                                <button
+                                    onClick={() => setIsLibraryOpen(!isLibraryOpen)}
+                                    className="md:hidden p-2 text-slate-500 hover:bg-slate-100 rounded-lg transition"
+                                >
+                                    <i className="fas fa-bars"></i>
+                                </button>
+                                <a href="/dashboard" className="p-2 text-slate-500 hover:text-slate-700 hover:bg-slate-100 rounded-full transition" title="Back to Dashboard">
                                     <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
                                     </svg>
                                 </a>
-                                <h1 className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-indigo-600">
+                                <h1 className="text-lg sm:text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-indigo-600 truncate">
                                     Workspace
                                 </h1>
                             </div>
