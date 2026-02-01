@@ -276,6 +276,7 @@
             const [saveStatus, setSaveStatus] = useState('saved'); // 'saved', 'saving', 'unsaved'
 
             const [isExportModalOpen, setIsExportModalOpen] = useState(false); // Export Modal
+            const [isStudyToolsOpen, setIsStudyToolsOpen] = useState(false); // Study Tools Dropdown Toggle
 
             // Study Tools State
             const [isQuizModalOpen, setIsQuizModalOpen] = useState(false);
@@ -485,6 +486,17 @@
                 window.addEventListener('keydown', handleKeyDown);
                 return () => window.removeEventListener('keydown', handleKeyDown);
             }, [editor, currentDeckId]); // Re-bind if editor or ID changes
+
+            // Close Study Tools dropdown when clicking outside
+            useEffect(() => {
+                const handleClickOutside = (e) => {
+                    if (isStudyToolsOpen && !e.target.closest('.study-tools-container')) {
+                        setIsStudyToolsOpen(false);
+                    }
+                };
+                document.addEventListener('click', handleClickOutside);
+                return () => document.removeEventListener('click', handleClickOutside);
+            }, [isStudyToolsOpen]);
 
             const handleImageUpload = (event) => {
                 const file = event.target.files[0];
@@ -905,21 +917,65 @@
                                 </h1>
                             </div>
                             <div className="flex gap-2">
-                                <div className="relative group z-50">
-                                    <button className="px-3 py-2 bg-slate-100 text-slate-700 rounded-lg font-medium hover:bg-slate-200 transition text-sm flex items-center gap-1">
-                                        {languages.find(l => l.code === selectedLanguage)?.label?.split(' ')[0] || '🇺🇸'} ▼
+                                {/* Tools Dropdown */}
+                                <div className="relative study-tools-container">
+                                    <button
+                                        onClick={() => setIsStudyToolsOpen(!isStudyToolsOpen)}
+                                        className="px-4 py-2 bg-purple-100 text-purple-700 rounded-lg font-medium hover:bg-purple-200 transition flex items-center gap-2"
+                                    >
+                                        {USER_TIER === 'podcaster' ? '🚀 Growth Tools' : '🧠 Study Tools'}
+                                        <i className={`fas fa-chevron-down text-xs transition-transform ${isStudyToolsOpen ? 'rotate-180' : ''}`}></i>
                                     </button>
-                                    <div className="absolute right-0 mt-2 w-40 bg-white rounded-xl shadow-xl border border-gray-100 hidden group-hover:block max-h-60 overflow-y-auto">
-                                        {languages.map(lang => (
-                                            <button
-                                                key={lang.code}
-                                                onClick={() => setSelectedLanguage(lang.code)}
-                                                className={`w-full text-left px-4 py-2 hover:bg-gray-50 text-sm ${selectedLanguage === lang.code ? 'bg-blue-50 text-blue-600 font-bold' : 'text-slate-700'}`}
-                                            >
-                                                {lang.label}
-                                            </button>
-                                        ))}
-                                    </div>
+                                    {isStudyToolsOpen && (
+                                        <div className="absolute right-0 mt-2 w-56 bg-white rounded-xl shadow-xl border border-gray-100 z-50">
+                                            {(USER_TIER === 'free' || USER_TIER === 'student') && (
+                                                <>
+                                                    <button
+                                                        onClick={() => generateStudyTool('quiz')}
+                                                        className="w-full text-left px-4 py-3 hover:bg-gray-50 rounded-t-xl text-sm font-bold text-slate-700 block"
+                                                    >
+                                                        📝 Generate Quiz
+                                                    </button>
+                                                    <button
+                                                        onClick={() => generateStudyTool('flashcards')}
+                                                        className="w-full text-left px-4 py-3 hover:bg-gray-50 text-sm font-bold text-slate-700 block"
+                                                    >
+                                                        📇 Generate Flashcards
+                                                    </button>
+                                                </>
+                                            )}
+
+                                            {(USER_TIER === 'pro' || USER_TIER === 'podcaster') && (
+                                                <>
+                                                    <div className="border-t border-gray-100"></div>
+                                                    <button
+                                                        onClick={() => setIsClipsModalOpen(true)}
+                                                        className="w-full text-left px-4 py-3 hover:bg-pink-50 text-sm font-bold text-pink-600 block flex items-center gap-2"
+                                                    >
+                                                        🎬 Instagram/LinkedIn Clips
+                                                    </button>
+                                                    <button
+                                                        onClick={() => generateStudyTool('carousel')}
+                                                        className="w-full text-left px-4 py-3 hover:bg-blue-50 text-sm font-bold text-blue-600 block flex items-center gap-2"
+                                                    >
+                                                        🎡 LinkedIn Carousel Script
+                                                    </button>
+                                                    <button
+                                                        onClick={() => generateStudyTool('blog')}
+                                                        className="w-full text-left px-4 py-3 hover:bg-orange-50 text-sm font-bold text-orange-600 block flex items-center gap-2"
+                                                    >
+                                                        ✍️ Video to Blog Post
+                                                    </button>
+                                                    <button
+                                                        onClick={() => setIsAudioModalOpen(true)}
+                                                        className="w-full text-left px-4 py-3 hover:bg-purple-50 rounded-b-xl text-sm font-bold text-purple-600 block flex items-center gap-2"
+                                                    >
+                                                        🎧 Podcast Synthesis
+                                                    </button>
+                                                </>
+                                            )}
+                                        </div>
+                                    )}
                                 </div>
 
                                 <button
@@ -1099,7 +1155,7 @@
                                         <div className="flex items-center gap-3">
                                             <button
                                                 onClick={() => setIsExportModalOpen(false)}
-                                                className="p-1 rounded-full hover:bg-gray-100 transition sm:hidden"
+                                                className="p-1 rounded-full hover:bg-gray-100 transition"
                                                 aria-label="Back"
                                             >
                                                 <i className="fas fa-chevron-left text-xl text-slate-500"></i>
@@ -1297,6 +1353,14 @@
                                                 </button>
                                             </div>
                                         )}
+                                        <div className="p-4 border-t border-gray-100 bg-gray-50">
+                                            <button
+                                                onClick={() => setIsQuizModalOpen(false)}
+                                                className="w-full py-3 text-slate-600 hover:text-slate-800 font-bold flex items-center justify-center gap-2"
+                                            >
+                                                <i className="fas fa-arrow-left"></i> Back to Workspace
+                                            </button>
+                                        </div>
                                     </div>
                                 </div>
                             )
@@ -1497,6 +1561,14 @@
                                             </div>
                                         )}
                                     </div>
+                                    <div className="p-4 border-t border-gray-100 bg-gray-50 mt-auto">
+                                        <button
+                                            onClick={() => setIsClipsModalOpen(false)}
+                                            className="w-full py-3 text-slate-600 hover:text-slate-800 font-bold flex items-center justify-center gap-2"
+                                        >
+                                            <i className="fas fa-arrow-left"></i> Back to Workspace
+                                        </button>
+                                    </div>
                                 </div>
                             </div>
                         )}
@@ -1598,9 +1670,19 @@
                                             )
                                         )}
                                     </div>
+                                    {/* Back Button at Bottom */}
+                                    <div className="p-4 border-t border-gray-100 bg-white">
+                                        <button
+                                            onClick={() => setIsAudioModalOpen(false)}
+                                            className="w-full py-3 text-slate-600 hover:text-slate-800 font-bold flex items-center justify-center gap-2"
+                                        >
+                                            <i className="fas fa-arrow-left"></i> Back to Workspace
+                                        </button>
+                                    </div>
                                 </div>
                             </div>
-                        )}
+                        )
+                        }
                         {/* Chat Assistant Button */}
                         <button
                             onClick={() => setIsChatOpen(!isChatOpen)}
@@ -1612,42 +1694,44 @@
                             </svg>
                         </button>
                         {/* Chat Sidebar */}
-                        {isChatOpen && (
-                            <div className="fixed bottom-24 right-6 w-80 h-96 bg-white rounded-2xl shadow-2xl z-50 flex flex-col overflow-hidden border border-gray-200">
-                                <div className="p-4 bg-gradient-to-r from-indigo-600 to-purple-600 text-white flex justify-between items-center">
-                                    <span className="font-bold">Video Assistant</span>
-                                    <button onClick={() => setIsChatOpen(false)} className="hover:bg-white/20 p-1 rounded">
-                                        <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-                                            <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
-                                        </svg>
-                                    </button>
-                                </div>
-                                <div className="flex-1 overflow-y-auto p-4 space-y-3 bg-gray-50">
-                                    {chatHistory.map((msg, idx) => (
-                                        <div key={idx} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-                                            <div className={`max-w-[80%] p-3 rounded-xl text-sm ${msg.role === 'user' ? 'bg-indigo-600 text-white rounded-br-none' : 'bg-white text-slate-700 shadow rounded-bl-none'}`}>
-                                                {msg.text}
+                        {
+                            isChatOpen && (
+                                <div className="fixed bottom-24 right-6 w-80 h-96 bg-white rounded-2xl shadow-2xl z-50 flex flex-col overflow-hidden border border-gray-200">
+                                    <div className="p-4 bg-gradient-to-r from-indigo-600 to-purple-600 text-white flex justify-between items-center">
+                                        <span className="font-bold">Video Assistant</span>
+                                        <button onClick={() => setIsChatOpen(false)} className="hover:bg-white/20 p-1 rounded">
+                                            <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                                                <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
+                                            </svg>
+                                        </button>
+                                    </div>
+                                    <div className="flex-1 overflow-y-auto p-4 space-y-3 bg-gray-50">
+                                        {chatHistory.map((msg, idx) => (
+                                            <div key={idx} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+                                                <div className={`max-w-[80%] p-3 rounded-xl text-sm ${msg.role === 'user' ? 'bg-indigo-600 text-white rounded-br-none' : 'bg-white text-slate-700 shadow rounded-bl-none'}`}>
+                                                    {msg.text}
+                                                </div>
                                             </div>
-                                        </div>
-                                    ))}
-                                    {isChatLoading && <div className="text-center text-slate-400 text-sm animate-pulse">Thinking...</div>}
+                                        ))}
+                                        {isChatLoading && <div className="text-center text-slate-400 text-sm animate-pulse">Thinking...</div>}
+                                    </div>
+                                    <form onSubmit={handleChatSubmit} className="p-3 border-t bg-white flex gap-2">
+                                        <input
+                                            type="text"
+                                            value={chatInput}
+                                            onChange={(e) => setChatInput(e.target.value)}
+                                            placeholder="Ask about the video..."
+                                            className="flex-1 p-2 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 outline-none"
+                                        />
+                                        <button type="submit" className="px-4 py-2 bg-indigo-600 text-white rounded-lg font-bold hover:bg-indigo-700 transition text-sm">
+                                            Send
+                                        </button>
+                                    </form>
                                 </div>
-                                <form onSubmit={handleChatSubmit} className="p-3 border-t bg-white flex gap-2">
-                                    <input
-                                        type="text"
-                                        value={chatInput}
-                                        onChange={(e) => setChatInput(e.target.value)}
-                                        placeholder="Ask about the video..."
-                                        className="flex-1 p-2 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 outline-none"
-                                    />
-                                    <button type="submit" className="px-4 py-2 bg-indigo-600 text-white rounded-lg font-bold hover:bg-indigo-700 transition text-sm">
-                                        Send
-                                    </button>
-                                </form>
-                            </div>
-                        )}
-                    </main>
-                </div>
+                            )
+                        }
+                    </main >
+                </div >
             );
         };
 
