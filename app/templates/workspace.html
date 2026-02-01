@@ -999,60 +999,7 @@
                                     📷 Add Media
                                 </button>
 
-                                {/* Tools Dropdown */}
-                                <div className="relative group">
-                                    <button className="px-4 py-2 bg-purple-100 text-purple-700 rounded-lg font-medium hover:bg-purple-200 transition flex items-center gap-2">
-                                        {USER_TIER === 'podcaster' ? '🚀 Growth Tools' : '🧠 Study Tools'}
-                                    </button>
-                                    <div className="absolute right-0 mt-2 w-56 bg-white rounded-xl shadow-xl border border-gray-100 hidden group-hover:block z-50">
-                                        {(USER_TIER === 'student' || USER_TIER === 'professor' || USER_TIER === 'pro') && (
-                                            <>
-                                                <button
-                                                    onClick={() => generateStudyTool('quiz')}
-                                                    className="w-full text-left px-4 py-3 hover:bg-gray-50 rounded-t-xl text-sm font-bold text-slate-700 block"
-                                                >
-                                                    📝 Generate Quiz
-                                                </button>
-                                                <button
-                                                    onClick={() => generateStudyTool('flashcards')}
-                                                    className="w-full text-left px-4 py-3 hover:bg-gray-50 text-sm font-bold text-slate-700 block"
-                                                >
-                                                    📇 Generate Flashcards
-                                                </button>
-                                            </>
-                                        )}
 
-                                        {(USER_TIER === 'pro' || USER_TIER === 'podcaster') && (
-                                            <>
-                                                <div className="border-t border-gray-100"></div>
-                                                <button
-                                                    onClick={() => setIsClipsModalOpen(true)}
-                                                    className="w-full text-left px-4 py-3 hover:bg-pink-50 text-sm font-bold text-pink-600 block flex items-center gap-2"
-                                                >
-                                                    🎬 Instagram/LinkedIn Clips
-                                                </button>
-                                                <button
-                                                    onClick={() => generateStudyTool('carousel')}
-                                                    className="w-full text-left px-4 py-3 hover:bg-blue-50 text-sm font-bold text-blue-600 block flex items-center gap-2"
-                                                >
-                                                    🎡 LinkedIn Carousel Script
-                                                </button>
-                                                <button
-                                                    onClick={() => generateStudyTool('blog')}
-                                                    className="w-full text-left px-4 py-3 hover:bg-orange-50 text-sm font-bold text-orange-600 block flex items-center gap-2"
-                                                >
-                                                    ✍️ Video to Blog Post
-                                                </button>
-                                                <button
-                                                    onClick={() => setIsAudioModalOpen(true)}
-                                                    className="w-full text-left px-4 py-3 hover:bg-purple-50 rounded-b-xl text-sm font-bold text-purple-600 block flex items-center gap-2"
-                                                >
-                                                    🎧 Podcast Synthesis
-                                                </button>
-                                            </>
-                                        )}
-                                    </div>
-                                </div>
 
                                 <button
                                     onClick={() => document.body.classList.toggle('font-dyslexic')}
